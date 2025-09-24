@@ -18,6 +18,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { SimpleSelect } from "@/components/ui/simple-select"
 import { UserPlus, Search } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import type { Profile, UserRole } from "@/lib/types"
@@ -43,6 +45,7 @@ export function UserManagement() {
     position: "",
     phone: "",
     address: "",
+    birth_date: "",
   })
 
   useEffect(() => {
@@ -73,9 +76,11 @@ export function UserManagement() {
         role: u.role,
         department: u.department ?? null,
         position: u.position ?? null,
+        profile_photo: u.profile_photo ?? null,
         hire_date: u.hire_date ? new Date(u.hire_date).toISOString() : null,
         phone: u.phone ?? null,
         address: u.address ?? null,
+        birth_date: u.birth_date ?? null,
         created_at: u.created_at ? new Date(u.created_at).toISOString() : "",
         updated_at: u.updated_at ? new Date(u.updated_at).toISOString() : "",
       }))
@@ -112,6 +117,7 @@ export function UserManagement() {
           position: "",
           phone: "",
           address: "",
+          birth_date: "",
         })
         setIsAddUserOpen(false)
         fetchUsers()
@@ -164,6 +170,7 @@ export function UserManagement() {
           position: editingUser.position,
           phone: editingUser.phone,
           address: editingUser.address,
+          birth_date: editingUser.birth_date,
         }),
       })
       if (!response.ok) throw new Error("Failed to save user changes")
@@ -271,19 +278,16 @@ export function UserManagement() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="role">Role</Label>
-                    <Select
+                    <SimpleSelect
+                      options={[
+                        { value: "employee", label: "Employee" },
+                        { value: "hr", label: "HR" },
+                        { value: "admin", label: "Admin" },
+                      ]}
                       value={newUser.role}
                       onValueChange={(value: UserRole) => setNewUser({ ...newUser, role: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="employee">Employee</SelectItem>
-                        <SelectItem value="hr">HR</SelectItem>
-                        <SelectItem value="admin">Admin</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      placeholder="Select role"
+                    />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -302,6 +306,15 @@ export function UserManagement() {
                         onChange={(e) => setNewUser({ ...newUser, position: e.target.value })}
                       />
                     </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="birth_date">Date of Birth</Label>
+                    <Input
+                      id="birth_date"
+                      type="date"
+                      value={newUser.birth_date}
+                      onChange={(e) => setNewUser({ ...newUser, birth_date: e.target.value })}
+                    />
                   </div>
                   <Button type="submit" className="w-full" disabled={isCreatingUser}>
                     {isCreatingUser ? "Creating User..." : "Create User"}
@@ -337,9 +350,17 @@ export function UserManagement() {
                 {filteredUsers.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell>
-                      <div>
-                        <p className="font-medium">{user.full_name || "No name"}</p>
-                        <p className="text-sm text-gray-500 sm:hidden">{user.email}</p>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="w-8 h-8">
+                          <AvatarImage src={user.profile_photo || ""} />
+                          <AvatarFallback className="text-xs">
+                            {user.full_name?.charAt(0) || user.email.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">{user.full_name || "No name"}</p>
+                          <p className="text-sm text-gray-500 sm:hidden">{user.email}</p>
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">{user.email}</TableCell>
@@ -351,19 +372,16 @@ export function UserManagement() {
                     <TableCell className="hidden md:table-cell">{user.department || "Not assigned"}</TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
-                        <Select
+                        <SimpleSelect
+                          options={[
+                            { value: "employee", label: "Employee" },
+                            { value: "hr", label: "HR" },
+                            { value: "admin", label: "Admin" },
+                          ]}
                           value={user.role}
                           onValueChange={(value: UserRole) => handleUpdateUserRole(user.id, value)}
-                        >
-                          <SelectTrigger className="w-24 h-8">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="employee">Employee</SelectItem>
-                            <SelectItem value="hr">HR</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
-                          </SelectContent>
-                        </Select>
+                          className="w-24 h-8"
+                        />
                         <Button size="sm" variant="outline" onClick={() => openEditUser(user)}>Edit</Button>
                         <Button size="sm" variant="destructive" onClick={() => handleDeleteUser(user.id)}>
                           Delete
@@ -418,19 +436,16 @@ export function UserManagement() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit_role">Role</Label>
-                <Select
+                <SimpleSelect
+                  options={[
+                    { value: "employee", label: "Employee" },
+                    { value: "hr", label: "HR" },
+                    { value: "admin", label: "Admin" },
+                  ]}
                   value={editingUser.role}
                   onValueChange={(value: UserRole) => setEditingUser({ ...editingUser, role: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="employee">Employee</SelectItem>
-                    <SelectItem value="hr">HR</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                  </SelectContent>
-                </Select>
+                  placeholder="Select role"
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -449,6 +464,15 @@ export function UserManagement() {
                     onChange={(e) => setEditingUser({ ...editingUser, position: e.target.value })}
                   />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit_birth_date">Date of Birth</Label>
+                <Input
+                  id="edit_birth_date"
+                  type="date"
+                  value={editingUser.birth_date ? new Date(editingUser.birth_date).toISOString().split('T')[0] : ""}
+                  onChange={(e) => setEditingUser({ ...editingUser, birth_date: e.target.value })}
+                />
               </div>
               <div className="flex gap-2 justify-end">
                 <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)}>

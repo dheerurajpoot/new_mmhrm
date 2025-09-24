@@ -28,6 +28,7 @@ export default function LoginPage() {
 	const [error, setError] = useState<string | null>(null);
 	const [emailError, setEmailError] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
+	const [hasUserInteracted, setHasUserInteracted] = useState(false);
 	const router = useRouter();
 
 	// Check for success message from signup
@@ -43,6 +44,17 @@ export default function LoginPage() {
 		}
 	}, []);
 
+	// Reset form state when component mounts (after logout)
+	useEffect(() => {
+		if (!user && !userLoading) {
+			setEmail("");
+			setPassword("");
+			setError(null);
+			setEmailError(null);
+			setHasUserInteracted(false);
+		}
+	}, [user, userLoading]);
+
 	// Email validation function
 	const validateEmail = (email: string): boolean => {
 		const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -53,6 +65,7 @@ export default function LoginPage() {
 	const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const value = e.target.value;
 		setEmail(value);
+		setHasUserInteracted(true);
 		
 		if (value && !validateEmail(value)) {
 			setEmailError("Please enter a valid email address");
@@ -61,15 +74,47 @@ export default function LoginPage() {
 		}
 	};
 
+	// Handle password change
+	const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		setPassword(e.target.value);
+		setHasUserInteracted(true);
+	};
+
 	// Redirect if already authenticated (from cache or API)
 	useEffect(() => {
-		if (user) {
-			router.replace(`/${user.role}`);
+		if (user && !userLoading) {
+			// Add a small delay to prevent flash of login form
+			const timer = setTimeout(() => {
+				router.replace(`/${user.role}`);
+			}, 200);
+			return () => clearTimeout(timer);
 		}
-	}, [user, router]);
+	}, [user, userLoading, router]);
+
+	// Show loading state while checking authentication
+	if (userLoading) {
+		return (
+			<div className='min-h-screen bg-gradient-to-br from-red-50 via-white to-blue-50 flex items-center justify-center p-4'>
+				<div className='w-full max-w-md'>
+					<Card className='border-0 shadow-xl'>
+						<CardContent className='p-8 text-center'>
+							<div className='animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto mb-4'></div>
+							<p className='text-gray-600'>Checking authentication...</p>
+						</CardContent>
+					</Card>
+				</div>
+			</div>
+		);
+	}
 
 	const handleLogin = async (e: React.FormEvent) => {
 		e.preventDefault();
+		
+		// Prevent auto-submit if user hasn't interacted with the form
+		if (!hasUserInteracted) {
+			return;
+		}
+		
 		setIsLoading(true);
 		setError(null);
 		setEmailError(null);
@@ -165,9 +210,7 @@ export default function LoginPage() {
 									type='password'
 									required
 									value={password}
-									onChange={(e) =>
-										setPassword(e.target.value)
-									}
+									onChange={handlePasswordChange}
 									className='h-11'
 								/>
 							</div>
@@ -184,11 +227,13 @@ export default function LoginPage() {
 							<Button
 								type='submit'
 								className='w-full h-11 bg-gradient-to-r from-red-600 to-blue-600 hover:from-red-700 hover:to-blue-700'
-								disabled={isLoading || userLoading || !!user}>
+								disabled={isLoading || userLoading || !!user || (!hasUserInteracted && email && password)}>
 								{isLoading
 									? "Signing in..."
 									: user
 									? "Redirecting..."
+									: (!hasUserInteracted && email && password)
+									? "Click to Sign In"
 									: "Sign In"}
 							</Button>
 						</form>

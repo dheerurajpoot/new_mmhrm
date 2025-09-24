@@ -6,6 +6,11 @@ let transporter: nodemailer.Transporter | null = null;
 
 try {
   if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+    console.log('[Email Service] Creating SMTP transporter...');
+    console.log('[Email Service] Host:', process.env.SMTP_HOST);
+    console.log('[Email Service] Port:', process.env.SMTP_PORT);
+    console.log('[Email Service] User:', process.env.SMTP_USER);
+    
     transporter = nodemailer.createTransporter({
       host: process.env.SMTP_HOST || 'smtp.gmail.com',
       port: parseInt(process.env.SMTP_PORT || '587'),
@@ -14,7 +19,11 @@ try {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
       },
+      tls: {
+        rejectUnauthorized: false // Allow self-signed certificates
+      }
     });
+    console.log('[Email Service] SMTP transporter created successfully');
   } else {
     console.log('[Email Service] SMTP credentials not configured, email sending will be disabled');
   }
@@ -33,6 +42,13 @@ export async function sendVerificationEmail(
       console.log('[Email Service] SMTP not configured, skipping email send');
       return { success: false, error: 'Email service not configured' };
     }
+
+    console.log('[Email Service] Attempting to send verification email to:', email);
+    
+    // Test connection first
+    console.log('[Email Service] Testing SMTP connection...');
+    await transporter.verify();
+    console.log('[Email Service] SMTP connection verified successfully');
 
     const verificationUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/auth/verify-email?token=${verificationToken}`
     
@@ -85,10 +101,20 @@ export async function sendVerificationEmail(
       `,
     }
 
-    await transporter.sendMail(mailOptions)
+    console.log('[Email Service] Sending email...');
+    const result = await transporter.sendMail(mailOptions);
+    console.log('[Email Service] Email sent successfully:', result.messageId);
     return { success: true }
   } catch (error) {
-    console.error('Email sending error:', error)
+    console.error('[Email Service] Email sending error:', error);
+    if (error instanceof Error) {
+      console.error('[Email Service] Error details:', {
+        message: error.message,
+        code: (error as any).code,
+        command: (error as any).command,
+        response: (error as any).response
+      });
+    }
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Failed to send email' 
@@ -106,10 +132,20 @@ export async function testEmailConnection(): Promise<boolean> {
       console.log('[Email Service] No transporter available for testing')
       return false
     }
+    console.log('[Email Service] Testing SMTP connection...')
     await transporter.verify()
+    console.log('[Email Service] SMTP connection successful!')
     return true
   } catch (error) {
-    console.error('Email connection test failed:', error)
+    console.error('[Email Service] SMTP connection test failed:', error)
+    if (error instanceof Error) {
+      console.error('[Email Service] Error details:', {
+        message: error.message,
+        code: (error as any).code,
+        command: (error as any).command,
+        response: (error as any).response
+      })
+    }
     return false
   }
 }

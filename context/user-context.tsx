@@ -34,20 +34,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 	const loadUser = useCallback(async () => {
 		setLoading(true);
 		try {
-			// Prefer cached user to avoid unnecessary API calls
-			const cached =
-				typeof window !== "undefined"
-					? localStorage.getItem("auth_user")
-					: null;
-			if (cached) {
-				try {
-					const parsed = JSON.parse(cached);
-					setUser(parsed);
-					setLoading(false);
-					return;
-				} catch {}
-			}
-
+			// Always check with server first to ensure we have valid session
 			const current = await getCurrentUser();
 			setUser(current as any);
 			if (typeof window !== "undefined") {
@@ -55,7 +42,15 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 					localStorage.setItem("auth_user", JSON.stringify(current));
 				} else {
 					localStorage.removeItem("auth_user");
+					localStorage.removeItem("auth_token");
 				}
+			}
+		} catch (error) {
+			console.error("Error loading user:", error);
+			setUser(null);
+			if (typeof window !== "undefined") {
+				localStorage.removeItem("auth_user");
+				localStorage.removeItem("auth_token");
 			}
 		} finally {
 			setLoading(false);
@@ -68,10 +63,20 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 	}, [loadUser]);
 
 	const handleSignOut = useCallback(async () => {
-		await clientSignOut();
-		setUser(null);
-		if (typeof window !== "undefined") {
-			localStorage.removeItem("auth_user");
+		try {
+			await clientSignOut();
+		} catch (error) {
+			console.error("Sign out error:", error);
+		} finally {
+			// Always clear local state regardless of API call success
+			setUser(null);
+			setLoading(false);
+			if (typeof window !== "undefined") {
+				localStorage.removeItem("auth_user");
+				localStorage.removeItem("auth_token");
+				// Force a page reload to clear any cached state
+				window.location.href = "/auth/login";
+			}
 		}
 	}, []);
 

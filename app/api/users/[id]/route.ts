@@ -22,12 +22,16 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       "phone",
       "address",
       "hire_date",
+      "birth_date",
     ];
     for (const key of updatable) {
       if (key in body) allowed[key] = body[key];
     }
     if ("hire_date" in allowed && allowed.hire_date) {
       allowed.hire_date = new Date(String(allowed.hire_date));
+    }
+    if ("birth_date" in allowed && allowed.birth_date) {
+      allowed.birth_date = new Date(String(allowed.birth_date));
     }
     allowed["updated_at"] = new Date();
 

@@ -57,7 +57,32 @@ export async function getLeaveRequestsByEmployee(employeeId: string): Promise<Le
 export async function getAllLeaveRequests(): Promise<LeaveRequest[]> {
   try {
     const leaveRequestsCollection = await getLeaveRequestsCollection()
-    return await leaveRequestsCollection.find({}).sort({ created_at: -1 }).toArray()
+    const usersCollection = await getUsersCollection()
+    
+    const leaveRequests = await leaveRequestsCollection.find({}).sort({ created_at: -1 }).toArray()
+    
+    // Populate employee data for each leave request
+    const populatedLeaveRequests = await Promise.all(
+      leaveRequests.map(async (request) => {
+        const employee = await usersCollection.findOne({ 
+          _id: new ObjectId(request.employee_id) 
+        })
+        
+        return {
+          ...request,
+          employee: employee ? {
+            id: employee._id.toString(),
+            full_name: employee.full_name || employee.name || "",
+            email: employee.email || "",
+            department: employee.department || "",
+            position: employee.position || "",
+            profile_photo: employee.profile_photo || "",
+          } : null
+        }
+      })
+    )
+    
+    return populatedLeaveRequests
   } catch (error) {
     console.error(" Error getting all leave requests:", error)
     return []
@@ -77,7 +102,32 @@ export async function getLeaveBalancesByEmployee(employeeId: string): Promise<Le
 export async function getAllLeaveBalances(): Promise<LeaveBalance[]> {
   try {
     const leaveBalancesCollection = await getLeaveBalancesCollection()
-    return await leaveBalancesCollection.find({}).toArray()
+    const usersCollection = await getUsersCollection()
+    
+    const leaveBalances = await leaveBalancesCollection.find({}).toArray()
+    
+    // Populate employee data for each leave balance
+    const populatedLeaveBalances = await Promise.all(
+      leaveBalances.map(async (balance) => {
+        const employee = await usersCollection.findOne({ 
+          _id: new ObjectId(balance.employee_id) 
+        })
+        
+        return {
+          ...balance,
+          employee: employee ? {
+            id: employee._id.toString(),
+            full_name: employee.full_name || employee.name || "",
+            email: employee.email || "",
+            department: employee.department || "",
+            position: employee.position || "",
+            profile_photo: employee.profile_photo || "",
+          } : null
+        }
+      })
+    )
+    
+    return populatedLeaveBalances
   } catch (error) {
     console.error(" Error getting all leave balances:", error)
     return []
@@ -163,7 +213,32 @@ export async function getEmployeeFinances(employeeId: string): Promise<EmployeeF
 export async function getAllEmployeeFinances(): Promise<EmployeeFinance[]> {
   try {
     const employeeFinancesCollection = await getEmployeeFinancesCollection()
-    return await employeeFinancesCollection.find({}).toArray()
+    const usersCollection = await getUsersCollection()
+    
+    const finances = await employeeFinancesCollection.find({}).toArray()
+    
+    // Populate employee data for each finance record
+    const populatedFinances = await Promise.all(
+      finances.map(async (finance) => {
+        const employee = await usersCollection.findOne({ 
+          _id: new ObjectId(finance.employee_id) 
+        })
+        
+        return {
+          ...finance,
+          employee: employee ? {
+            id: employee._id.toString(),
+            full_name: employee.full_name || employee.name || "",
+            email: employee.email || "",
+            department: employee.department || "",
+            position: employee.position || "",
+            profile_photo: employee.profile_photo || "",
+          } : null
+        }
+      })
+    )
+    
+    return populatedFinances
   } catch (error) {
     console.error(" Error getting all employee finances:", error)
     return []
@@ -188,7 +263,32 @@ export async function getPayrollRecordsByEmployee(employeeId: string): Promise<P
 export async function getAllPayrollRecords(): Promise<PayrollRecord[]> {
   try {
     const payrollRecordsCollection = await getPayrollRecordsCollection()
-    return await payrollRecordsCollection.find({}).sort({ pay_period_end: -1 }).toArray()
+    const usersCollection = await getUsersCollection()
+    
+    const payrollRecords = await payrollRecordsCollection.find({}).sort({ pay_period_end: -1 }).toArray()
+    
+    // Populate employee data for each payroll record
+    const populatedPayrollRecords = await Promise.all(
+      payrollRecords.map(async (record) => {
+        const employee = await usersCollection.findOne({ 
+          _id: new ObjectId(record.employee_id) 
+        })
+        
+        return {
+          ...record,
+          employee: employee ? {
+            id: employee._id.toString(),
+            full_name: employee.full_name || employee.name || "",
+            email: employee.email || "",
+            department: employee.department || "",
+            position: employee.position || "",
+            profile_photo: employee.profile_photo || "",
+          } : null
+        }
+      })
+    )
+    
+    return populatedPayrollRecords
   } catch (error) {
     console.error(" Error getting all payroll records:", error)
     return []

@@ -40,6 +40,7 @@ export function MobileBottomNav({ role, activeSection, onNavigate }: MobileBotto
         return [
           { id: "overview", label: "Dashboard", icon: BarChart3 },
           { id: "users", label: "Users", icon: Users },
+          { id: "teams", label: "Teams", icon: Users },
           { id: "finances", label: "Finance", icon: DollarSign },
           { id: "leaves", label: "Leaves", icon: Calendar },
           { id: "settings", label: "Settings", icon: Settings },

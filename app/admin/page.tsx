@@ -1,6 +1,11 @@
 "use client";
 import { AdminDashboard } from "@/components/admin/admin-dashboard";
+import { ProtectedRoute } from "@/components/shared/protected-route";
 
-export default async function AdminPage() {
-	return <AdminDashboard />;
+export default function AdminPage() {
+	return (
+		<ProtectedRoute requiredRole="admin">
+			<AdminDashboard />
+		</ProtectedRoute>
+	);
 }

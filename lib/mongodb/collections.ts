@@ -11,6 +11,7 @@ import type {
   PayrollRecord,
   Session,
   EmailVerificationToken,
+  Team,
 } from "./models"
 
 export async function getUsersCollection() {
@@ -71,6 +72,11 @@ export async function getWebsiteSettingsCollection() {
 export async function getEmailVerificationTokensCollection() {
   const db = await getDatabase()
   return db.collection<EmailVerificationToken>("emailVerificationTokens")
+}
+
+export async function getTeamsCollection() {
+  const db = await getDatabase()
+  return db.collection<Team>("teams")
 }
 
 // Initialize database indexes

@@ -42,7 +42,7 @@ export async function signIn(
 export async function signUp(userData: {
 	email: string;
 	full_name: string;
-}): Promise<{ success: boolean; user?: AuthUser; error?: string }> {
+}): Promise<{ success: boolean; user?: AuthUser; error?: string; verificationUrl?: string; message?: string }> {
 	try {
 		const response = await fetch("/api/auth/signup", {
 			method: "POST",
@@ -54,6 +54,7 @@ export async function signUp(userData: {
 		});
 
 		const data = await response.json();
+		console.log("Signup API response:", data);
 
 		if (!response.ok) {
 			return { success: false, error: data.error || "Sign up failed" };
@@ -69,7 +70,19 @@ export async function signUp(userData: {
 			} catch {}
 		}
 
-		return { success: true, user: data.user };
+		console.log("Returning signup result:", {
+			success: true,
+			user: data.user,
+			verificationUrl: data.verificationUrl,
+			message: data.message
+		});
+
+		return { 
+			success: true, 
+			user: data.user,
+			verificationUrl: data.verificationUrl,
+			message: data.message
+		};
 	} catch (error) {
 		console.error("Sign up error:", error);
 		return { success: false, error: "Network error occurred" };
@@ -89,16 +102,16 @@ export async function signOut(): Promise<{ success: boolean; error?: string }> {
 			});
 		}
 
+		// Always clear local storage regardless of API call success
 		localStorage.removeItem("auth_token");
-		// httpOnly cookie cleared by server in signout route
-		try {
-			localStorage.removeItem("auth_user");
-		} catch {}
+		localStorage.removeItem("auth_user");
+		
 		return { success: true };
 	} catch (error) {
-		console.error(" Sign out error:", error);
-		localStorage.removeItem("auth_token"); // Remove token anyway
-		// httpOnly cookie will remain until server clears; consider redirecting to login
+		console.error("Sign out error:", error);
+		// Still clear local storage even if API call fails
+		localStorage.removeItem("auth_token");
+		localStorage.removeItem("auth_user");
 		return { success: false, error: "Sign out failed" };
 	}
 }

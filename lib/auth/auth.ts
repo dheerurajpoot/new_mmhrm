@@ -36,6 +36,7 @@ export async function createUser(userData: {
   position?: string
   phone?: string
   address?: string
+  birth_date?: string
 }): Promise<{ success: boolean; user?: User; error?: string }> {
   try {
     console.log(" Getting users collection...")
@@ -61,6 +62,7 @@ export async function createUser(userData: {
       position: userData.position,
       phone: userData.phone,
       address: userData.address,
+      birth_date: userData.birth_date ? new Date(userData.birth_date) : undefined,
       created_at: new Date(),
       updated_at: new Date(),
     }

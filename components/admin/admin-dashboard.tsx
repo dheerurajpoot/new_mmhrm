@@ -12,6 +12,7 @@ import { EmployeeManagement } from "./employee-management"
 import { FinancialManagement } from "./financial-management"
 import { LeaveManagement } from "./leave-management"
 import { AdminSettings } from "./admin-settings"
+import { TeamManagement } from "./team-management"
 
 export function AdminDashboard() {
   const [activeSection, setActiveSection] = useState("overview")
@@ -31,6 +32,8 @@ export function AdminDashboard() {
         return <AdminStats />
       case "users":
         return <UserManagement />
+      case "teams":
+        return <TeamManagement />
       case "employees":
         return <EmployeeManagement currentUserRole="admin" />
       case "finances":
@@ -50,6 +53,8 @@ export function AdminDashboard() {
         return { title: "Admin Dashboard", description: "Overview of system metrics and user activity" }
       case "users":
         return { title: "User Management", description: "Manage users, roles, and permissions" }
+      case "teams":
+        return { title: "Team Management", description: "Create and manage teams for better collaboration" }
       case "employees":
         return { title: "Employee Management", description: "Manage employees, roles, and permissions" }
       case "finances":

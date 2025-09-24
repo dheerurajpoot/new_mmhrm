@@ -10,6 +10,7 @@ import { LeaveBalance } from "./leave-balance"
 import { TimeTracking } from "./time-tracking"
 import { EmployeeFinances } from "./employee-finances"
 import { EmployeeStats } from "./employee-stats"
+import { TeamMembers } from "./team-members"
 import type { Profile } from "@/lib/types"
 
 export function EmployeeDashboard() {
@@ -40,7 +41,12 @@ export function EmployeeDashboard() {
   const renderContent = () => {
     switch (activeSection) {
       case "overview":
-        return <EmployeeStats />
+        return (
+          <div className="space-y-6">
+            <EmployeeStats />
+            <TeamMembers />
+          </div>
+        )
       case "profile":
         return <EmployeeProfile />
       case "leaves":
@@ -50,7 +56,12 @@ export function EmployeeDashboard() {
       case "finances":
         return <EmployeeFinances />
       default:
-        return <EmployeeStats />
+        return (
+          <div className="space-y-6">
+            <EmployeeStats />
+            <TeamMembers />
+          </div>
+        )
     }
   }
 

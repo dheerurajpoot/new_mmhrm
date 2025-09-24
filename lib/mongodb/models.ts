@@ -9,6 +9,7 @@ export interface User {
   department?: string
   position?: string
   hire_date?: Date
+  birth_date?: Date
   phone?: string
   address?: string
   profile_photo?: string
@@ -25,6 +26,7 @@ export interface Profile {
   department?: string
   position?: string
   hire_date?: Date
+  birth_date?: Date
   phone?: string
   address?: string
   profile_photo?: string
@@ -152,4 +154,13 @@ export interface EmailVerificationToken {
   expires_at: Date
   used: boolean
   created_at: Date
+}
+
+export interface Team {
+  _id?: ObjectId
+  name: string
+  leader_id: ObjectId
+  member_ids: ObjectId[]
+  created_at: Date
+  updated_at: Date
 }

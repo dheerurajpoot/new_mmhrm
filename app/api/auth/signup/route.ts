@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createUser, createSession } from "@/lib/auth/auth"
-import { getEmailVerificationTokensCollection } from "@/lib/mongodb/collections"
+import { getEmailVerificationTokensCollection, getUsersCollection } from "@/lib/mongodb/collections"
 import { sendVerificationEmail, generateVerificationToken } from "@/lib/services/email"
 
 export async function POST(request: NextRequest) {
@@ -23,14 +23,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Please enter a valid email address" }, { status: 400 })
     }
 
-    // Check if user already exists
-    const existingUserResult = await createUser({
-      email,
-      full_name,
-      role: "employee", // Default role
-    })
-
-    if (!existingUserResult.success && existingUserResult.error === "User already exists") {
+    // Check if user already exists (without creating them)
+    const usersCollection = await getUsersCollection()
+    const existingUser = await usersCollection.findOne({ email })
+    
+    if (existingUser) {
       return NextResponse.json({ error: "An account with this email already exists" }, { status: 400 })
     }
 
@@ -40,8 +37,11 @@ export async function POST(request: NextRequest) {
     const expiresAt = new Date()
     expiresAt.setHours(expiresAt.getHours() + 24) // Token expires in 24 hours
 
-    // Save verification token to database
+    // Clean up any existing verification tokens for this email
     const tokensCollection = await getEmailVerificationTokensCollection()
+    await tokensCollection.deleteMany({ email })
+
+    // Save verification token to database
     await tokensCollection.insertOne({
       email,
       token: verificationToken,
@@ -66,9 +66,10 @@ export async function POST(request: NextRequest) {
       
       return NextResponse.json({
         success: true,
-        message: `Email service not configured. Please use this link to verify your account: ${verificationUrl}`,
+        message: `Email service is not working properly. Please use this link to complete your registration: ${verificationUrl}`,
         verificationUrl: verificationUrl,
         token: verificationToken, // Include token for development
+        emailError: emailResult.error // Include the specific error
       })
     }
 

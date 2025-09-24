@@ -62,8 +62,15 @@ export function AppSidebar({ role }: AppSidebarProps) {
 	}, []);
 
 	const handleLogout = async () => {
-		await signOut();
-		router.push("/");
+		try {
+			await signOut();
+			// Force redirect to login page
+			window.location.href = "/auth/login";
+		} catch (error) {
+			console.error("Logout error:", error);
+			// Even if logout fails, redirect to login
+			window.location.href = "/auth/login";
+		}
 	};
 
 	const handleNavigation = (section: string) => {
@@ -79,6 +86,7 @@ export function AppSidebar({ role }: AppSidebarProps) {
 					return [
 						{ id: "overview", label: "Dashboard", icon: BarChart3 },
 						{ id: "users", label: "User Management", icon: Users },
+						{ id: "teams", label: "Team Management", icon: Users },
 						{ id: "finances", label: "Finance Management", icon: DollarSign },
 						{ id: "leaves", label: "Leave Management", icon: Calendar },
 						{ id: "settings", label: "Settings", icon: Settings },

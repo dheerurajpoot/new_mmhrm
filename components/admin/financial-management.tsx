@@ -7,9 +7,11 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { SearchableSelect } from "@/components/ui/searchable-select"
+import { SimpleSelect } from "@/components/ui/simple-select"
 import {
   Dialog,
   DialogContent,
@@ -34,6 +36,7 @@ interface Employee {
   email: string
   department: string
   position: string
+  profile_photo?: string
 }
 
 interface EmployeeFinance {
@@ -118,34 +121,42 @@ export function FinancialManagement() {
           email: u.email,
           department: u.department || "",
           position: u.position || "",
+          profile_photo: u.profile_photo || "",
         }))
+        console.log("Loaded employees:", mappedEmployees.length)
         setEmployees(mappedEmployees)
+      } else {
+        console.error("Failed to load employees:", employeesRes.status, employeesRes.statusText)
+        setEmployees([])
       }
 
       if (financesRes.ok) {
         const financesData = await financesRes.json()
-        // Normalize and enrich with employee display where possible
-        const mappedFinances: EmployeeFinance[] = (financesData || []).map((f: any) => {
-          const employeeId = f.employee_id?.toString?.() || f.employee_id
-          const employee = employees.find((e) => e.id === employeeId)
-          return {
-            id: f._id?.toString?.() || f._id || f.id,
-            employee_id: employeeId,
-            base_salary: f.base_salary ?? 0,
-            hourly_rate: f.hourly_rate ?? 0,
-            pay_frequency: f.pay_frequency || "monthly",
-            bank_account: f.bank_account || "",
-            tax_id: f.tax_id || "",
-            currency: f.currency || "USD",
-            employee: employee || ({ id: employeeId, full_name: f.employee_name || "", email: "", department: "", position: "" } as any),
-          }
-        })
+        // Data is already populated with employee information from the API
+        const mappedFinances: EmployeeFinance[] = (financesData || []).map((f: any) => ({
+          id: f._id?.toString?.() || f._id || f.id,
+          employee_id: f.employee_id?.toString?.() || f.employee_id,
+          base_salary: f.base_salary ?? 0,
+          hourly_rate: f.hourly_rate ?? 0,
+          pay_frequency: f.pay_frequency || "monthly",
+          bank_account: f.bank_account || "",
+          tax_id: f.tax_id || "",
+          currency: f.currency || "USD",
+          employee: f.employee || null,
+        }))
         setEmployeeFinances(mappedFinances)
       }
 
       if (payrollRes.ok) {
         const payrollData = await payrollRes.json()
-        setPayrollRecords(payrollData)
+        // Data is already populated with employee information from the API
+        const mappedPayrollRecords = (payrollData || []).map((p: any) => ({
+          ...p,
+          id: p._id?.toString?.() || p._id || p.id,
+          employee_id: p.employee_id?.toString?.() || p.employee_id,
+          employee: p.employee || null,
+        }))
+        setPayrollRecords(mappedPayrollRecords)
       }
     } catch (error) {
       console.error("Error fetching data:", error)
@@ -161,11 +172,23 @@ export function FinancialManagement() {
 
   const handleFinanceSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    const employeeId = editingFinance ? editingFinance.employee_id : financeFormData.employee_id
+    
+    if (!employeeId) {
+      toast({
+        title: "Error",
+        description: "Please select an employee",
+        variant: "destructive",
+      })
+      return
+    }
+    
     setLoading(true)
 
     try {
       const result = await updateEmployeeFinances(
-        editingFinance ? editingFinance.employee_id : financeFormData.employee_id,
+        employeeId,
         {
           base_salary: Number.parseFloat(financeFormData.base_salary) || 0,
           hourly_rate: Number.parseFloat(financeFormData.hourly_rate) || 0,
@@ -218,7 +241,7 @@ export function FinancialManagement() {
         overtime_hours: Number.parseFloat(payrollFormData.overtime_hours) || 0,
         overtime_pay: Number.parseFloat(payrollFormData.overtime_pay) || 0,
         bonus: Number.parseFloat(payrollFormData.bonus) || 0,
-        status: payrollFormData.status,
+        status: payrollFormData.status as "pending" | "paid" | "cancelled",
       }
 
       const result = editingPayroll
@@ -275,6 +298,39 @@ export function FinancialManagement() {
       toast({
         title: "Error",
         description: "Failed to delete payroll record",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDeleteFinance = async (financeId: string) => {
+    if (!confirm("Are you sure you want to delete this finance record?")) return
+
+    setLoading(true)
+    try {
+      const response = await fetch(`/api/finances/${financeId}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: "Finance record deleted successfully",
+        })
+        fetchData()
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to delete finance record",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete finance record",
         variant: "destructive",
       })
     } finally {
@@ -411,39 +467,35 @@ export function FinancialManagement() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="employee_id">Employee</Label>
-                      <Select
+                      <SearchableSelect
+                        options={employees.map((employee) => ({
+                          value: employee.id,
+                          label: employee.full_name || employee.email,
+                          description: employee.position || employee.department,
+                          profile_photo: employee.profile_photo,
+                          email: employee.email,
+                        }))}
                         value={financeFormData.employee_id}
                         onValueChange={(value) => setFinanceFormData({ ...financeFormData, employee_id: value })}
-                        disabled={!!editingFinance}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select employee" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {employees.map((employee) => (
-                            <SelectItem key={employee.id} value={employee.id}>
-                              {employee.full_name} - {employee.position}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        placeholder={employees.length === 0 ? "No employees available" : "Select employee"}
+                        searchPlaceholder="Search employees..."
+                        emptyMessage={employees.length === 0 ? "No employees found. Please check your authentication." : "No employees found."}
+                        disabled={!!editingFinance || employees.length === 0}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="currency">Currency</Label>
-                      <Select
+                      <SimpleSelect
+                        options={[
+                          { value: "USD", label: "USD" },
+                          { value: "EUR", label: "EUR" },
+                          { value: "GBP", label: "GBP" },
+                          { value: "INR", label: "INR" },
+                        ]}
                         value={financeFormData.currency}
                         onValueChange={(value) => setFinanceFormData({ ...financeFormData, currency: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="USD">USD</SelectItem>
-                          <SelectItem value="EUR">EUR</SelectItem>
-                          <SelectItem value="GBP">GBP</SelectItem>
-                          <SelectItem value="INR">INR</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        placeholder="Select currency"
+                      />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
@@ -471,20 +523,17 @@ export function FinancialManagement() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="pay_frequency">Pay Frequency</Label>
-                      <Select
+                      <SimpleSelect
+                        options={[
+                          { value: "weekly", label: "Weekly" },
+                          { value: "bi-weekly", label: "Bi-weekly" },
+                          { value: "monthly", label: "Monthly" },
+                          { value: "quarterly", label: "Quarterly" },
+                        ]}
                         value={financeFormData.pay_frequency}
                         onValueChange={(value) => setFinanceFormData({ ...financeFormData, pay_frequency: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="weekly">Weekly</SelectItem>
-                          <SelectItem value="bi-weekly">Bi-weekly</SelectItem>
-                          <SelectItem value="monthly">Monthly</SelectItem>
-                          <SelectItem value="quarterly">Quarterly</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        placeholder="Select pay frequency"
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="tax_id">Tax ID</Label>
@@ -537,7 +586,20 @@ export function FinancialManagement() {
                   <TableBody>
                     {employeeFinances.map((finance) => (
                       <TableRow key={finance.id}>
-                        <TableCell className="font-medium">{finance.employee?.full_name}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Avatar className="w-8 h-8">
+                              <AvatarImage src={finance.employee?.profile_photo || ""} />
+                              <AvatarFallback className="text-xs">
+                                {finance.employee?.full_name?.charAt(0) || finance.employee?.email?.charAt(0) || "?"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium">{finance.employee?.full_name || "Unknown Employee"}</p>
+                              <p className="text-sm text-gray-500">{finance.employee?.position}</p>
+                            </div>
+                          </div>
+                        </TableCell>
                         <TableCell>
                           {finance.base_salary ? `${finance.currency} ${finance.base_salary}` : "-"}
                         </TableCell>
@@ -547,9 +609,14 @@ export function FinancialManagement() {
                         <TableCell className="capitalize">{finance.pay_frequency}</TableCell>
                         <TableCell>{finance.currency}</TableCell>
                         <TableCell>
-                          <Button variant="outline" size="sm" onClick={() => openFinanceDialog(finance)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
+                          <div className="flex space-x-2">
+                            <Button variant="outline" size="sm" onClick={() => openFinanceDialog(finance)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => handleDeleteFinance(finance.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -580,22 +647,21 @@ export function FinancialManagement() {
                   <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="payroll_employee_id">Employee</Label>
-                      <Select
+                      <SearchableSelect
+                        options={employees.map((employee) => ({
+                          value: employee.id,
+                          label: employee.full_name || employee.email,
+                          description: employee.position || employee.department,
+                          profile_photo: employee.profile_photo,
+                          email: employee.email,
+                        }))}
                         value={payrollFormData.employee_id}
                         onValueChange={(value) => setPayrollFormData({ ...payrollFormData, employee_id: value })}
-                        disabled={!!editingPayroll}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select employee" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {employees.map((employee) => (
-                            <SelectItem key={employee.id} value={employee.id}>
-                              {employee.full_name} - {employee.position}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        placeholder={employees.length === 0 ? "No employees available" : "Select employee"}
+                        searchPlaceholder="Search employees..."
+                        emptyMessage={employees.length === 0 ? "No employees found. Please check your authentication." : "No employees found."}
+                        disabled={!!editingPayroll || employees.length === 0}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="pay_period_start">Pay Period Start</Label>
@@ -674,19 +740,16 @@ export function FinancialManagement() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="status">Status</Label>
-                      <Select
+                      <SimpleSelect
+                        options={[
+                          { value: "pending", label: "Pending" },
+                          { value: "processing", label: "Processing" },
+                          { value: "paid", label: "Paid" },
+                        ]}
                         value={payrollFormData.status}
                         onValueChange={(value) => setPayrollFormData({ ...payrollFormData, status: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="processing">Processing</SelectItem>
-                          <SelectItem value="paid">Paid</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        placeholder="Select status"
+                      />
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -741,7 +804,20 @@ export function FinancialManagement() {
                   <TableBody>
                     {payrollRecords.map((record) => (
                       <TableRow key={record.id}>
-                        <TableCell className="font-medium">{record.employee?.full_name}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Avatar className="w-8 h-8">
+                              <AvatarImage src={record.employee?.profile_photo || ""} />
+                              <AvatarFallback className="text-xs">
+                                {record.employee?.full_name?.charAt(0) || record.employee?.email?.charAt(0) || "?"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium">{record.employee?.full_name || "Unknown Employee"}</p>
+                              <p className="text-sm text-gray-500">{record.employee?.position}</p>
+                            </div>
+                          </div>
+                        </TableCell>
                         <TableCell>
                           {new Date(record.pay_period_start).toLocaleDateString()} -{" "}
                           {new Date(record.pay_period_end).toLocaleDateString()}

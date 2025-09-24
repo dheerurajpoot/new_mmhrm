@@ -76,6 +76,8 @@ export default function SignupPage() {
 			console.log("Signup result:", {
 				success: result.success,
 				error: result.error,
+				verificationUrl: result.verificationUrl,
+				message: result.message,
 			});
 
 			if (!result.success) {
@@ -87,11 +89,11 @@ export default function SignupPage() {
 			// Show success message
 			if (result.verificationUrl) {
 				// Development mode: show the verification link
-				setSuccessMessage(
-					`Email service not configured. Please click this link to complete your registration: ${result.verificationUrl}`
-				);
+				console.log("Setting verification URL:", result.verificationUrl);
+				setSuccessMessage(result.verificationUrl);
 			} else {
 				// Production mode: email was sent
+				console.log("No verification URL, showing email message");
 				setSuccessMessage("Verification email sent! Please check your inbox and click the link to complete your registration.");
 			}
 			setError(null);
@@ -176,21 +178,38 @@ export default function SignupPage() {
 								)}
 							</div>
 							{successMessage && (
-								<div className='p-3 text-sm text-green-600 bg-green-50 border border-green-200 rounded-md'>
+								<div className='p-4 text-sm bg-blue-50 border border-blue-200 rounded-md'>
 									{successMessage.includes('http') ? (
 										<div>
-											<p className="mb-2">Email service not configured. Please click the link below to complete your registration:</p>
+											<div className="flex items-center mb-3">
+												<div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-2">
+													<span className="text-blue-600 text-xs">ℹ</span>
+												</div>
+												<p className="text-blue-800 font-medium">Email service not configured</p>
+											</div>
+											<p className="text-blue-700 mb-3">Please click the link below to complete your registration:</p>
 											<a 
-												href={successMessage.split(' ').find(word => word.startsWith('http'))} 
+												href={successMessage} 
 												target="_blank" 
 												rel="noopener noreferrer"
-												className="text-blue-600 hover:text-blue-800 underline break-all"
+												className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
 											>
-												{successMessage.split(' ').find(word => word.startsWith('http'))}
+												Complete Registration
 											</a>
+											<p className="text-xs text-blue-600 mt-2 break-all">
+												Or copy this link: {successMessage}
+											</p>
 										</div>
 									) : (
-										successMessage
+										<div className="text-green-600">
+											<div className="flex items-center mb-2">
+												<div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mr-2">
+													<span className="text-green-600 text-xs">✓</span>
+												</div>
+												<p className="font-medium">Success!</p>
+											</div>
+											<p>{successMessage}</p>
+										</div>
 									)}
 								</div>
 							)}

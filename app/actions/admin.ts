@@ -20,6 +20,7 @@ export async function createUser(userData: {
 	position?: string;
 	phone?: string;
 	address?: string;
+	birth_date?: string;
 }) {
 	try {
 		console.log("Creating user with MongoDB:", userData.email);
@@ -34,6 +35,7 @@ export async function createUser(userData: {
 			position: userData.position,
 			phone: userData.phone,
 			address: userData.address,
+			birth_date: userData.birth_date,
 		});
 
 		if (!result.success) {
@@ -157,6 +159,11 @@ export async function updateEmployeeFinances(
 	}
 ) {
 	try {
+		// Validate ObjectId
+		if (!employeeId || !ObjectId.isValid(employeeId)) {
+			throw new Error("Invalid employee ID");
+		}
+
 		const employeeFinancesCollection =
 			await getEmployeeFinancesCollection();
 

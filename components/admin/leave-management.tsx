@@ -11,6 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { SearchableSelect } from "@/components/ui/searchable-select"
+import { SimpleSelect } from "@/components/ui/simple-select"
 import {
   Dialog,
   DialogContent,
@@ -30,6 +33,7 @@ interface Employee {
   email: string
   department: string
   position: string
+  profile_photo?: string
 }
 
 interface LeaveBalance {
@@ -129,12 +133,14 @@ export function LeaveManagement() {
           email: u.email,
           department: u.department || "",
           position: u.position || "",
+          profile_photo: u.profile_photo || "",
         }))
         setEmployees(mappedEmployees)
       }
 
       if (balancesRes.ok) {
         const balancesData = await balancesRes.json()
+        // Data is already populated with employee information from the API
         const mappedBalances: LeaveBalance[] = (balancesData || []).map((b: any) => ({
           id: b._id?.toString?.() || b._id || b.id,
           employee_id: b.employee_id?.toString?.() || b.employee_id,
@@ -143,15 +149,14 @@ export function LeaveManagement() {
           total_days: b.total_days,
           used_days: b.used_days,
           remaining_days: b.remaining_days,
-          employee:
-            employees.find((e) => e.id === (b.employee_id?.toString?.() || b.employee_id)) ||
-            ({ id: b.employee_id, full_name: b.employee_name || "", email: "", department: "", position: "" } as any),
+          employee: b.employee || null,
         }))
         setLeaveBalances(mappedBalances)
       }
 
       if (requestsRes.ok) {
         const requestsData = await requestsRes.json()
+        // Data is already populated with employee information from the API
         const mappedRequests: LeaveRequest[] = (requestsData || []).map((r: any) => ({
           id: r._id?.toString?.() || r._id || r.id,
           employee_id: r.employee_id?.toString?.() || r.employee_id,
@@ -164,9 +169,7 @@ export function LeaveManagement() {
           approved_by: r.approved_by?.toString?.() || r.approved_by,
           approved_at: r.approved_at,
           admin_notes: r.admin_notes,
-          employee:
-            employees.find((e) => e.id === (r.employee_id?.toString?.() || r.employee_id)) ||
-            ({ id: r.employee_id, full_name: r.employee_name || "", email: "", department: "", position: "" } as any),
+          employee: r.employee || null,
         }))
         setLeaveRequests(mappedRequests)
       }
@@ -364,6 +367,68 @@ export function LeaveManagement() {
     }
   }
 
+  const handleDeleteBalance = async (balanceId: string) => {
+    const confirmed = window.confirm("Are you sure you want to delete this leave balance? This action cannot be undone.")
+    if (!confirmed) return
+
+    try {
+      const response = await fetch(`/api/leave-balances/${balanceId}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: "Leave balance deleted successfully",
+        })
+        fetchData()
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to delete leave balance",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete leave balance",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleDeleteRequest = async (requestId: string) => {
+    const confirmed = window.confirm("Are you sure you want to delete this leave request? This action cannot be undone.")
+    if (!confirmed) return
+
+    try {
+      const response = await fetch(`/api/leave-requests/${requestId}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: "Leave request deleted successfully",
+        })
+        fetchData()
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to delete leave request",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete leave request",
+        variant: "destructive",
+      })
+    }
+  }
+
   const openTypeDialog = (type?: LeaveType) => {
     if (type) {
       setEditingType(type)
@@ -520,39 +585,32 @@ export function LeaveManagement() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="request_employee_id">Employee</Label>
-                      <Select
+                      <SearchableSelect
+                        options={employees.map((employee) => ({
+                          value: employee.id,
+                          label: employee.full_name || employee.email,
+                          description: employee.position || employee.department,
+                          profile_photo: employee.profile_photo,
+                          email: employee.email,
+                        }))}
                         value={requestFormData.employee_id}
                         onValueChange={(value) => setRequestFormData({ ...requestFormData, employee_id: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select employee" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {employees.map((employee) => (
-                            <SelectItem key={employee.id} value={employee.id}>
-                              {employee.full_name} - {employee.position}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        placeholder="Select employee"
+                        searchPlaceholder="Search employees..."
+                        emptyMessage="No employees found."
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="request_leave_type">Leave Type</Label>
-                      <Select
+                      <SimpleSelect
+                        options={leaveTypes.map((type) => ({
+                          value: type.name,
+                          label: type.name,
+                        }))}
                         value={requestFormData.leave_type}
                         onValueChange={(value) => setRequestFormData({ ...requestFormData, leave_type: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select leave type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {leaveTypes.map((type) => (
-                            <SelectItem key={type.id} value={type.name}>
-                              {type.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        placeholder="Select leave type"
+                      />
                     </div>
                   </div>
                   <div className="grid grid-cols-3 gap-4">
@@ -637,7 +695,20 @@ export function LeaveManagement() {
                   <TableBody>
                     {leaveRequests.map((request) => (
                       <TableRow key={request.id}>
-                        <TableCell className="font-medium">{request.employee?.full_name}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Avatar className="w-8 h-8">
+                              <AvatarImage src={request.employee?.profile_photo || ""} />
+                              <AvatarFallback className="text-xs">
+                                {request.employee?.full_name?.charAt(0) || request.employee?.email?.charAt(0) || "?"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium">{request.employee?.full_name || "Unknown Employee"}</p>
+                              <p className="text-sm text-gray-500">{request.employee?.position}</p>
+                            </div>
+                          </div>
+                        </TableCell>
                         <TableCell>{request.leave_type}</TableCell>
                         <TableCell>
                           {new Date(request.start_date).toLocaleDateString()} -{" "}
@@ -649,24 +720,33 @@ export function LeaveManagement() {
                         </TableCell>
                         <TableCell className="max-w-xs truncate">{request.reason}</TableCell>
                         <TableCell>
-                          {request.status === "pending" && (
-                            <div className="flex space-x-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleRequestUpdate(request.id, "approved")}
-                              >
-                                <Check className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleRequestUpdate(request.id, "rejected")}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          )}
+                          <div className="flex space-x-2">
+                            {request.status === "pending" && (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleRequestUpdate(request.id, "approved")}
+                                >
+                                  <Check className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleRequestUpdate(request.id, "rejected")}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDeleteRequest(request.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -697,41 +777,34 @@ export function LeaveManagement() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="balance_employee_id">Employee</Label>
-                      <Select
+                      <SearchableSelect
+                        options={employees.map((employee) => ({
+                          value: employee.id,
+                          label: employee.full_name || employee.email,
+                          description: employee.position || employee.department,
+                          profile_photo: employee.profile_photo,
+                          email: employee.email,
+                        }))}
                         value={balanceFormData.employee_id}
                         onValueChange={(value) => setBalanceFormData({ ...balanceFormData, employee_id: value })}
+                        placeholder="Select employee"
+                        searchPlaceholder="Search employees..."
+                        emptyMessage="No employees found."
                         disabled={!!editingBalance}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select employee" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {employees.map((employee) => (
-                            <SelectItem key={employee.id} value={employee.id}>
-                              {employee.full_name} - {employee.position}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="balance_leave_type">Leave Type</Label>
-                      <Select
+                      <SimpleSelect
+                        options={leaveTypes.map((type) => ({
+                          value: type.name,
+                          label: type.name,
+                        }))}
                         value={balanceFormData.leave_type}
                         onValueChange={(value) => setBalanceFormData({ ...balanceFormData, leave_type: value })}
+                        placeholder="Select leave type"
                         disabled={!!editingBalance}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select leave type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {leaveTypes.map((type) => (
-                            <SelectItem key={type.id} value={type.name}>
-                              {type.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      />
                     </div>
                   </div>
                   <div className="grid grid-cols-3 gap-4">
@@ -802,16 +875,34 @@ export function LeaveManagement() {
                   <TableBody>
                     {leaveBalances.map((balance) => (
                       <TableRow key={balance.id}>
-                        <TableCell className="font-medium">{balance.employee?.full_name}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Avatar className="w-8 h-8">
+                              <AvatarImage src={balance.employee?.profile_photo || ""} />
+                              <AvatarFallback className="text-xs">
+                                {balance.employee?.full_name?.charAt(0) || balance.employee?.email?.charAt(0) || "?"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium">{balance.employee?.full_name || "Unknown Employee"}</p>
+                              <p className="text-sm text-gray-500">{balance.employee?.position}</p>
+                            </div>
+                          </div>
+                        </TableCell>
                         <TableCell>{balance.leave_type}</TableCell>
                         <TableCell>{balance.year}</TableCell>
                         <TableCell>{balance.total_days}</TableCell>
                         <TableCell>{balance.used_days}</TableCell>
                         <TableCell className="font-medium">{balance.remaining_days}</TableCell>
                         <TableCell>
-                          <Button variant="outline" size="sm" onClick={() => openBalanceDialog(balance)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
+                          <div className="flex space-x-2">
+                            <Button variant="outline" size="sm" onClick={() => openBalanceDialog(balance)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => handleDeleteBalance(balance.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
