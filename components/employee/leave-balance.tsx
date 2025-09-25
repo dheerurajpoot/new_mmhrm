@@ -19,7 +19,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Calendar, Plus, Clock } from "lucide-react"
+import { Calendar, Plus, Clock, Plane, Heart, Stethoscope, Laptop, HeartHandshake, Timer, Zap, Flower } from "lucide-react"
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts"
 import type { LeaveRequest } from "@/lib/types"
 
 export function EmployeeLeaveBalance() {
@@ -153,7 +154,7 @@ export function EmployeeLeaveBalance() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-responsive">
       {/* Leave Balances */}
       <Card>
         <CardHeader>
@@ -194,7 +195,7 @@ export function EmployeeLeaveBalance() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-responsive">
                     <div className="space-y-2">
                       <Label htmlFor="start_date">Start Date</Label>
                       <Input
@@ -241,29 +242,193 @@ export function EmployeeLeaveBalance() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {leaveBalances.map((balance) => (
-              <div key={balance.id} className="p-4 border rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <Badge className={getLeaveTypeColor(balance.leave_type)}>
-                    {balance.leave_type.charAt(0).toUpperCase() + balance.leave_type.slice(1)}
-                  </Badge>
-                  <Calendar className="w-4 h-4 text-gray-400" />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-2xl font-bold text-gray-900">{balance.remaining_days}</p>
-                  <p className="text-sm text-gray-500">of {balance.total_days} days remaining</p>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-gradient-to-r from-red-600 to-blue-600 h-2 rounded-full"
-                      style={{
-                        width: `${(balance.remaining_days / balance.total_days) * 100}%`,
-                      }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {leaveBalances.map((balance) => {
+              const getLeaveTypeConfig = (leaveType: string) => {
+                const type = leaveType.toLowerCase()
+                if (type.includes('casual') || type.includes('annual')) {
+                  return { 
+                    icon: Plane, 
+                    color: '#3B82F6', 
+                    bgGradient: 'from-blue-50 to-blue-100',
+                    borderColor: 'border-blue-200',
+                    textColor: 'text-blue-800',
+                    iconColor: 'text-blue-600'
+                  }
+                } else if (type.includes('sick')) {
+                  return { 
+                    icon: Heart, 
+                    color: '#EF4444', 
+                    bgGradient: 'from-red-50 to-red-100',
+                    borderColor: 'border-red-200',
+                    textColor: 'text-red-800',
+                    iconColor: 'text-red-600'
+                  }
+                } else if (type.includes('medical')) {
+                  return { 
+                    icon: Stethoscope, 
+                    color: '#10B981', 
+                    bgGradient: 'from-emerald-50 to-emerald-100',
+                    borderColor: 'border-emerald-200',
+                    textColor: 'text-emerald-800',
+                    iconColor: 'text-emerald-600'
+                  }
+                } else if (type.includes('workfrom') || type.includes('wfh')) {
+                  return { 
+                    icon: Laptop, 
+                    color: '#6366F1', 
+                    bgGradient: 'from-indigo-50 to-indigo-100',
+                    borderColor: 'border-indigo-200',
+                    textColor: 'text-indigo-800',
+                    iconColor: 'text-indigo-600'
+                  }
+                } else if (type.includes('marriage')) {
+                  return { 
+                    icon: HeartHandshake, 
+                    color: '#F59E0B', 
+                    bgGradient: 'from-amber-50 to-amber-100',
+                    borderColor: 'border-amber-200',
+                    textColor: 'text-amber-800',
+                    iconColor: 'text-amber-600'
+                  }
+                } else if (type.includes('halfday')) {
+                  return { 
+                    icon: Timer, 
+                    color: '#8B5CF6', 
+                    bgGradient: 'from-purple-50 to-purple-100',
+                    borderColor: 'border-purple-200',
+                    textColor: 'text-purple-800',
+                    iconColor: 'text-purple-600'
+                  }
+                } else if (type.includes('shortday')) {
+                  return { 
+                    icon: Zap, 
+                    color: '#06B6D4', 
+                    bgGradient: 'from-cyan-50 to-cyan-100',
+                    borderColor: 'border-cyan-200',
+                    textColor: 'text-cyan-800',
+                    iconColor: 'text-cyan-600'
+                  }
+                } else if (type.includes('mensuration') || type.includes('menstrual')) {
+                  return { 
+                    icon: Flower, 
+                    color: '#EC4899', 
+                    bgGradient: 'from-pink-50 to-pink-100',
+                    borderColor: 'border-pink-200',
+                    textColor: 'text-pink-800',
+                    iconColor: 'text-pink-600'
+                  }
+                } else {
+                  return { 
+                    icon: Calendar, 
+                    color: '#6B7280', 
+                    bgGradient: 'from-gray-50 to-gray-100',
+                    borderColor: 'border-gray-200',
+                    textColor: 'text-gray-800',
+                    iconColor: 'text-gray-600'
+                  }
+                }
+              }
+
+              const config = getLeaveTypeConfig(balance.leave_type)
+              const usagePercentage = (balance.used_days / balance.total_days) * 100
+              
+              // Pie chart data
+              const pieData = [
+                { name: 'Used', value: balance.used_days, color: config.color },
+                { name: 'Remaining', value: balance.remaining_days, color: `${config.color}20` }
+              ]
+
+              return (
+                <Card key={balance.id} className={`relative overflow-hidden border-2 ${config.borderColor} hover:shadow-xl transition-all duration-300 hover:scale-105`}>
+                  <div className={`absolute inset-0 bg-gradient-to-br ${config.bgGradient} opacity-50`}></div>
+                  <CardContent className="relative p-6">
+                    {/* Header */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className={`p-3 rounded-xl bg-white/80 shadow-sm`}>
+                        <config.icon className={`w-6 h-6 ${config.iconColor}`} />
+                      </div>
+                      <div className="text-right">
+                        <div className={`text-2xl font-bold ${config.textColor}`}>
+                          {balance.remaining_days}
+                        </div>
+                        <div className="text-xs text-gray-500">days left</div>
+                      </div>
+                    </div>
+
+                    {/* Leave Type Name */}
+                    <h3 className={`text-lg font-semibold ${config.textColor} mb-3 capitalize`}>
+                      {balance.leave_type}
+                    </h3>
+
+                    {/* Pie Chart */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-20 h-20">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={pieData}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={20}
+                              outerRadius={35}
+                              paddingAngle={2}
+                              dataKey="value"
+                            >
+                              {pieData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <div className="flex-1 ml-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600">Used</span>
+                            <span className={`font-semibold ${config.textColor}`}>
+                              {balance.used_days}/{balance.total_days}
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div 
+                              className={`h-2 rounded-full transition-all duration-500`}
+                              style={{ 
+                                width: `${usagePercentage}%`,
+                                backgroundColor: config.color
+                              }}
+                            ></div>
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {usagePercentage.toFixed(0)}% used
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Status Badge */}
+                    <div className="flex items-center justify-between">
+                      <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        balance.remaining_days > balance.total_days * 0.5 
+                          ? 'bg-green-100 text-green-800' 
+                          : balance.remaining_days > balance.total_days * 0.2 
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {balance.remaining_days > balance.total_days * 0.5 
+                          ? 'Good Balance' 
+                          : balance.remaining_days > balance.total_days * 0.2 
+                          ? 'Low Balance'
+                          : 'Critical'}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {balance.total_days} total
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
         </CardContent>
       </Card>

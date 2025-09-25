@@ -11,6 +11,7 @@ import { TimeTracking } from "./time-tracking"
 import { EmployeeFinances } from "./employee-finances"
 import { EmployeeStats } from "./employee-stats"
 import { TeamMembers } from "./team-members"
+import { UpcomingBirthdays } from "./upcoming-birthdays"
 import type { Profile } from "@/lib/types"
 
 export function EmployeeDashboard() {
@@ -21,7 +22,7 @@ export function EmployeeDashboard() {
     const fetchCurrentUser = async () => {
       try {
         const user = await getCurrentUser()
-        setCurrentUser(user)
+        setCurrentUser(user as Profile)
       } catch (error) {
         console.log(" Auth error:", error)
       }
@@ -44,7 +45,10 @@ export function EmployeeDashboard() {
         return (
           <div className="space-y-6">
             <EmployeeStats />
-            <TeamMembers />
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
+              <TeamMembers />
+              <UpcomingBirthdays />
+            </div>
           </div>
         )
       case "profile":
@@ -59,7 +63,10 @@ export function EmployeeDashboard() {
         return (
           <div className="space-y-6">
             <EmployeeStats />
-            <TeamMembers />
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
+              <TeamMembers />
+              <UpcomingBirthdays />
+            </div>
           </div>
         )
     }
@@ -89,14 +96,18 @@ export function EmployeeDashboard() {
     <SidebarProvider>
       <AppSidebar role="employee" />
       <SidebarInset>
-        <div className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+        <div className="flex h-14 md:h-16 shrink-0 items-center gap-2 border-b px-3 md:px-4 bg-white/80 backdrop-blur-sm">
           <SidebarTrigger className="-ml-1" />
-          <div className="flex flex-col">
-            <h1 className="text-lg font-semibold">{title}</h1>
-            <p className="text-sm text-muted-foreground hidden sm:block">{description}</p>
+          <div className="flex flex-col min-w-0 flex-1">
+            <h1 className="text-base md:text-lg font-semibold truncate">{title}</h1>
+            <p className="text-xs md:text-sm text-muted-foreground hidden sm:block truncate">{description}</p>
           </div>
         </div>
-        <div className="flex-1 p-4 pb-20 md:pb-4">{renderContent()}</div>
+        <div className="flex-1 p-3 md:p-4 pb-20 md:pb-4 bg-gray-50/50 min-h-screen">
+          <div className="max-w-7xl mx-auto">
+            {renderContent()}
+          </div>
+        </div>
       </SidebarInset>
       <MobileBottomNav role="employee" activeSection={activeSection} onNavigate={setActiveSection} />
     </SidebarProvider>

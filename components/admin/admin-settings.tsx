@@ -141,12 +141,12 @@ export function AdminSettings() {
 
     setUploadingLogo(true)
     try {
-      const formData = new FormData()
-      formData.append("logo", file)
+      const uploadFormData = new FormData()
+      uploadFormData.append("logo", file)
 
       const response = await fetch("/api/admin/settings/logo", {
         method: "POST",
-        body: formData,
+        body: uploadFormData,
       })
 
       if (response.ok) {
@@ -206,7 +206,7 @@ export function AdminSettings() {
       primary_color: "#dc2626",
       secondary_color: "#2563eb",
       theme: "light",
-      footer_text: "© 2024 MMHRM. All rights reserved.",
+      footer_text: "Made with ❤️ by Chandu © 2025 HRMS. All rights reserved.",
       contact_email: "admin@mmhrm.com",
       contact_phone: "+1 (555) 123-4567",
     })

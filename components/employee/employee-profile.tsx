@@ -24,6 +24,7 @@ export function EmployeeProfile() {
     full_name: "",
     phone: "",
     address: "",
+    birth_date: "",
   })
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
 
@@ -44,6 +45,7 @@ export function EmployeeProfile() {
         full_name: data.full_name || "",
         phone: data.phone || "",
         address: data.address || "",
+        birth_date: data.birth_date || "",
       })
     } catch (error) {
       console.error("Error fetching profile:", error)
@@ -66,6 +68,7 @@ export function EmployeeProfile() {
           full_name: editForm.full_name,
           phone: editForm.phone,
           address: editForm.address,
+          birth_date: editForm.birth_date,
         }),
       })
 
@@ -204,7 +207,7 @@ export function EmployeeProfile() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-responsive">
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -223,7 +226,7 @@ export function EmployeeProfile() {
         <CardContent>
           {isEditing ? (
             <form onSubmit={handleSave} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid-responsive-2 gap-responsive">
                 <div className="space-y-2">
                   <Label htmlFor="full_name">Full Name</Label>
                   <Input
@@ -239,7 +242,7 @@ export function EmployeeProfile() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid-responsive-2 gap-responsive">
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone Number</Label>
                   <Input
@@ -260,13 +263,24 @@ export function EmployeeProfile() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
-                <Input
-                  id="address"
-                  value={editForm.address}
-                  onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                />
+              <div className="grid-responsive-2 gap-responsive">
+                <div className="space-y-2">
+                  <Label htmlFor="address">Address</Label>
+                  <Input
+                    id="address"
+                    value={editForm.address}
+                    onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="birth_date">Date of Birth</Label>
+                  <Input
+                    id="birth_date"
+                    type="date"
+                    value={editForm.birth_date}
+                    onChange={(e) => setEditForm({ ...editForm, birth_date: e.target.value })}
+                  />
+                </div>
               </div>
 
               <div className="flex space-x-3">
@@ -318,7 +332,7 @@ export function EmployeeProfile() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid-responsive-2 gap-responsive">
                 <div className="space-y-4">
                   <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
                     <Mail className="w-5 h-5 text-gray-400" />
@@ -360,6 +374,16 @@ export function EmployeeProfile() {
                       <p className="text-sm font-medium text-gray-500">Hire Date</p>
                       <p className="text-gray-900">
                         {profile?.hire_date ? new Date(profile.hire_date).toLocaleDateString() : "Not provided"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <Calendar className="w-5 h-5 text-gray-400" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Date of Birth</p>
+                      <p className="text-gray-900">
+                        {profile?.birth_date ? new Date(profile.birth_date).toLocaleDateString() : "Not provided"}
                       </p>
                     </div>
                   </div>

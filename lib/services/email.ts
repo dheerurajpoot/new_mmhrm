@@ -1,17 +1,17 @@
 import nodemailer from 'nodemailer'
 import crypto from 'crypto'
 
-// Email configuration - only create transporter if credentials are available
-let transporter: nodemailer.Transporter | null = null;
+// Email configuration - only create transport if credentials are available
+let transport: nodemailer.Transporter | null = null;
 
 try {
   if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-    console.log('[Email Service] Creating SMTP transporter...');
+    console.log('[Email Service] Creating SMTP transport...');
     console.log('[Email Service] Host:', process.env.SMTP_HOST);
     console.log('[Email Service] Port:', process.env.SMTP_PORT);
     console.log('[Email Service] User:', process.env.SMTP_USER);
-    
-    transporter = nodemailer.createTransporter({
+
+    transport = nodemailer.createTransport({
       host: process.env.SMTP_HOST || 'smtp.gmail.com',
       port: parseInt(process.env.SMTP_PORT || '587'),
       secure: false, // true for 465, false for other ports
@@ -23,12 +23,12 @@ try {
         rejectUnauthorized: false // Allow self-signed certificates
       }
     });
-    console.log('[Email Service] SMTP transporter created successfully');
+    console.log('[Email Service] SMTP transport created successfully');
   } else {
     console.log('[Email Service] SMTP credentials not configured, email sending will be disabled');
   }
 } catch (error) {
-  console.error('[Email Service] Failed to create transporter:', error);
+  console.error('[Email Service] Failed to create transport:', error);
 }
 
 export async function sendVerificationEmail(
@@ -37,21 +37,21 @@ export async function sendVerificationEmail(
   verificationToken: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    // Check if transporter is configured
-    if (!transporter) {
+    // Check if transport is configured
+    if (!transport) {
       console.log('[Email Service] SMTP not configured, skipping email send');
       return { success: false, error: 'Email service not configured' };
     }
 
     console.log('[Email Service] Attempting to send verification email to:', email);
-    
+
     // Test connection first
     console.log('[Email Service] Testing SMTP connection...');
-    await transporter.verify();
+    await transport!.verify();
     console.log('[Email Service] SMTP connection verified successfully');
 
     const verificationUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/auth/verify-email?token=${verificationToken}`
-    
+
     const mailOptions = {
       from: process.env.FROM_EMAIL || process.env.SMTP_USER || 'noreply@yourcompany.com',
       to: email,
@@ -64,28 +64,28 @@ export async function sendVerificationEmail(
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>Email Verification</title>
           <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            body { font-family: Trebuchet MS, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 5px; }
             .header { background: linear-gradient(135deg, #dc2626, #2563eb); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
             .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-            .button { display: inline-block; background: linear-gradient(135deg, #dc2626, #2563eb); color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+            .button { display: inline-block; background: linear-gradient(135deg, #dc2626, #2563eb); color: #fff !important; padding: 15px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
             .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
           </style>
         </head>
         <body>
           <div class="container">
             <div class="header">
-              <h1>Welcome to HRMS!</h1>
+              <img src="https://image.s7.sfmc-content.com/lib/fe2a11717d640474741277/m/1/572f415e-e0b4-45ef-8bfc-7ed983975410.png" width="60px">
             </div>
             <div class="content">
-              <h2>Hello ${fullName}!</h2>
-              <p>Thank you for registering with our HR Management System. To complete your registration and set up your account, please verify your email address by clicking the button below:</p>
+              <h2>Hi ${fullName}, welcome to the MM Team!</h2>
+              <p>Thank you for registering with MM HR Management System. To complete your registration and set up your account, please verify your email address by clicking the button below:</p>
               
               <div style="text-align: center;">
                 <a href="${verificationUrl}" class="button">Verify Email & Set Password</a>
               </div>
               
-              <p>This link will expire in 24 hours for security reasons.</p>
+              <p>This link will expire in 10 minutes for security reasons.</p>
               
               <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
               <p style="word-break: break-all; background: #eee; padding: 10px; border-radius: 5px;">${verificationUrl}</p>
@@ -102,7 +102,7 @@ export async function sendVerificationEmail(
     }
 
     console.log('[Email Service] Sending email...');
-    const result = await transporter.sendMail(mailOptions);
+    const result = await transport.sendMail(mailOptions);
     console.log('[Email Service] Email sent successfully:', result.messageId);
     return { success: true }
   } catch (error) {
@@ -115,9 +115,9 @@ export async function sendVerificationEmail(
         response: (error as any).response
       });
     }
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Failed to send email' 
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to send email'
     }
   }
 }
@@ -128,12 +128,12 @@ export function generateVerificationToken(): string {
 
 export async function testEmailConnection(): Promise<boolean> {
   try {
-    if (!transporter) {
-      console.log('[Email Service] No transporter available for testing')
+    if (!transport) {
+      console.log('[Email Service] No transport available for testing')
       return false
     }
     console.log('[Email Service] Testing SMTP connection...')
-    await transporter.verify()
+    await transport.verify()
     console.log('[Email Service] SMTP connection successful!')
     return true
   } catch (error) {

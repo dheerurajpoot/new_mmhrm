@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
       department: profile.department,
       position: profile.position,
       hire_date: profile.hire_date,
+      birth_date: profile.birth_date,
       phone: profile.phone,
       address: profile.address,
       profile_photo: profile.profile_photo,
@@ -42,7 +43,7 @@ export async function PATCH(request: NextRequest) {
     const user = await getServerUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { full_name, phone, address } = await request.json();
+    const { full_name, phone, address, birth_date } = await request.json();
 
     const collection = await getUsersCollection();
     const result = await collection.updateOne(
@@ -52,6 +53,7 @@ export async function PATCH(request: NextRequest) {
           full_name: full_name || "",
           phone: phone || "",
           address: address || "",
+          birth_date: birth_date || null,
           updated_at: new Date(),
         },
       }

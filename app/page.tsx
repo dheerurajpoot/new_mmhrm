@@ -498,7 +498,7 @@ export default function HomePage() {
           </div>
           
           <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 {settings?.site_name || "MM HRM"}. All rights reserved.</p>
+            <p>Made with ❤️ by Chandu © 2025 {settings?.site_name || "MM HRM"}. All rights reserved.</p>
           </div>
         </div>
       </footer>

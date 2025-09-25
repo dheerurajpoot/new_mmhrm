@@ -178,7 +178,7 @@ export default function SignupPage() {
 								)}
 							</div>
 							{successMessage && (
-								<div className='p-4 text-sm bg-blue-50 border border-blue-200 rounded-md'>
+								<div className='p-2 text-sm bg-green-100 rounded-md'>
 									{successMessage.includes('http') ? (
 										<div>
 											<div className="flex items-center mb-3">
@@ -202,13 +202,7 @@ export default function SignupPage() {
 										</div>
 									) : (
 										<div className="text-green-600">
-											<div className="flex items-center mb-2">
-												<div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mr-2">
-													<span className="text-green-600 text-xs">✓</span>
-												</div>
-												<p className="font-medium">Success!</p>
-											</div>
-											<p>{successMessage}</p>
+											<p className="text-[12px]">✓ {successMessage}</p>
 										</div>
 									)}
 								</div>

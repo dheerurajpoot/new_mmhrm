@@ -8,6 +8,7 @@ export type Profile = {
   department: string | null
   position: string | null
   hire_date: string | null
+  birth_date: string | null
   phone: string | null
   address: string | null
   profile_photo: string | null
