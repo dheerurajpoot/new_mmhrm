@@ -67,6 +67,7 @@ export function EmployeeStats() {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [showSearchResults, setShowSearchResults] = useState(false)
+  const [selectedIndex, setSelectedIndex] = useState(-1)
   const [leaveBalances, setLeaveBalances] = useState<any[]>([])
   const [leaveTypes, setLeaveTypes] = useState<any[]>([])
   const [isLeaveDataLoading, setIsLeaveDataLoading] = useState(true)
@@ -324,7 +325,12 @@ export function EmployeeStats() {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement
-      if (!target.closest('.search-container')) {
+      const searchContainer = target.closest('.search-container')
+      const searchInput = target.closest('input[type="text"]')
+      const searchResults = target.closest('.search-results')
+      
+      // Only close if clicking outside the search container and not on search results
+      if (!searchContainer && !searchInput && !searchResults) {
         setShowSearchResults(false)
       }
     }
@@ -336,18 +342,23 @@ export function EmployeeStats() {
   }, [])
 
   useEffect(() => {
+    setSelectedIndex(-1) // Reset selected index when search term changes
+    
     if (searchTerm.trim() === "") {
-      setFilteredEmployees(employees)
+      setFilteredEmployees([])
       setShowSearchResults(false)
     } else {
-      const filtered = employees.filter(employee =>
-        employee.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        employee.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        employee.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        employee.position?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+      const filtered = employees.filter(employee => {
+        const searchLower = searchTerm.toLowerCase()
+        return (
+          employee.full_name?.toLowerCase().includes(searchLower) ||
+          employee.email?.toLowerCase().includes(searchLower) ||
+          employee.department?.toLowerCase().includes(searchLower) ||
+          employee.position?.toLowerCase().includes(searchLower)
+        )
+      })
       setFilteredEmployees(filtered)
-      setShowSearchResults(true)
+      setShowSearchResults(filtered.length > 0)
     }
   }, [searchTerm, employees])
 
@@ -385,6 +396,7 @@ export function EmployeeStats() {
       console.error("Error fetching employees:", error)
     }
   }
+
 
   const handleEmployeeClick = (employee: Employee) => {
     setSelectedEmployee(employee)
@@ -491,7 +503,7 @@ export function EmployeeStats() {
     },
     {
       title: "Monthly Salary",
-      value: stats.currentSalary ? `$${stats.currentSalary.toLocaleString()}` : "N/A",
+      value: stats.currentSalary ? `₹${stats.currentSalary.toLocaleString()}` : "N/A",
       description: "Current rate",
       icon: DollarSign,
       growth: stats.salaryGrowth,
@@ -504,77 +516,134 @@ export function EmployeeStats() {
   return (
     <div className="space-responsive">
       {/* Employee Search Box */}
-      <div className="relative search-container">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 md:w-5 md:h-5" />
-          <Input
-            type="text"
-            placeholder="Search employees..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 md:pl-10 pr-4 py-2 md:py-3 w-full border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm md:text-base"
-          />
-        </div>
-
-        {/* Search Results Dropdown */}
-        {showSearchResults && searchTerm.trim() !== "" && (
-          <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-80 md:max-h-96 overflow-y-auto">
-            {filteredEmployees.length > 0 ? (
-              <div className="py-1 md:py-2">
-                {filteredEmployees.map((employee) => (
-                  <div
-                    key={employee.id}
-                    className="flex items-center space-x-3 md:space-x-4 p-3 md:p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                    onClick={() => {
+      <div className="relative search-container mb-6">
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 md:w-5 md:h-5" />
+            <Input
+              type="text"
+              placeholder="Search employees by name, email, department, or position..."
+              value={searchTerm}
+              onChange={(e) => {
+                const value = e.target.value
+                setSearchTerm(value)
+              }}
+              onFocus={() => {
+                if (searchTerm.trim() !== "" && filteredEmployees.length > 0) {
+                  setShowSearchResults(true)
+                }
+              }}
+              onKeyDown={(e) => {
+                if (!showSearchResults || filteredEmployees.length === 0) return
+                
+                switch (e.key) {
+                  case 'ArrowDown':
+                    e.preventDefault()
+                    setSelectedIndex(prev => 
+                      prev < filteredEmployees.length - 1 ? prev + 1 : 0
+                    )
+                    break
+                  case 'ArrowUp':
+                    e.preventDefault()
+                    setSelectedIndex(prev => 
+                      prev > 0 ? prev - 1 : filteredEmployees.length - 1
+                    )
+                    break
+                  case 'Enter':
+                    e.preventDefault()
+                    if (selectedIndex >= 0 && selectedIndex < filteredEmployees.length) {
+                      const employee = filteredEmployees[selectedIndex]
                       handleEmployeeClick(employee)
                       setShowSearchResults(false)
                       setSearchTerm("")
-                    }}
-                  >
-                    <Avatar className="w-8 h-8 md:w-10 md:h-10">
-                      <AvatarImage src={employee.profile_photo} alt={employee.full_name} />
-                      <AvatarFallback className="bg-gradient-to-br from-blue-400 to-purple-400 text-white font-semibold text-xs md:text-sm">
-                        {employee.full_name?.charAt(0) || 'E'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2 mb-1">
-                        <h4 className="text-xs md:text-sm font-semibold text-gray-900 truncate">{employee.full_name}</h4>
-                        <Badge variant={employee.role === 'admin' ? 'default' : employee.role === 'hr' ? 'secondary' : 'outline'} className="text-xs w-fit">
-                          {employee.role}
-                        </Badge>
-                      </div>
-                      <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-3 text-xs text-gray-600">
-                        <div className="flex items-center space-x-1">
-                          <Mail className="w-3 h-3" />
-                          <span className="truncate">{employee.email}</span>
+                      setSelectedIndex(-1)
+                    }
+                    break
+                  case 'Escape':
+                    setShowSearchResults(false)
+                    setSelectedIndex(-1)
+                    break
+                }
+              }}
+              className="pl-9 md:pl-10 pr-4 py-2 md:py-3 w-full border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm md:text-base"
+            />
+            
+            {/* Search Results Dropdown */}
+            {showSearchResults && searchTerm.trim() !== "" && (
+              <div className="search-results absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-80 md:max-h-96 overflow-y-auto">
+                {filteredEmployees.length > 0 ? (
+                  <div className="py-1">
+                    {filteredEmployees.slice(0, 10).map((employee, index) => (
+                      <div
+                        key={employee.id}
+                        className={`flex items-center space-x-3 p-3 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors ${
+                          index === selectedIndex 
+                            ? 'bg-blue-50 border-blue-200' 
+                            : 'hover:bg-gray-50'
+                        }`}
+               onClick={() => {
+                 handleEmployeeClick(employee)
+                 setShowSearchResults(false)
+                 setSearchTerm("")
+                 setSelectedIndex(-1)
+               }}
+                        onMouseEnter={() => setSelectedIndex(index)}
+                      >
+                        <Avatar className="w-10 h-10">
+                          <AvatarImage src={employee.profile_photo} alt={employee.full_name} />
+                          <AvatarFallback className="bg-gradient-to-br from-blue-400 to-purple-400 text-white font-semibold text-sm">
+                            {employee.full_name?.charAt(0) || employee.email?.charAt(0) || 'E'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <h4 className="text-sm font-semibold text-gray-900 truncate">{employee.full_name}</h4>
+                            <Badge 
+                              variant={employee.role === 'admin' ? 'default' : employee.role === 'hr' ? 'secondary' : 'outline'} 
+                              className="text-xs"
+                            >
+                              {employee.role}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center space-x-3 text-xs text-gray-600">
+                            <div className="flex items-center space-x-1">
+                              <Mail className="w-3 h-3" />
+                              <span className="truncate">{employee.email}</span>
+                            </div>
+                            {employee.department && (
+                              <div className="flex items-center space-x-1">
+                                <User className="w-3 h-3" />
+                                <span className="truncate">{employee.department}</span>
+                              </div>
+                            )}
+                            {employee.position && (
+                              <div className="flex items-center space-x-1">
+                                <MapPin className="w-3 h-3" />
+                                <span className="truncate">{employee.position}</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        {employee.department && (
-                          <div className="flex items-center space-x-1">
-                            <User className="w-3 h-3" />
-                            <span className="truncate">{employee.department}</span>
-                          </div>
-                        )}
-                        {employee.position && (
-                          <div className="flex items-center space-x-1">
-                            <MapPin className="w-3 h-3" />
-                            <span className="truncate">{employee.position}</span>
-                          </div>
-                        )}
                       </div>
-                    </div>
+                    ))}
+                    {filteredEmployees.length > 10 && (
+                      <div className="px-3 py-2 text-xs text-gray-500 text-center border-t border-gray-100">
+                        Showing 10 of {filteredEmployees.length} results
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-6 md:py-8 text-gray-500">
-                <Users className="w-10 h-10 md:w-12 md:h-12 mx-auto mb-2 opacity-50" />
-                <p className="text-sm font-medium">No employees found</p>
-                <p className="text-xs">Try adjusting your search terms</p>
+                ) : (
+                  <div className="text-center py-6 text-gray-500">
+                    <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm font-medium">No employees found</p>
+                    <p className="text-xs">Try different search terms</p>
+                  </div>
+                )}
               </div>
             )}
           </div>
-        )}
+        </div>
+        
       </div>
 
       {/* Time Tracking Card */}

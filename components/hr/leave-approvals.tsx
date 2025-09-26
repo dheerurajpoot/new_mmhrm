@@ -53,14 +53,27 @@ export function LeaveApprovals() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ 
+          status,
+          approved_by: "admin" // You might want to get this from user context
+        }),
       })
 
       if (!response.ok) throw new Error("Failed to update leave request")
 
+      toast({
+        title: "Success",
+        description: `Leave request ${status} successfully`,
+      })
+
       fetchLeaveRequests()
     } catch (error) {
       console.error("Error updating leave request:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update leave request",
+        variant: "destructive",
+      })
     }
   }
 

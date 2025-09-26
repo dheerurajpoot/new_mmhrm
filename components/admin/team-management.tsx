@@ -20,7 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { SearchableSelect } from "@/components/ui/searchable-select"
 import { Users, Plus, Edit, Trash2, UserCheck } from "lucide-react"
-import { toast } from "@/hooks/use-toast"
+import { toast } from "sonner"
 import type { Profile } from "@/lib/types"
 
 interface Team {
@@ -96,7 +96,7 @@ export function TeamManagement() {
   const handleCreateTeam = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newTeam.name || !newTeam.leaderId) {
-      toast({ title: "Error", description: "Please fill in all required fields", variant: "destructive" })
+      toast.error("Please fill in all required fields")
       return
     }
 
@@ -110,14 +110,14 @@ export function TeamManagement() {
 
       if (!response.ok) throw new Error("Failed to create team")
       
-      toast({ title: "Team created", description: "Team has been created successfully." })
+      toast.success("Team has been created successfully.")
       
       setNewTeam({ name: "", leaderId: "", memberIds: [] })
       setIsCreateTeamOpen(false)
       fetchTeams()
     } catch (error) {
       console.error("Error creating team:", error)
-      toast({ title: "Error", description: "Failed to create team", variant: "destructive" })
+      toast.error("Failed to create team")
     } finally {
       setIsCreatingTeam(false)
     }
@@ -130,11 +130,11 @@ export function TeamManagement() {
     try {
       const response = await fetch(`/api/teams/${teamId}`, { method: "DELETE" })
       if (!response.ok) throw new Error("Failed to delete team")
-      toast({ title: "Team deleted", description: "The team has been removed." })
+      toast.success("The team has been removed.")
       fetchTeams()
     } catch (error) {
       console.error("Error deleting team:", error)
-      toast({ title: "Error", description: "Failed to delete team", variant: "destructive" })
+      toast.error("Failed to delete team")
     }
   }
 
@@ -157,13 +157,13 @@ export function TeamManagement() {
         }),
       })
       if (!response.ok) throw new Error("Failed to save team changes")
-      toast({ title: "Team updated", description: "Team details saved successfully." })
+      toast.success("Team details saved successfully.")
       setIsEditOpen(false)
       setEditingTeam(null)
       fetchTeams()
     } catch (error) {
       console.error("Error saving team:", error)
-      toast({ title: "Error", description: "Failed to save team changes", variant: "destructive" })
+      toast.error("Failed to save team changes")
     } finally {
       setIsSavingEdit(false)
     }

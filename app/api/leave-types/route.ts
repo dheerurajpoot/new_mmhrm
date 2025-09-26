@@ -15,11 +15,11 @@ export async function GET(request: NextRequest) {
     try {
       const collection = await getLeaveTypesCollection()
       const defaults = [
-        { name: "Annual Leave", description: "General purpose leave", days_per_year: 25, carry_forward: false },
-        { name: "Sick Leave", description: "Illness or recovery", days_per_year: 12, carry_forward: true },
-        { name: "Personal Leave", description: "Personal matters", days_per_year: 5, carry_forward: false },
-        { name: "Maternity Leave", description: "Maternity and childcare", days_per_year: 90, carry_forward: false },
-        { name: "Emergency Leave", description: "Emergency situations", days_per_year: 3, carry_forward: false },
+        { name: "Annual Leave", description: "General purpose leave", max_days_per_year: 25, carry_forward: false },
+        { name: "Sick Leave", description: "Illness or recovery", max_days_per_year: 12, carry_forward: true },
+        { name: "Personal Leave", description: "Personal matters", max_days_per_year: 5, carry_forward: false },
+        { name: "Maternity Leave", description: "Maternity and childcare", max_days_per_year: 90, carry_forward: false },
+        { name: "Emergency Leave", description: "Emergency situations", max_days_per_year: 3, carry_forward: false },
       ]
 
       // Seed defaults if empty
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
         id: (d as any)._id?.toString?.() || (d as any)._id,
         name: d.name,
         description: d.description,
-        days_per_year: d.days_per_year || d.max_days_per_year,
+        days_per_year: d.max_days_per_year,
         carry_forward: d.carry_forward,
       }))
       

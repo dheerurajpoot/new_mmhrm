@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import { toast } from "sonner"
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -24,7 +25,6 @@ import {
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, Check, X, Edit, Plus, Trash2 } from "lucide-react"
-import { toast } from "@/hooks/use-toast"
 import { updateLeaveBalance, updateLeaveRequest, createLeaveRequest, createLeaveType } from "@/app/actions/admin"
 
 interface Employee {
@@ -180,11 +180,7 @@ export function LeaveManagement() {
       }
     } catch (error) {
       console.error("Error fetching data:", error)
-      toast({
-        title: "Error",
-        description: "Failed to fetch leave data",
-        variant: "destructive",
-      })
+      toast.error("Failed to fetch leave data")
     } finally {
       setLoading(false)
     }
@@ -195,33 +191,22 @@ export function LeaveManagement() {
     setLoading(true)
 
     try {
-      const result = await updateLeaveBalance(balanceFormData.employee_id, balanceFormData.leave_type, {
+      const result = await updateLeaveBalance(balanceFormData.employee_id, balanceFormData.leave_type as any, {
         total_days: Number.parseInt(balanceFormData.total_days),
         used_days: Number.parseInt(balanceFormData.used_days) || 0,
         year: balanceFormData.year,
       })
 
       if (result.success) {
-        toast({
-          title: "Success",
-          description: "Leave balance updated successfully",
-        })
+        toast.success("Leave balance updated successfully")
         setIsBalanceDialogOpen(false)
         resetBalanceForm()
         fetchData()
       } else {
-        toast({
-          title: "Error",
-          description: result.error || "Failed to update leave balance",
-          variant: "destructive",
-        })
+        toast.error(result.error || "Failed to update leave balance")
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update leave balance",
-        variant: "destructive",
-      })
+      toast.error("Failed to update leave balance")
     } finally {
       setLoading(false)
     }
@@ -242,26 +227,15 @@ export function LeaveManagement() {
       })
 
       if (result.success) {
-        toast({
-          title: "Success",
-          description: "Leave request created successfully",
-        })
+        toast.success("Leave request created successfully")
         setIsRequestDialogOpen(false)
         resetRequestForm()
         fetchData()
       } else {
-        toast({
-          title: "Error",
-          description: result.error || "Failed to create leave request",
-          variant: "destructive",
-        })
+        toast.error(result.error || "Failed to create leave request")
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create leave request",
-        variant: "destructive",
-      })
+      toast.error("Failed to create leave request")
     } finally {
       setLoading(false)
     }
@@ -286,19 +260,12 @@ export function LeaveManagement() {
         })
 
         if (response.ok) {
-          toast({
-            title: "Success",
-            description: "Leave type updated successfully",
-          })
+          toast.success("Leave type updated successfully")
           setIsTypeDialogOpen(false)
           resetTypeForm()
           fetchData()
         } else {
-          toast({
-            title: "Error",
-            description: "Failed to update leave type",
-            variant: "destructive",
-          })
+          toast.error("Failed to update leave type")
         }
       } else {
         // Create new type
@@ -310,27 +277,16 @@ export function LeaveManagement() {
         })
 
         if (result.success) {
-          toast({
-            title: "Success",
-            description: "Leave type created successfully",
-          })
+          toast.success("Leave type created successfully")
           setIsTypeDialogOpen(false)
           resetTypeForm()
           fetchData()
         } else {
-          toast({
-            title: "Error",
-            description: result.error || "Failed to create leave type",
-            variant: "destructive",
-          })
+          toast.error(result.error || "Failed to create leave type")
         }
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to save leave type",
-        variant: "destructive",
-      })
+      toast.error("Failed to save leave type")
     } finally {
       setLoading(false)
     }
@@ -346,24 +302,13 @@ export function LeaveManagement() {
       })
 
       if (response.ok) {
-        toast({
-          title: "Success",
-          description: "Leave type deleted successfully",
-        })
+        toast.success("Leave type deleted successfully")
         fetchData()
       } else {
-        toast({
-          title: "Error",
-          description: "Failed to delete leave type",
-          variant: "destructive",
-        })
+        toast.error("Failed to delete leave type")
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete leave type",
-        variant: "destructive",
-      })
+      toast.error("Failed to delete leave type")
     }
   }
 
@@ -377,24 +322,13 @@ export function LeaveManagement() {
       })
 
       if (response.ok) {
-        toast({
-          title: "Success",
-          description: "Leave balance deleted successfully",
-        })
+        toast.success("Leave balance deleted successfully")
         fetchData()
       } else {
-        toast({
-          title: "Error",
-          description: "Failed to delete leave balance",
-          variant: "destructive",
-        })
+        toast.error("Failed to delete leave balance")
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete leave balance",
-        variant: "destructive",
-      })
+      toast.error("Failed to delete leave balance")
     }
   }
 
@@ -408,24 +342,13 @@ export function LeaveManagement() {
       })
 
       if (response.ok) {
-        toast({
-          title: "Success",
-          description: "Leave request deleted successfully",
-        })
+        toast.success("Leave request deleted successfully")
         fetchData()
       } else {
-        toast({
-          title: "Error",
-          description: "Failed to delete leave request",
-          variant: "destructive",
-        })
+        toast.error("Failed to delete leave request")
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete leave request",
-        variant: "destructive",
-      })
+      toast.error("Failed to delete leave request")
     }
   }
 
@@ -454,24 +377,13 @@ export function LeaveManagement() {
       })
 
       if (result.success) {
-        toast({
-          title: "Success",
-          description: `Leave request ${status} successfully`,
-        })
+        toast.success(`Leave request ${status} successfully`)
         fetchData()
       } else {
-        toast({
-          title: "Error",
-          description: result.error || "Failed to update leave request",
-          variant: "destructive",
-        })
+        toast.error(result.error || "Failed to update leave request")
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update leave request",
-        variant: "destructive",
-      })
+      toast.error("Failed to update leave request")
     } finally {
       setLoading(false)
     }

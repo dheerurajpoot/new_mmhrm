@@ -26,6 +26,22 @@ export function EmployeeFinancesComponent() {
   const [payrollRecords, setPayrollRecords] = useState<PayrollRecord[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
+  // Helper function to format currency
+  const formatCurrency = (amount: number, currency: string = "USD") => {
+    const currencySymbols: { [key: string]: string } = {
+      "USD": "$",
+      "INR": "₹",
+      "EUR": "€",
+      "GBP": "£",
+      "JPY": "¥",
+      "CAD": "C$",
+      "AUD": "A$"
+    }
+    
+    const symbol = currencySymbols[currency] || currency
+    return `${symbol}${amount.toLocaleString()}`
+  }
+
   useEffect(() => {
     fetchFinancialData()
   }, [])
@@ -95,7 +111,7 @@ export function EmployeeFinancesComponent() {
               <div>
                 <p className="text-sm font-medium text-gray-600">Base Salary</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {finances?.base_salary ? `$${finances.base_salary.toLocaleString()}` : "Not set"}
+                  {finances?.base_salary ? formatCurrency(finances.base_salary, finances?.currency) : "Not set"}
                 </p>
                 <p className="text-xs text-gray-500">Monthly</p>
               </div>
@@ -112,7 +128,7 @@ export function EmployeeFinancesComponent() {
               <div>
                 <p className="text-sm font-medium text-gray-600">Hourly Rate</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {finances?.hourly_rate ? `$${finances.hourly_rate}` : "Not set"}
+                  {finances?.hourly_rate ? formatCurrency(finances.hourly_rate, finances?.currency) : "Not set"}
                 </p>
                 <p className="text-xs text-gray-500">Per hour</p>
               </div>
@@ -183,13 +199,13 @@ export function EmployeeFinancesComponent() {
                         </div>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
-                        <span className="font-medium">${record.gross_pay.toLocaleString()}</span>
+                        <span className="font-medium">{formatCurrency(record.gross_pay, finances?.currency)}</span>
                       </TableCell>
                       <TableCell className="hidden lg:table-cell">
-                        <span className="text-red-600">-${record.deductions.toLocaleString()}</span>
+                        <span className="text-red-600">-{formatCurrency(record.deductions, finances?.currency)}</span>
                       </TableCell>
                       <TableCell>
-                        <span className="font-bold text-blue-600">${record.net_pay.toLocaleString()}</span>
+                        <span className="font-bold text-blue-600">{formatCurrency(record.net_pay, finances?.currency)}</span>
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
                         <Badge className={getStatusBadgeColor(record.status)}>
@@ -240,7 +256,7 @@ export function EmployeeFinancesComponent() {
                 <div className="p-3 bg-red-50 rounded-lg">
                   <p className="text-sm font-medium text-red-800">Annual Salary</p>
                   <p className="text-2xl font-bold text-red-900">
-                    {finances.base_salary ? `$${(finances.base_salary * 12).toLocaleString()}` : "Not calculated"}
+                    {finances.base_salary ? formatCurrency(finances.base_salary * 12, finances.currency) : "Not calculated"}
                   </p>
                 </div>
                 <div className="p-3 bg-blue-50 rounded-lg">

@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getServerUser } from "@/lib/auth/server"
-import { getAllUsers } from "@/lib/mongodb/operations"
+import { getUsersCollection } from "@/lib/mongodb/collections"
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,7 +13,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 })
     }
 
-    const employees = await getAllUsers()
+    // Fetch directly from users collection
+    const usersCollection = await getUsersCollection()
+    const employees = await usersCollection.find({}).toArray()
 
     return NextResponse.json(employees)
   } catch (error) {

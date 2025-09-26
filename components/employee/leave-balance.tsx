@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import { toast } from "sonner"
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -26,6 +27,7 @@ import type { LeaveRequest } from "@/lib/types"
 export function EmployeeLeaveBalance() {
   const [leaveBalances, setLeaveBalances] = useState<any[]>([])
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([])
+  const [grantedLeaveTypes, setGrantedLeaveTypes] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false)
 
@@ -42,9 +44,10 @@ export function EmployeeLeaveBalance() {
 
   const fetchLeaveData = async () => {
     try {
-      const [balancesResponse, requestsResponse] = await Promise.all([
+      const [balancesResponse, requestsResponse, grantedTypesResponse] = await Promise.all([
         fetch("/api/employee/leave-balances"),
         fetch("/api/employee/leave-requests"),
+        fetch("/api/employee/granted-leave-types"),
       ])
 
       if (balancesResponse.ok) {
@@ -55,6 +58,11 @@ export function EmployeeLeaveBalance() {
       if (requestsResponse.ok) {
         const requests = await requestsResponse.json()
         setLeaveRequests(requests || [])
+      }
+
+      if (grantedTypesResponse.ok) {
+        const grantedTypes = await grantedTypesResponse.json()
+        setGrantedLeaveTypes(grantedTypes || [])
       }
     } catch (error) {
       console.error("Error fetching leave data:", error)
@@ -75,6 +83,13 @@ export function EmployeeLeaveBalance() {
 
     try {
       const daysRequested = calculateDays(leaveRequest.start_date, leaveRequest.end_date)
+      const selectedLeaveType = grantedLeaveTypes.find(lt => lt.leave_type === leaveRequest.leave_type)
+      
+      // Validate that requested days don't exceed available balance
+      if (selectedLeaveType && daysRequested > selectedLeaveType.remaining_days) {
+        toast.error(`You only have ${selectedLeaveType.remaining_days} days left for ${leaveRequest.leave_type}`)
+        return
+      }
 
       const response = await fetch("/api/employee/leave-requests", {
         method: "POST",
@@ -90,6 +105,8 @@ export function EmployeeLeaveBalance() {
 
       if (!response.ok) throw new Error("Failed to submit leave request")
 
+      toast.success("Leave request submitted successfully")
+
       setLeaveRequest({
         leave_type: "",
         start_date: "",
@@ -100,6 +117,7 @@ export function EmployeeLeaveBalance() {
       fetchLeaveData()
     } catch (error) {
       console.error("Error submitting leave request:", error)
+      toast.error("Failed to submit leave request")
     }
   }
 
@@ -186,16 +204,15 @@ export function EmployeeLeaveBalance() {
                         <SelectValue placeholder="Select leave type" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="annual">Annual Leave</SelectItem>
-                        <SelectItem value="sick">Sick Leave</SelectItem>
-                        <SelectItem value="personal">Personal Leave</SelectItem>
-                        <SelectItem value="maternity">Maternity Leave</SelectItem>
-                        <SelectItem value="paternity">Paternity Leave</SelectItem>
-                        <SelectItem value="emergency">Emergency Leave</SelectItem>
+                        {grantedLeaveTypes.map((leaveType) => (
+                          <SelectItem key={leaveType.id} value={leaveType.leave_type}>
+                            {leaveType.leave_type} ({leaveType.remaining_days} days left)
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-responsive">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="start_date">Start Date</Label>
                       <Input
@@ -218,10 +235,24 @@ export function EmployeeLeaveBalance() {
                     </div>
                   </div>
                   {leaveRequest.start_date && leaveRequest.end_date && (
-                    <div className="p-3 bg-red-50 rounded-lg">
-                      <p className="text-sm text-red-800">
+                    <div className="p-3 bg-blue-50 rounded-lg">
+                      <p className="text-sm text-blue-800">
                         Total days: {calculateDays(leaveRequest.start_date, leaveRequest.end_date)}
                       </p>
+                      {leaveRequest.leave_type && (
+                        (() => {
+                          const selectedLeaveType = grantedLeaveTypes.find(lt => lt.leave_type === leaveRequest.leave_type)
+                          const requestedDays = calculateDays(leaveRequest.start_date, leaveRequest.end_date)
+                          if (selectedLeaveType && requestedDays > selectedLeaveType.remaining_days) {
+                            return (
+                              <p className="text-sm text-red-600 mt-1">
+                                ⚠️ You only have {selectedLeaveType.remaining_days} days left for {leaveRequest.leave_type}
+                              </p>
+                            )
+                          }
+                          return null
+                        })()
+                      )}
                     </div>
                   )}
                   <div className="space-y-2">

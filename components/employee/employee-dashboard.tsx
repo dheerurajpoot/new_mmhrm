@@ -11,12 +11,14 @@ import { TimeTracking } from "./time-tracking"
 import { EmployeeFinances } from "./employee-finances"
 import { EmployeeStats } from "./employee-stats"
 import { TeamMembers } from "./team-members"
-import { UpcomingBirthdays } from "./upcoming-birthdays"
+import { UpcomingBirthdays } from "@/components/shared/upcoming-birthdays"
+import { useWebsiteSettings } from "@/hooks/use-website-settings"
 import type { Profile } from "@/lib/types"
 
 export function EmployeeDashboard() {
   const [activeSection, setActiveSection] = useState("overview")
   const [currentUser, setCurrentUser] = useState<Profile | null>(null)
+  const { settings } = useWebsiteSettings()
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -98,6 +100,26 @@ export function EmployeeDashboard() {
       <SidebarInset>
         <div className="flex h-14 md:h-16 shrink-0 items-center gap-2 border-b px-3 md:px-4 bg-white/80 backdrop-blur-sm">
           <SidebarTrigger className="-ml-1" />
+          
+          {/* Mobile Logo and User Name - Only visible on mobile */}
+          <div className="flex items-center space-x-2 md:hidden">
+            {settings?.site_logo && settings.site_logo !== "/placeholder-logo.png" ? (
+              <img
+                src={settings.site_logo}
+                alt="Logo"
+                className="w-6 h-6 object-contain"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                  if (fallback) fallback.style.display = 'flex';
+                }}
+              />
+            ) : null}
+            <div className="w-6 h-6 bg-gradient-to-r from-red-600 to-blue-600 rounded-lg flex items-center justify-center" style={{ display: settings?.site_logo && settings.site_logo !== "/placeholder-logo.png" ? 'none' : 'flex' }}>
+              <span className="text-white font-bold text-xs">MM</span>
+            </div>
+          </div>
+          
           <div className="flex flex-col min-w-0 flex-1">
             <h1 className="text-base md:text-lg font-semibold truncate">{title}</h1>
             <p className="text-xs md:text-sm text-muted-foreground hidden sm:block truncate">{description}</p>

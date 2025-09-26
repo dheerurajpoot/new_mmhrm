@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, Calendar, Clock, AlertCircle, ArrowUpRight, ArrowDownRight, UserCheck, Building2 } from "lucide-react"
+import { UpcomingBirthdays } from "@/components/shared/upcoming-birthdays"
 
 interface HRStats {
   totalEmployees: number
@@ -223,7 +224,7 @@ export function HRStats() {
       </div>
 
       {/* Bottom Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Attendance Chart */}
         <div className="bg-white rounded-2xl border border-gray-100 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-6">Weekly Attendance</h3>
@@ -276,6 +277,15 @@ export function HRStats() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Upcoming Birthdays */}
+        <div className="lg:col-span-1">
+          <UpcomingBirthdays 
+            showAllMonths={true}
+            title="Employee Birthdays"
+            description="Month-wise birthday calendar"
+          />
         </div>
       </div>
     </div>

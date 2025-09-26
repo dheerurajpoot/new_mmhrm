@@ -13,7 +13,11 @@ import type { User, LeaveRequest, LeaveBalance, TimeEntry, EmployeeFinance, Payr
 export async function getAllUsers(): Promise<User[]> {
   try {
     const usersCollection = await getUsersCollection()
-    return await usersCollection.find({}).toArray()
+    const users = await usersCollection.find({}).toArray()
+    console.log("getAllUsers: Found", users.length, "users")
+    console.log("Sample user:", users[0])
+    console.log("Users with birth dates:", users.filter(user => user.birth_date).length)
+    return users
   } catch (error) {
     console.error(" Error getting all users:", error)
     return []

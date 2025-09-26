@@ -25,7 +25,7 @@ export async function PATCH(
     
     // Verify leader exists if provided
     if (leaderId) {
-      const leader = await usersCollection.findOne({ _id: leaderId })
+      const leader = await usersCollection.findOne({ _id: new ObjectId(leaderId) })
       if (!leader) {
         return NextResponse.json({ error: "Leader not found" }, { status: 400 })
       }
@@ -33,8 +33,9 @@ export async function PATCH(
     
     // Verify members exist if provided
     if (memberIds && memberIds.length > 0) {
+      const memberObjectIds = memberIds.map((id: string) => new ObjectId(id))
       const members = await usersCollection.find({ 
-        _id: { $in: memberIds } 
+        _id: { $in: memberObjectIds } 
       }).toArray()
       
       if (members.length !== memberIds.length) {
@@ -47,8 +48,8 @@ export async function PATCH(
     }
     
     if (name) updateData.name = name
-    if (leaderId) updateData.leader_id = leaderId
-    if (memberIds) updateData.member_ids = memberIds
+    if (leaderId) updateData.leader_id = new ObjectId(leaderId)
+    if (memberIds) updateData.member_ids = memberIds.map((id: string) => new ObjectId(id))
     
     await teamsCollection.updateOne(
       { _id: new ObjectId(teamId) },

@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, UserCheck, Clock, Calendar, UserPlus, Building2, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, DollarSign } from "lucide-react"
+import { Users, UserCheck, Clock, Calendar, UserPlus, Building2, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, DollarSign, Activity, CheckCircle, XCircle, AlertCircle, Timer, UserX, FileText, Cake, Gift, Star, Sparkles, Trash2 } from "lucide-react"
+import { UpcomingBirthdays } from "@/components/shared/upcoming-birthdays"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 
 interface Stats {
   totalUsers: number
@@ -20,13 +22,32 @@ interface Stats {
 
 interface RecentActivity {
   id: string
-  type: 'team' | 'employee' | 'clockin' | 'leave'
-  message: string
+  type: 'leave_request' | 'leave_approval' | 'employee_registered' | 'team_created' | 'time_entry'
+  title: string
+  description: string
+  details?: any
+  user?: {
+    name: string
+    email: string
+    profile_photo?: string
+    role: string
+  }
+  targetUser?: {
+    name: string
+    email: string
+    profile_photo?: string
+    role: string
+  }
+  approver?: {
+    name: string
+    email: string
+    profile_photo?: string
+    role: string
+  }
   timestamp: string
-  user?: string
-  profile_photo?: string
-  role?: string
+  status: string
 }
+
 
 export function AdminStats() {
   const [stats, setStats] = useState<Stats>({
@@ -43,17 +64,32 @@ export function AdminStats() {
   })
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [usersRes, leavesRes, attendanceRes, leaveTypesRes, teamsRes] = await Promise.all([
+        console.log("Starting to fetch dashboard data...")
+        
+        const [usersRes, leavesRes, attendanceRes, leaveTypesRes, teamsRes, activitiesRes, employeesRes] = await Promise.all([
           fetch("/api/employees"),
           fetch("/api/leave-requests"),
           fetch("/api/time-entries"),
           fetch("/api/leave-types"),
           fetch("/api/teams"),
+          fetch("/api/admin/recent-activities"),
+          fetch("/api/employee/search"),
         ])
+
+        console.log("API responses status:", {
+          users: usersRes.status,
+          leaves: leavesRes.status,
+          attendance: attendanceRes.status,
+          leaveTypes: leaveTypesRes.status,
+          teams: teamsRes.status,
+          activities: activitiesRes.status,
+          employees: employeesRes.status
+        })
 
         if (!usersRes.ok) {
           console.error("Failed to fetch users:", usersRes.status, usersRes.statusText)
@@ -61,15 +97,35 @@ export function AdminStats() {
         if (!teamsRes.ok) {
           console.error("Failed to fetch teams:", teamsRes.status, teamsRes.statusText)
         }
+        if (!activitiesRes.ok) {
+          console.error("Failed to fetch activities:", activitiesRes.status, activitiesRes.statusText)
+        }
+        if (!employeesRes.ok) {
+          console.error("Failed to fetch employees:", employeesRes.status, employeesRes.statusText)
+        }
 
         const users = await usersRes.json()
         const leaves = await leavesRes.json()
         const attendance = await attendanceRes.json()
         const leaveTypes = await leaveTypesRes.json()
         const teams = await teamsRes.json()
+        const activities = await activitiesRes.json()
+        const employees = await employeesRes.json()
 
-        console.log("Fetched users:", users.length, users)
-        console.log("Fetched teams:", teams.length, teams)
+        console.log("Fetched data:", {
+          users: users.length,
+          teams: teams.length,
+          activities: activities.length,
+          employees: employees.length,
+          leaves: leaves.length
+        })
+        
+        console.log("Employee data details:", employees)
+        console.log("Activities data details:", activities)
+        console.log("Employees with birth dates:", employees.filter((emp: any) => emp.birth_date))
+        console.log("Sample employee:", employees[0])
+        console.log("Sample employee birth_date:", employees[0]?.birth_date)
+        console.log("Sample employee birth_date type:", typeof employees[0]?.birth_date)
 
         setStats({
           totalUsers: users.length || 0,
@@ -88,104 +144,11 @@ export function AdminStats() {
           teamGrowth: 25,
         })
 
-        // Generate recent activity from real data
-        const activities: RecentActivity[] = []
+        setRecentActivity(activities || [])
         
-        // Recent teams (last 3 teams created)
-        let recentTeams = teams.slice(0, 3)
         
-        // Fallback: if no teams, create mock data
-        if (recentTeams.length === 0) {
-          recentTeams = [
-            {
-              _id: "mock-team-1",
-              name: "Development Team",
-              leader: { full_name: "John Doe", profile_photo: null },
-              created_at: new Date().toISOString()
-            },
-            {
-              _id: "mock-team-2", 
-              name: "Marketing Team",
-              leader: { full_name: "Jane Smith", profile_photo: null },
-              created_at: new Date(Date.now() - 86400000).toISOString()
-            }
-          ]
-        }
-        
-        recentTeams.forEach((team: any) => {
-          activities.push({
-            id: `team-${team._id}`,
-            type: 'team',
-            message: `New team "${team.name}" created`,
-            timestamp: team.created_at,
-            user: team.leader?.full_name || 'Unknown',
-            profile_photo: team.leader?.profile_photo
-          })
-        })
-
-        // Recent employees (last 3 users registered) - sort by created_at or use all users
-        let recentUsers = users
-          .filter((user: any) => user.created_at || user._id) // Users with creation date or any user
-          .sort((a: any, b: any) => {
-            const dateA = a.created_at ? new Date(a.created_at).getTime() : 0
-            const dateB = b.created_at ? new Date(b.created_at).getTime() : 0
-            return dateB - dateA
-          })
-          .slice(0, 3)
-        
-        // Fallback: if no users with dates, just take first 3 users
-        if (recentUsers.length === 0 && users.length > 0) {
-          recentUsers = users.slice(0, 3)
-        }
-        
-        // Final fallback: if still no users, create mock data for testing
-        if (recentUsers.length === 0) {
-          recentUsers = [
-            {
-              _id: "mock-1",
-              full_name: "John Doe",
-              email: "john.doe@company.com",
-              role: "employee",
-              profile_photo: null,
-              created_at: new Date().toISOString()
-            },
-            {
-              _id: "mock-2", 
-              full_name: "Jane Smith",
-              email: "jane.smith@company.com",
-              role: "hr",
-              profile_photo: null,
-              created_at: new Date(Date.now() - 86400000).toISOString() // 1 day ago
-            },
-            {
-              _id: "mock-3",
-              full_name: "Admin User",
-              email: "admin@company.com", 
-              role: "admin",
-              profile_photo: null,
-              created_at: new Date(Date.now() - 172800000).toISOString() // 2 days ago
-            }
-          ]
-        }
-        console.log("Recent users to process:", recentUsers)
-        recentUsers.forEach((user: any) => {
-          console.log("Processing user:", user)
-          activities.push({
-            id: `user-${user._id}`,
-            type: 'employee',
-            message: `New employee "${user.full_name || user.email}" registered`,
-            timestamp: user.created_at || user.last_sign_in_at,
-            user: user.full_name || user.email,
-            profile_photo: user.profile_photo,
-            role: user.role
-          })
-        })
-
-        // Sort by timestamp and take the most recent 6
-        activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-        console.log("All activities:", activities)
-        console.log("Employee activities:", activities.filter(a => a.type === 'employee'))
-        setRecentActivity(activities.slice(0, 6))
+        // Update last updated timestamp
+        setLastUpdated(new Date())
 
       } catch (error) {
         console.error("Error fetching stats:", error)
@@ -195,6 +158,11 @@ export function AdminStats() {
     }
 
     fetchStats()
+    
+    // Set up real-time updates every 30 seconds
+    const interval = setInterval(fetchStats, 30000)
+    
+    return () => clearInterval(interval)
   }, [])
 
   const statCards = [
@@ -205,9 +173,10 @@ export function AdminStats() {
       icon: Users,
       growth: stats.userGrowth,
       trend: "up",
-      color: "text-emerald-600",
-      bgColor: "bg-emerald-50",
-      borderColor: "border-emerald-200",
+      color: "text-blue-600",
+      bgColor: "bg-gradient-to-br from-blue-50 to-blue-100",
+      borderColor: "border-blue-200",
+      iconBg: "bg-blue-500",
     },
     {
       title: "Total Teams",
@@ -216,9 +185,10 @@ export function AdminStats() {
       icon: Building2,
       growth: stats.teamGrowth,
       trend: "up",
-      color: "text-emerald-600",
-      bgColor: "bg-emerald-50",
-      borderColor: "border-emerald-200",
+      color: "text-purple-600",
+      bgColor: "bg-gradient-to-br from-purple-50 to-purple-100",
+      borderColor: "border-purple-200",
+      iconBg: "bg-purple-500",
     },
     {
       title: "Leave Types",
@@ -228,19 +198,21 @@ export function AdminStats() {
       growth: 0,
       trend: "up",
       color: "text-emerald-600",
-      bgColor: "bg-emerald-50",
+      bgColor: "bg-gradient-to-br from-emerald-50 to-emerald-100",
       borderColor: "border-emerald-200",
+      iconBg: "bg-emerald-500",
     },
     {
-      title: "Average Salary",
-      value: `$${(stats.todayAttendance * 1500).toLocaleString()}`,
-      description: "Monthly average",
-      icon: DollarSign,
-      growth: -9,
+      title: "Pending Leaves",
+      value: stats.pendingLeaves.toLocaleString(),
+      description: "Awaiting approval",
+      icon: AlertCircle,
+      growth: stats.leaveGrowth,
       trend: "down",
-      color: "text-red-500",
-      bgColor: "bg-red-50",
-      borderColor: "border-red-200",
+      color: "text-orange-600",
+      bgColor: "bg-gradient-to-br from-orange-50 to-orange-100",
+      borderColor: "border-orange-200",
+      iconBg: "bg-orange-500",
     },
   ]
 
@@ -282,31 +254,52 @@ export function AdminStats() {
 
   const getActivityIcon = (type: string) => {
     switch (type) {
-      case 'team':
-        return <Building2 className="w-4 h-4 text-indigo-600" />
-      case 'employee':
-        return <UserPlus className="w-4 h-4 text-green-600" />
-      case 'clockin':
-        return <Clock className="w-4 h-4 text-blue-600" />
-      case 'leave':
-        return <Calendar className="w-4 h-4 text-orange-600" />
+      case 'leave_request':
+        return <FileText className="w-4 h-4 text-blue-600" />
+      case 'leave_approval':
+        return <CheckCircle className="w-4 h-4 text-green-600" />
+      case 'employee_registered':
+        return <UserPlus className="w-4 h-4 text-emerald-600" />
+      case 'team_created':
+        return <Building2 className="w-4 h-4 text-purple-600" />
+      case 'time_entry':
+        return <Timer className="w-4 h-4 text-orange-600" />
       default:
-        return <Users className="w-4 h-4 text-gray-600" />
+        return <Activity className="w-4 h-4 text-gray-600" />
     }
   }
 
   const getActivityColor = (type: string) => {
     switch (type) {
-      case 'team':
-        return 'bg-indigo-100'
-      case 'employee':
-        return 'bg-green-100'
-      case 'clockin':
-        return 'bg-blue-100'
-      case 'leave':
-        return 'bg-orange-100'
+      case 'leave_request':
+        return 'bg-blue-100 text-blue-800'
+      case 'leave_approval':
+        return 'bg-green-100 text-green-800'
+      case 'employee_registered':
+        return 'bg-emerald-100 text-emerald-800'
+      case 'team_created':
+        return 'bg-purple-100 text-purple-800'
+      case 'time_entry':
+        return 'bg-orange-100 text-orange-800'
       default:
-        return 'bg-gray-100'
+        return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  const getActivityBadge = (type: string, status: string) => {
+    switch (type) {
+      case 'leave_request':
+        return status === 'pending' ? 'Pending' : status
+      case 'leave_approval':
+        return status === 'approved' ? 'Approved' : 'Rejected'
+      case 'employee_registered':
+        return 'New'
+      case 'team_created':
+        return 'Created'
+      case 'time_entry':
+        return status === 'clock_in' ? 'Clock In' : 'Clock Out'
+      default:
+        return 'Activity'
     }
   }
 
@@ -321,20 +314,66 @@ export function AdminStats() {
     return `${Math.floor(diffInMinutes / 1440)}d ago`
   }
 
+
+
+
+  const refreshDashboard = () => {
+    setIsLoading(true)
+    // Trigger the useEffect to refetch data
+    window.location.reload()
+  }
+
+  const deleteActivity = async (activityId: string) => {
+    try {
+      // Extract the actual ID from the activity ID (remove prefix)
+      const actualId = activityId.replace(/^(leave-request-|leave-approved-|leave-rejected-|team-|employee-|time-)/, '')
+      
+      // Determine the collection based on activity type
+      let endpoint = ''
+      if (activityId.startsWith('leave-request-') || activityId.startsWith('leave-approved-') || activityId.startsWith('leave-rejected-')) {
+        endpoint = `/api/leave-requests/${actualId}`
+      } else if (activityId.startsWith('team-')) {
+        endpoint = `/api/teams/${actualId}`
+      } else if (activityId.startsWith('employee-')) {
+        endpoint = `/api/users/${actualId}`
+      } else if (activityId.startsWith('time-')) {
+        endpoint = `/api/time-entries/${actualId}`
+      }
+
+      if (endpoint) {
+        const response = await fetch(endpoint, {
+          method: 'DELETE',
+        })
+
+        if (response.ok) {
+          // Remove from local state
+          setRecentActivity(prev => prev.filter(activity => activity.id !== activityId))
+          console.log('Activity deleted successfully')
+        } else {
+          console.error('Failed to delete activity')
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting activity:', error)
+    }
+  }
+
   return (
     <div className="space-y-8">
+
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {statCards.map((stat, index) => (
-          <div key={index} className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg transition-all duration-200">
+          <div key={index} className={`${stat.bgColor} rounded-2xl border-2 ${stat.borderColor} p-6 hover:shadow-xl transition-all duration-300 hover:scale-105`}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-medium text-gray-600">{stat.title}</h3>
-              <div className={`w-8 h-8 ${stat.bgColor} rounded-lg flex items-center justify-center`}>
-                <stat.icon className={`w-4 h-4 ${stat.color}`} />
+              <h3 className="text-sm font-semibold text-gray-700">{stat.title}</h3>
+              <div className={`w-12 h-12 ${stat.iconBg} rounded-xl flex items-center justify-center shadow-lg`}>
+                <stat.icon className="w-6 h-6 text-white" />
               </div>
             </div>
-            <div className="mb-2">
-              <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+            <div className="mb-3">
+              <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+              <p className="text-sm text-gray-600 mt-1">{stat.description}</p>
             </div>
             <div className="flex items-center space-x-2">
               {stat.trend === "up" ? (
@@ -342,7 +381,7 @@ export function AdminStats() {
               ) : (
                 <ArrowDownRight className="w-4 h-4 text-red-500" />
               )}
-              <span className={`text-sm font-medium ${stat.trend === "up" ? "text-emerald-600" : "text-red-500"}`}>
+              <span className={`text-sm font-semibold ${stat.trend === "up" ? "text-emerald-600" : "text-red-500"}`}>
                 {Math.abs(stat.growth)}%
               </span>
             </div>
@@ -350,71 +389,106 @@ export function AdminStats() {
         ))}
       </div>
 
-      {/* Recent Teams and Users Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Teams */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Recent Teams</h3>
+      {/* Recent Activity, Teams, and Birthdays Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Recent Activity */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-3 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+              <Activity className="w-5 h-5 mr-2 text-blue-600" />
+              Recent Activity
+            </h3>
+            <Badge variant="outline" className="text-xs">
+              Last 5 activities
+            </Badge>
+          </div>
           <div className="space-y-4">
-            {recentActivity.filter(activity => activity.type === 'team').slice(0, 3).map((activity, index) => (
-              <div key={activity.id} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                <Avatar className="w-10 h-10">
-                  <AvatarImage src={activity.profile_photo} alt={activity.user} />
-                  <AvatarFallback className="bg-gradient-to-br from-indigo-400 to-purple-400 text-white font-semibold text-sm">
-                    <Building2 className="w-5 h-5" />
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">{activity.message}</p>
-                  <p className="text-xs text-gray-500">by {activity.user}</p>
+            {recentActivity.slice(0, 4).map((activity, index) => (
+              <div key={activity.id} className="flex items-start space-x-4 p-4 rounded-xl hover:bg-gray-50 transition-all duration-200 border border-gray-100">
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center">
+                    {getActivityIcon(activity.type)}
+                  </div>
                 </div>
-                <div className="px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                  Team
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-semibold text-gray-900">{activity.title}</h4>
+                    <Badge className={`text-xs ${getActivityColor(activity.type)}`}>
+                      {getActivityBadge(activity.type, activity.status)}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-1">{activity.description}</p>
+                  <div className="flex items-center justify-between mt-2">
+                    <div className="flex items-center space-x-2">
+                      {activity.user && (
+                        <Avatar className="w-6 h-6">
+                          <AvatarImage src={activity.user.profile_photo} alt={activity.user.name} />
+                          <AvatarFallback className="text-xs bg-gradient-to-br from-blue-400 to-purple-400 text-white">
+                            {activity.user.name?.charAt(0) || 'U'}
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
+                      <span className="text-xs text-gray-500">
+                        {activity.user?.name || 'System'}
+                        {activity.targetUser && (
+                          <span className="text-gray-400"> → {activity.targetUser.name}</span>
+                        )}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
-            {recentActivity.filter(activity => activity.type === 'team').length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                <Building2 className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>No recent teams created</p>
+            {recentActivity.length === 0 && (
+              <div className="text-center py-12 text-gray-500">
+                <Activity className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                <p className="text-lg font-medium">No recent activity</p>
+                <p className="text-sm">Activities will appear here as they happen</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Recent Users */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Recent Users</h3>
+        {/* Recent Teams */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+              <Building2 className="w-5 h-5 mr-2 text-purple-600" />
+              Recent Teams
+            </h3>
+            <Badge variant="outline" className="text-xs">
+              {recentActivity.filter(a => a.type === 'team_created').length} teams
+            </Badge>
+          </div>
           <div className="space-y-4">
-            {recentActivity.filter(activity => activity.type === 'employee').slice(0, 3).map((activity, index) => (
-              <div key={activity.id} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+            {recentActivity.filter(activity => activity.type === 'team_created').slice(0, 3).map((activity, index) => (
+              <div key={activity.id} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100">
                 <Avatar className="w-10 h-10">
-                  <AvatarImage src={activity.profile_photo} alt={activity.user} />
-                  <AvatarFallback className="bg-gradient-to-br from-emerald-400 to-blue-400 text-white font-semibold text-sm">
-                    {activity.user?.charAt(0) || 'U'}
+                  <AvatarImage src={activity.user?.profile_photo} alt={activity.user?.name} />
+                  <AvatarFallback className="bg-gradient-to-br from-purple-400 to-indigo-400 text-white font-semibold text-sm">
+                    <Building2 className="w-5 h-5" />
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">{activity.user || 'Unknown User'}</p>
-                  <p className="text-xs text-gray-500">{activity.message}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{activity.details?.teamName || 'Team'}</p>
+                  <p className="text-xs text-gray-500">by {activity.user?.name || 'Unknown'}</p>
                 </div>
-                <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  activity.role === 'admin' ? 'bg-red-100 text-red-800' :
-                  activity.role === 'hr' ? 'bg-blue-100 text-blue-800' :
-                  'bg-emerald-100 text-emerald-800'
-                }`}>
-                  {activity.role === 'admin' ? 'Admin' : activity.role === 'hr' ? 'HR' : 'Employee'}
-                </div>
+                <Badge className="text-xs bg-purple-100 text-purple-800">
+                  Team
+                </Badge>
               </div>
             ))}
-            {recentActivity.filter(activity => activity.type === 'employee').length === 0 && (
+            {recentActivity.filter(activity => activity.type === 'team_created').length === 0 && (
               <div className="text-center py-8 text-gray-500">
-                <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>No recent users registered</p>
+                <Building2 className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p className="text-sm">No recent teams created</p>
               </div>
             )}
           </div>
         </div>
+
+        {/* Upcoming Birthdays */}
+        <UpcomingBirthdays />
       </div>
     </div>
   )

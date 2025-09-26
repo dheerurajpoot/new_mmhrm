@@ -36,7 +36,7 @@ export function TeamMembers() {
     const fetchCurrentUser = async () => {
       try {
         const user = await getCurrentUser()
-        setCurrentUser(user)
+        setCurrentUser(user as Profile)
         if (user) {
           await fetchTeamMembers(user.id)
         }
@@ -116,7 +116,7 @@ export function TeamMembers() {
       <CardContent>
         <div className="space-y-4">
           {/* Team Leader */}
-          <div className="border rounded-lg p-4 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <div className="border rounded-lg p-2 bg-gradient-to-r from-blue-50 to-indigo-50">
             <div className="flex items-center gap-3">
               <div className="relative">
                 <Avatar className="w-12 h-12">
@@ -137,7 +137,7 @@ export function TeamMembers() {
                   </Badge>
                 </div>
                 <p className="text-sm text-gray-600">{team.leader.position || team.leader.department}</p>
-                <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                <div className="flex flex-wrap items-center gap-4 mt-2 text-[10px]  text-gray-500 lg:text-xs">
                   <div className="flex items-center gap-1">
                     <Mail className="w-3 h-3" />
                     {team.leader.email}
@@ -163,7 +163,7 @@ export function TeamMembers() {
               <div className="grid gap-3">
                 {otherMembers.map((member) => (
                   <div key={member.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-wrap">
                       <Avatar className="w-10 h-10">
                         <AvatarImage src={member.profile_photo || ""} />
                         <AvatarFallback>

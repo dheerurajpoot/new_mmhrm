@@ -51,24 +51,12 @@ export default clientPromise
 
 export async function getDatabase(): Promise<Db> {
   try {
-    console.log(" Attempting to connect to MongoDB...")
-    console.log(" MongoDB URI exists:", !!process.env.MONGODB_URI)
-    console.log(" MongoDB DB name:", process.env.MONGODB_DB)
-
     const client = await clientPromise
     const db = client.db(dbName)
-    console.log(" MongoDB connection successful, database:", dbName)
-
-    await db.admin().ping()
-    console.log(" Database ping successful")
 
     return db
   } catch (error) {
     console.error(" MongoDB connection failed:", error)
-    console.error(" Connection error details:", {
-      message: error instanceof Error ? error.message : "Unknown error",
-      stack: error instanceof Error ? error.stack : undefined,
-    })
     throw error
   }
 }
@@ -78,7 +66,6 @@ export async function connectToDatabase() {
     const client = await clientPromise
     const db = client.db(dbName)
 
-    console.log(" Connected to MongoDB successfully")
     return { client, db }
   } catch (error) {
     console.error(" MongoDB connection error:", error)
