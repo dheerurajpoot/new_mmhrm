@@ -8,12 +8,15 @@ import { MobileBottomNav } from "@/components/shared/mobile-bottom-nav"
 import { EmployeeProfile } from "./employee-profile"
 import { LeaveBalance } from "./leave-balance"
 import { TimeTracking } from "./time-tracking"
+import { TimeTrackingSimple } from "./time-tracking-simple"
 import { EmployeeFinances } from "./employee-finances"
 import { EmployeeStats } from "./employee-stats"
 import { TeamMembers } from "./team-members"
 import { UpcomingBirthdays } from "@/components/shared/upcoming-birthdays"
+import { Cake } from "lucide-react"
 import { useWebsiteSettings } from "@/hooks/use-website-settings"
 import type { Profile } from "@/lib/types"
+import { TimeTrackingWidget } from "./time-tracking-widget"
 
 export function EmployeeDashboard() {
   const [activeSection, setActiveSection] = useState("overview")
@@ -46,10 +49,33 @@ export function EmployeeDashboard() {
       case "overview":
         return (
           <div className="space-y-6">
+             <TimeTrackingWidget />
             <EmployeeStats />
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
               <TeamMembers />
-              <UpcomingBirthdays />
+              {/* New Upcoming Birthdays Section - Same as Admin */}
+              <div className="bg-gradient-to-br from-white via-pink-50/30 to-rose-50/30 rounded-2xl border border-pink-100 p-4 shadow-lg">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl flex items-center justify-center shadow-md">
+                      <Cake className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900">Upcoming Birthdays</h3>
+                      <p className="text-sm text-gray-600">Celebrate your colleagues!</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-pink-500 rounded-full animate-pulse"></div>
+                    <span className="text-xs bg-pink-50 text-pink-700 border border-pink-200 px-2 py-1 rounded-full">
+                      Next 10 birthdays
+                    </span>
+                  </div>
+                </div>
+                <div className="h-96 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-pink-200 scrollbar-track-transparent hover:scrollbar-thumb-pink-300">
+                  <UpcomingBirthdays maxEmployees={10} showAllMonths={false} />
+                </div>
+              </div>
             </div>
           </div>
         )
@@ -65,9 +91,32 @@ export function EmployeeDashboard() {
         return (
           <div className="space-y-6">
             <EmployeeStats />
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
+            <TimeTrackingSimple />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
               <TeamMembers />
-              <UpcomingBirthdays />
+              {/* New Upcoming Birthdays Section - Same as Admin */}
+              <div className="bg-gradient-to-br from-white via-pink-50/30 to-rose-50/30 rounded-2xl border border-pink-100 p-4 shadow-lg">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl flex items-center justify-center shadow-md">
+                      <Cake className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900">Upcoming Birthdays</h3>
+                      <p className="text-sm text-gray-600">Celebrate your colleagues!</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-pink-500 rounded-full animate-pulse"></div>
+                    <span className="text-xs bg-pink-50 text-pink-700 border border-pink-200 px-2 py-1 rounded-full">
+                      Next 10 birthdays
+                    </span>
+                  </div>
+                </div>
+                <div className="h-96 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-pink-200 scrollbar-track-transparent hover:scrollbar-thumb-pink-300">
+                  <UpcomingBirthdays maxEmployees={10} showAllMonths={false} />
+                </div>
+              </div>
             </div>
           </div>
         )

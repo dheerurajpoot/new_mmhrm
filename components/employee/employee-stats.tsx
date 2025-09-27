@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Calendar, Clock, Home, DollarSign, Plus, Play, Pause, ArrowUpRight, ArrowDownRight, TrendingDown, Users, Search, Mail, Phone, MapPin, User, Plane, Heart, Baby, Coffee, Umbrella, Stethoscope, Laptop, HeartHandshake, Timer, Zap, Flower } from "lucide-react"
 import { toast } from "sonner"
+import { getCurrentUser } from "@/lib/auth/client"
 import { TeamMembers } from "./team-members"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -23,6 +24,7 @@ interface EmployeeStats {
   hoursGrowth: number
   salaryGrowth: number
   requestGrowth: number
+  currentUser?: any
   leaveBalances: Array<{
     id: string
     leave_type: string
@@ -364,11 +366,13 @@ export function EmployeeStats() {
 
   const fetchStats = async () => {
     try {
+      const user = await getCurrentUser()
       const response = await fetch("/api/employee/stats")
       if (response.ok) {
         const data = await response.json()
         setStats({
           ...data,
+          currentUser: user,
           leaveGrowth: 5,
           hoursGrowth: 12,
           salaryGrowth: 8,
@@ -405,33 +409,59 @@ export function EmployeeStats() {
 
   const handleClockInOut = async () => {
     try {
-      const response = await fetch("/api/employee/time-tracking", {
+      // Get current user directly
+      const currentUser = await getCurrentUser()
+      if (!currentUser) {
+        toast.error("Authentication error", {
+          description: "Please log in again to clock in/out.",
+        })
+        return
+      }
+
+      console.log("[Employee Stats] Clock in/out request:", {
+        action: stats.isCurrentlyClockedIn ? "clock_out" : "clock_in",
+        employee_id: currentUser.id,
+        currentUser: currentUser
+      })
+
+      const loadingToastId = toast.loading(stats.isCurrentlyClockedIn ? "Clocking out..." : "Clocking in...", {
+        description: stats.isCurrentlyClockedIn 
+          ? "Processing your clock out request." 
+          : "Processing your clock in request.",
+      });
+
+      const response = await fetch("/api/time-entries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: stats.isCurrentlyClockedIn ? "clock_out" : "clock_in",
+          employee_id: currentUser.id,
         }),
       })
 
+      const data = await response.json()
+      console.log("[Employee Stats] API response:", { status: response.status, data })
+
+      // Dismiss loading toast
+      toast.dismiss(loadingToastId);
+
       if (response.ok) {
-        toast({
-          title: "Success",
-          description: stats.isCurrentlyClockedIn ? "Clocked out successfully" : "Clocked in successfully",
+        toast.success(stats.isCurrentlyClockedIn ? "Clocked out successfully!" : "Clocked in successfully!", {
+          description: stats.isCurrentlyClockedIn 
+            ? "Great work today! You have been clocked out." 
+            : "Welcome back! You have been clocked in.",
         })
         fetchStats()
       } else {
-        toast({
-          title: "Error",
-          description: "Failed to clock in/out",
-          variant: "destructive",
+        console.error("[Employee Stats] Clock in/out failed:", data)
+        toast.error("Failed to clock in/out", {
+          description: data.error || data.details || "There was an error processing your request. Please try again.",
         })
       }
     } catch (error) {
-      console.error("Error clocking in/out:", error)
-      toast({
-        title: "Error",
-        description: "Failed to clock in/out",
-        variant: "destructive",
+      console.error("[Employee Stats] Error clocking in/out:", error)
+      toast.error("Failed to clock in/out", {
+        description: "An unexpected error occurred. Please try again.",
       })
     }
   }
@@ -647,7 +677,7 @@ export function EmployeeStats() {
       </div>
 
       {/* Time Tracking Card */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl border border-gray-100 p-4 md:p-6 text-white">
+      {/* <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl border border-gray-100 p-4 md:p-6 text-white">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-4 md:space-y-0">
           <div className="flex-1">
             <h3 className="text-lg md:text-xl font-semibold mb-2">Time Tracking</h3>
@@ -684,10 +714,10 @@ export function EmployeeStats() {
             )}
           </Button>
         </div>
-      </div>
+      </div> */}
 
       {/* Statistics Cards */}
-      <div className="grid-responsive-4 gap-responsive">
+      {/* <div className="grid-responsive-4 gap-responsive">
         {statCards.map((stat, index) => (
           <div key={index} className="bg-white rounded-2xl border border-gray-100 p-4 md:p-6 hover:shadow-lg transition-all duration-200">
             <div className="flex items-center justify-between mb-3 md:mb-4">
@@ -711,7 +741,7 @@ export function EmployeeStats() {
             </div>
           </div>
         ))}
-      </div>
+      </div> */}
 
       {/* Leave Management Section */}
       <div className="space-y-4 md:space-y-6">
@@ -731,13 +761,13 @@ export function EmployeeStats() {
               <Calendar className="w-4 h-4 mr-2" />
               {isLeaveDataLoading ? "Refreshing..." : "Refresh"}
             </Button>
-            <Button 
+            {/* <Button 
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-sm md:text-base"
               size="sm"
             >
               <Plus className="w-4 h-4 mr-2" />
               Request Leave
-            </Button>
+            </Button> */}
           </div>
         </div>
 

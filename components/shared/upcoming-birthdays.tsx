@@ -33,8 +33,8 @@ interface MonthGroup {
   isCurrentMonth: boolean
 }
 
-export function UpcomingBirthdays({ 
-  showAllMonths = false, 
+export function UpcomingBirthdays({
+  showAllMonths = false,
   maxEmployees = 4,
   title = "Upcoming Birthdays",
   description = "Celebrate your colleagues!"
@@ -58,17 +58,17 @@ export function UpcomingBirthdays({
       setIsLoading(true)
       console.log("Fetching upcoming birthdays...")
       const response = await fetch("/api/employee/search")
-      
+
       if (response.ok) {
         const employees: Employee[] = await response.json()
         console.log("Fetched employees for birthdays:", employees.length)
         console.log("Employees with birth dates:", employees.filter(emp => emp.birth_date).length)
         console.log("Sample employee with birth date:", employees.find(emp => emp.birth_date))
-        
+
         const today = new Date()
         const currentYear = today.getFullYear()
         const currentMonth = today.getMonth()
-        
+
         // Calculate upcoming birthdays
         const birthdayData: BirthdayEmployee[] = employees
           .filter(emp => emp.birth_date) // Only employees with birth dates
@@ -76,33 +76,33 @@ export function UpcomingBirthdays({
             console.log("Processing birthday for:", emp.full_name, "Birth date:", emp.birth_date)
             const birthDate = new Date(emp.birth_date!)
             console.log("Parsed birth date:", birthDate, "Valid:", !isNaN(birthDate.getTime()))
-            
+
             if (isNaN(birthDate.getTime())) {
               console.log("Invalid birth date, skipping:", emp.full_name)
               return null
             }
-            
+
             const birthMonth = birthDate.getMonth()
             const birthDay = birthDate.getDate()
-            
+
             // Calculate this year's birthday
             let thisYearBirthday = new Date(currentYear, birthMonth, birthDay)
-            
+
             // If birthday has passed this year, use next year's date
             if (thisYearBirthday < today) {
               thisYearBirthday = new Date(currentYear + 1, birthMonth, birthDay)
             }
-            
+
             const daysUntilBirthday = Math.ceil(
               (thisYearBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
             )
-            
+
             const age = currentYear - birthDate.getFullYear()
             const monthNames = [
               'January', 'February', 'March', 'April', 'May', 'June',
               'July', 'August', 'September', 'October', 'November', 'December'
             ]
-            
+
             return {
               ...emp,
               daysUntilBirthday,
@@ -114,7 +114,7 @@ export function UpcomingBirthdays({
           })
           .filter((item): item is BirthdayEmployee => item !== null) // Remove null entries
           .sort((a, b) => a.daysUntilBirthday - b.daysUntilBirthday) // Sort by closest birthday
-        
+
         console.log("Final birthday data:", birthdayData)
         setUpcomingBirthdays(birthdayData)
 
@@ -148,11 +148,11 @@ export function UpcomingBirthdays({
           })
 
         setMonthGroups(groups)
-        
+
         // Auto-expand current month and next month
         const nextMonth = (currentMonth + 1) % 12
         setExpandedMonths(new Set([currentMonth, nextMonth]))
-        
+
         console.log("Upcoming birthdays:", birthdayData)
         console.log("Month groups:", groups)
       } else {
@@ -190,13 +190,12 @@ export function UpcomingBirthdays({
   }
 
   const renderEmployeeCard = (employee: BirthdayEmployee, isNext: boolean = false) => (
-    <div 
-      key={employee.id} 
-      className={`relative flex items-center space-x-3 p-3 rounded-xl transition-all duration-300 ${
-        isNext 
-          ? 'bg-gradient-to-r from-pink-100 via-purple-50 to-blue-50 border-2 border-pink-200 shadow-md hover:shadow-lg' 
+    <div
+      key={employee.id}
+      className={`relative flex items-center space-x-3 p-3 rounded-xl transition-all duration-300 ${isNext
+          ? 'bg-gradient-to-r from-pink-100 via-purple-50 to-blue-50 border-2 border-pink-200 shadow-md hover:shadow-lg'
           : 'hover:bg-gray-50 border border-transparent hover:border-gray-200'
-      }`}
+        }`}
     >
       {/* Special decoration for next birthday */}
       {isNext && (
@@ -207,15 +206,14 @@ export function UpcomingBirthdays({
           </div>
         </div>
       )}
-      
+
       <div className="relative">
         <Avatar className={`${isNext ? 'w-12 h-12' : 'w-10 h-10'} ${isNext ? 'ring-2 ring-pink-300 ring-offset-2' : ''}`}>
           <AvatarImage src={employee.profile_photo} alt={employee.full_name} />
-          <AvatarFallback className={`${
-            isNext 
-              ? 'bg-gradient-to-br from-pink-500 to-purple-500' 
+          <AvatarFallback className={`${isNext
+              ? 'bg-gradient-to-br from-pink-500 to-purple-500'
               : 'bg-gradient-to-br from-pink-400 to-purple-400'
-          } text-white font-semibold ${isNext ? 'text-base' : 'text-sm'}`}>
+            } text-white font-semibold ${isNext ? 'text-base' : 'text-sm'}`}>
             {employee.full_name?.charAt(0) || 'E'}
           </AvatarFallback>
         </Avatar>
@@ -227,7 +225,7 @@ export function UpcomingBirthdays({
           </div>
         )}
       </div>
-      
+
       <div className="flex-1 min-w-0">
         <div className="flex flex-col space-y-1">
           <h4 className={`${isNext ? 'text-sm font-bold' : 'text-xs font-semibold'} text-gray-900 truncate`}>
@@ -239,13 +237,12 @@ export function UpcomingBirthdays({
           </div>
         </div>
       </div>
-      
+
       <div className="text-right flex-shrink-0">
-        <Badge className={`text-xs ${
-          isNext 
-            ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg' 
+        <Badge className={`text-xs ${isNext
+            ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg'
             : getBirthdayBadgeColor(employee.daysUntilBirthday)
-        } ${isNext ? 'animate-pulse' : ''}`}>
+          } ${isNext ? 'animate-pulse' : ''}`}>
           {getBirthdayText(employee.daysUntilBirthday)}
         </Badge>
         <div className={`text-xs mt-1 ${isNext ? 'text-pink-700 font-medium' : 'text-gray-500'}`}>
@@ -314,7 +311,7 @@ export function UpcomingBirthdays({
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="bg-gradient-to-r from-pink-50 to-purple-50 border-b border-pink-100">
+      {/* <CardHeader className="bg-gradient-to-r from-pink-50 to-purple-50 border-b border-pink-100">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <div className="p-2 bg-white rounded-full shadow-sm">
@@ -332,33 +329,31 @@ export function UpcomingBirthdays({
             </div>
           )}
         </div>
-      </CardHeader>
+      </CardHeader> */}
       <CardContent className="p-6">
         {showAllMonths ? (
           <div className="space-y-4">
             {monthGroups.map((group) => (
-              <Collapsible 
-                key={group.monthNumber} 
+              <Collapsible
+                key={group.monthNumber}
                 open={expandedMonths.has(group.monthNumber)}
                 onOpenChange={() => toggleMonth(group.monthNumber)}
               >
                 <CollapsibleTrigger asChild>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     className="w-full justify-between p-3 h-auto hover:bg-gray-50"
                   >
                     <div className="flex items-center space-x-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        group.isCurrentMonth 
-                          ? 'bg-pink-100 text-pink-600' 
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${group.isCurrentMonth
+                          ? 'bg-pink-100 text-pink-600'
                           : 'bg-gray-100 text-gray-600'
-                      }`}>
+                        }`}>
                         <Cake className="w-4 h-4" />
                       </div>
                       <div className="text-left">
-                        <h3 className={`font-semibold ${
-                          group.isCurrentMonth ? 'text-pink-700' : 'text-gray-900'
-                        }`}>
+                        <h3 className={`font-semibold ${group.isCurrentMonth ? 'text-pink-700' : 'text-gray-900'
+                          }`}>
                           {group.month}
                         </h3>
                         <p className="text-xs text-gray-500">
@@ -374,7 +369,7 @@ export function UpcomingBirthdays({
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-2 mt-2">
-                  {group.employees.map((employee, index) => 
+                  {group.employees.map((employee, index) =>
                     renderEmployeeCard(employee, index === 0 && group.isCurrentMonth)
                   )}
                 </CollapsibleContent>
@@ -383,7 +378,7 @@ export function UpcomingBirthdays({
           </div>
         ) : (
           <div className="space-y-3">
-            {upcomingBirthdays.slice(0, maxEmployees).map((employee, index) => 
+            {upcomingBirthdays.slice(0, maxEmployees).map((employee, index) =>
               renderEmployeeCard(employee, index === 0)
             )}
           </div>

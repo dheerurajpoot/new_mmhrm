@@ -13,6 +13,7 @@ import { FinancialManagement } from "./financial-management"
 import { LeaveManagement } from "./leave-management"
 import { AdminSettings } from "./admin-settings"
 import { TeamManagement } from "./team-management"
+import { AttendanceManagement } from "./attendance-management"
 
 export function AdminDashboard() {
   const [activeSection, setActiveSection] = useState("overview")
@@ -40,6 +41,8 @@ export function AdminDashboard() {
         return <FinancialManagement />
       case "leaves":
         return <LeaveManagement />
+      case "attendance":
+        return <AttendanceManagement />
       case "settings":
         return <AdminSettings />
       default:
@@ -61,6 +64,8 @@ export function AdminDashboard() {
         return { title: "Financial Management", description: "Manage payroll, compensation, and finances" }
       case "leaves":
         return { title: "Leave Management", description: "Manage leave requests, balances, and types" }
+      case "attendance":
+        return { title: "Attendance Management", description: "Monitor and manage employee attendance and time tracking" }
       case "settings":
         return { title: "System Settings", description: "Configure system-wide settings and preferences" }
       default:

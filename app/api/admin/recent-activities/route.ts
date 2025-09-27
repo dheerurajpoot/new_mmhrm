@@ -212,22 +212,24 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // Process time entries (clock in/out) - only recent ones
+      // Process time entries (clock in/out) - create separate activities for clock in and clock out
       for (const timeEntry of recentTimeEntries) {
         const employee = await getEmployeeData(timeEntry.employee_id)
         
         if (employee) {
+          // Clock In Activity
           activities.push({
-            id: `time-${timeEntry._id}`,
-            type: 'time_entry',
-            title: 'Time Entry',
-            description: `${employee.full_name || employee.email} logged time entry`,
+            id: `clock-in-${timeEntry._id}`,
+            type: 'clock_in',
+            title: 'Clock In',
+            description: `${employee.full_name || employee.email} clocked in at ${new Date(timeEntry.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
             details: {
               clockIn: timeEntry.clock_in,
               clockOut: timeEntry.clock_out,
               breakDuration: timeEntry.break_duration,
               totalHours: timeEntry.total_hours,
-              date: timeEntry.date
+              date: timeEntry.date,
+              action: 'clock_in'
             },
             user: {
               name: employee.full_name || employee.email,
@@ -235,9 +237,35 @@ export async function GET(request: NextRequest) {
               profile_photo: employee.profile_photo,
               role: employee.role
             },
-            timestamp: timeEntry.created_at || new Date(),
-            status: 'logged'
+            timestamp: timeEntry.clock_in,
+            status: 'clocked_in'
           })
+          
+          // Clock Out Activity (if exists)
+          if (timeEntry.clock_out) {
+            activities.push({
+              id: `clock-out-${timeEntry._id}`,
+              type: 'clock_out',
+              title: 'Clock Out',
+              description: `${employee.full_name || employee.email} clocked out at ${new Date(timeEntry.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+              details: {
+                clockIn: timeEntry.clock_in,
+                clockOut: timeEntry.clock_out,
+                breakDuration: timeEntry.break_duration,
+                totalHours: timeEntry.total_hours,
+                date: timeEntry.date,
+                action: 'clock_out'
+              },
+              user: {
+                name: employee.full_name || employee.email,
+                email: employee.email,
+                profile_photo: employee.profile_photo,
+                role: employee.role
+              },
+              timestamp: timeEntry.clock_out,
+              status: 'clocked_out'
+            })
+          }
         }
       }
 

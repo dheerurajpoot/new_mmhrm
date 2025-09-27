@@ -182,6 +182,14 @@ export function AppSidebar({ role }: AppSidebarProps) {
 						textColor: "text-purple-700"
 					},
 					{ 
+						id: "attendance", 
+						label: "Attendance", 
+						icon: Clock, 
+						color: "from-teal-500 to-teal-600",
+						bgColor: "bg-teal-50 hover:bg-teal-100",
+						textColor: "text-teal-700"
+					},
+					{ 
 						id: "settings", 
 						label: "Settings", 
 						icon: Settings, 
