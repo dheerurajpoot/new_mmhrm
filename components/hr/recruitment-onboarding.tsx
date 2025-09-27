@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { UserPlus, Briefcase, CheckCircle } from "lucide-react"
-import { toast } from "@/hooks/use-toast"
+import { toast } from "sonner"
 
 interface JobPosting {
   id: string

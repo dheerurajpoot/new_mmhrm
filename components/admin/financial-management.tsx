@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { DollarSign, Edit, Plus, Trash2, Calculator } from "lucide-react"
-import { toast } from "@/hooks/use-toast"
+import { toast } from "sonner"
 import {
   updateEmployeeFinances,
   createPayrollRecord,

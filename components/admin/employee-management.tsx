@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Trash2, Edit, UserPlus } from "lucide-react"
-import { toast } from "@/hooks/use-toast"
+import { toast } from "sonner"
 import { createUser, updateEmployee, deleteEmployee } from "@/app/actions/admin"
 
 interface Employee {

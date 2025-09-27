@@ -21,7 +21,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { SimpleSelect } from "@/components/ui/simple-select"
 import { UserPlus, Search } from "lucide-react"
-import { toast } from "@/hooks/use-toast"
+import { toast } from "sonner"
 import type { Profile, UserRole } from "@/lib/types"
 import { createUser } from "@/app/actions/admin"
 
@@ -103,8 +103,7 @@ export function UserManagement() {
 
       if (result.success) {
         console.log(" User created successfully")
-        toast({
-          title: "User created",
+        toast.success("User created successfully!", {
           description: `An email verification link has been sent to ${newUser.email}.`,
         })
 
@@ -123,11 +122,15 @@ export function UserManagement() {
         fetchUsers()
       } else {
         console.error(" Failed to create user:", result.error)
-        toast({ title: "Error", description: result.error || "Error creating user", variant: "destructive" })
+        toast.error("Error creating user", {
+          description: result.error || "Failed to create user. Please try again.",
+        })
       }
     } catch (error) {
       console.error(" Error in handleAddUser:", error)
-      toast({ title: "Error", description: "Error creating user. Please try again.", variant: "destructive" })
+      toast.error("Error creating user", {
+        description: "An unexpected error occurred. Please try again.",
+      })
     } finally {
       setIsCreatingUser(false)
     }
@@ -142,11 +145,15 @@ export function UserManagement() {
       })
 
       if (!response.ok) throw new Error("Failed to update user role")
-      toast({ title: "Role updated", description: "User role changed successfully." })
+      toast.success("Role updated successfully!", {
+        description: "User role has been changed successfully.",
+      })
       fetchUsers()
     } catch (error) {
       console.error("Error updating user role:", error)
-      toast({ title: "Error", description: "Failed to update user role", variant: "destructive" })
+      toast.error("Failed to update user role", {
+        description: "There was an error updating the user role. Please try again.",
+      })
     }
   }
 
@@ -174,13 +181,17 @@ export function UserManagement() {
         }),
       })
       if (!response.ok) throw new Error("Failed to save user changes")
-      toast({ title: "User updated", description: "User details saved successfully." })
+      toast.success("User updated successfully!", {
+        description: "User details have been saved successfully.",
+      })
       setIsEditOpen(false)
       setEditingUser(null)
       fetchUsers()
     } catch (error) {
       console.error("Error saving user:", error)
-      toast({ title: "Error", description: "Failed to save user changes", variant: "destructive" })
+      toast.error("Failed to save user changes", {
+        description: "There was an error saving the user details. Please try again.",
+      })
     } finally {
       setIsSavingEdit(false)
     }
@@ -192,11 +203,15 @@ export function UserManagement() {
     try {
       const response = await fetch(`/api/users/${userId}`, { method: "DELETE" })
       if (!response.ok) throw new Error("Failed to delete user")
-      toast({ title: "User deleted", description: "The user has been removed." })
+      toast.success("User deleted successfully!", {
+        description: "The user has been removed from the system.",
+      })
       fetchUsers()
     } catch (error) {
       console.error("Error deleting user:", error)
-      toast({ title: "Error", description: "Failed to delete user", variant: "destructive" })
+      toast.error("Failed to delete user", {
+        description: "There was an error deleting the user. Please try again.",
+      })
     }
   }
 

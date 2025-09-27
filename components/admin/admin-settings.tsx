@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Settings, Palette, Image, Globe, Mail, Phone } from "lucide-react"
-import { toast } from "@/hooks/use-toast"
+import { toast } from "sonner"
 
 interface WebsiteSettings {
   id: string

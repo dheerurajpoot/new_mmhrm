@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { toast } from "@/hooks/use-toast"
+import { toast } from "sonner"
 import { User, Mail, Phone, MapPin, Building, Calendar, Edit, AlertTriangle, Upload, Camera } from "lucide-react"
 import type { Profile } from "@/lib/types"
 
@@ -74,18 +74,15 @@ export function EmployeeProfile() {
 
       if (!response.ok) throw new Error("Failed to update profile")
 
-      toast({
-        title: "Success",
-        description: "Profile updated successfully",
+      toast.success("Profile updated successfully!", {
+        description: "Your profile information has been saved.",
       })
       setIsEditing(false)
       fetchProfile()
     } catch (error) {
       console.error("Error updating profile:", error)
-      toast({
-        title: "Error",
-        description: "Failed to update profile",
-        variant: "destructive",
+      toast.error("Failed to update profile", {
+        description: "There was an error updating your profile. Please try again.",
       })
     } finally {
       setIsSaving(false)
@@ -106,19 +103,15 @@ export function EmployeeProfile() {
     if (!file) return
 
     if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: "Error",
-        description: "File size must be less than 5MB",
-        variant: "destructive",
+      toast.error("File size too large", {
+        description: "Please select a file smaller than 5MB.",
       })
       return
     }
 
     if (!file.type.startsWith("image/")) {
-      toast({
-        title: "Error",
-        description: "Please select an image file",
-        variant: "destructive",
+      toast.error("Invalid file type", {
+        description: "Please select a valid image file (JPG, PNG, etc.).",
       })
       return
     }
@@ -134,26 +127,21 @@ export function EmployeeProfile() {
       })
 
       if (response.ok) {
-        toast({
-          title: "Success",
-          description: "Profile photo updated successfully",
+        toast.success("Profile photo updated!", {
+          description: "Your profile photo has been updated successfully.",
         })
         fetchProfile()
         // Dispatch event to update sidebar
         window.dispatchEvent(new CustomEvent("profileUpdated"))
       } else {
-        toast({
-          title: "Error",
-          description: "Failed to upload profile photo",
-          variant: "destructive",
+        toast.error("Failed to upload photo", {
+          description: "There was an error uploading your profile photo.",
         })
       }
     } catch (error) {
       console.error("Error uploading photo:", error)
-      toast({
-        title: "Error",
-        description: "Failed to upload profile photo",
-        variant: "destructive",
+      toast.error("Failed to upload photo", {
+        description: "There was an error uploading your profile photo.",
       })
     } finally {
       setUploadingPhoto(false)

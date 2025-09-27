@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { createContext, useContext, useEffect, useState } from "react"
-import { toast } from "@/hooks/use-toast"
+import { toast } from "sonner"
 
 interface RealtimeContextType {
   isConnected: boolean

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Users, Settings, BarChart3, UserPlus, Calendar, Clock, DollarSign, User } from "lucide-react"
 import { getCurrentUser } from "@/lib/auth/client"
+import { toast } from "sonner"
 import type { Profile } from "@/lib/types"
 
 interface MobileBottomNavProps {
@@ -75,7 +76,32 @@ export function MobileBottomNav({ role, activeSection, onNavigate }: MobileBotto
             key={item.id}
             variant="ghost"
             size="sm"
-            onClick={() => onNavigate(item.id)}
+            onClick={() => {
+              const sectionNames = {
+                overview: "Dashboard",
+                users: "User Management",
+                teams: "Team Management",
+                employees: "Employee Management",
+                finances: "Financial Management",
+                leaves: "Leave Management",
+                settings: "Settings",
+                profile: "Profile",
+                time: "Time Tracking",
+                attendance: "Attendance",
+                recruitment: "Recruitment",
+                performance: "Performance",
+                compliance: "Compliance"
+              };
+              
+              const sectionName = sectionNames[item.id as keyof typeof sectionNames] || item.id;
+              
+              toast.info(`Switching to ${sectionName}`, {
+                description: `Loading ${sectionName.toLowerCase()}...`,
+                duration: 1000,
+              });
+              
+              onNavigate(item.id);
+            }}
             className={`flex flex-col items-center gap-1 h-auto py-2 px-3 ${
               activeSection === item.id ? "text-red-600 bg-red-50" : "text-gray-600 hover:text-gray-900"
             }`}

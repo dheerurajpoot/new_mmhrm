@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createUser, createSession } from "@/lib/auth/auth"
 import { getEmailVerificationTokensCollection, getUsersCollection } from "@/lib/mongodb/collections"
-import { sendVerificationEmail, generateVerificationToken } from "@/lib/services/email"
+import { sendVerificationEmail, generateVerificationToken, getBaseUrl } from "@/lib/services/email"
 
 export async function POST(request: NextRequest) {
   try {
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       // For development: if email fails, still return success but with different message
       // In production, you might want to handle this differently
       console.log(" Email service not configured, returning verification link for manual use")
-      const verificationUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/auth/verify-email?token=${verificationToken}`
+      const verificationUrl = `${getBaseUrl()}/auth/verify-email?token=${verificationToken}`
       
       return NextResponse.json({
         success: true,

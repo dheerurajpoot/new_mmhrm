@@ -39,6 +39,102 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
+/* Custom Toast Styling */
+.toast-custom {
+  background: rgba(255, 255, 255, 0.329) !important;
+  backdrop-filter: blur(5px) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+  color: rgb(17, 24, 39) !important;
+  padding: 16px 20px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  max-width: 400px !important;
+  min-width: 320px !important;
+  margin: 8px auto !important;
+  position: relative !important;
+  overflow: hidden !important;
+  transform: translateY(-20px) scale(0.95) !important;
+  animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+.toast-custom::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #06b6d4);
+  border-radius: 16px 16px 0 0;
+}
+
+.toast-custom[data-type="success"]::before {
+  background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.toast-custom[data-type="error"]::before {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+.toast-custom[data-type="warning"]::before {
+  background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+.toast-custom[data-type="info"]::before {
+  background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+}
+
+.toast-custom[data-type="loading"]::before {
+  background: linear-gradient(90deg, #6366f1, #4f46e5);
+  animation: loadingBar 2s ease-in-out infinite;
+}
+
+@keyframes toastSlideIn {
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes loadingBar {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.toast-custom .toast-title {
+  font-weight: 600 !important;
+  font-size: 15px !important;
+  margin-bottom: 4px !important;
+  color: rgb(17, 24, 39) !important;
+}
+
+.toast-custom .toast-description {
+  color: rgb(75, 85, 99) !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  line-height: 1.4 !important;
+}
+
+/* Dark mode toast styling */
+.dark .toast-custom {
+  background: rgba(17, 24, 39, 0.95) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: rgb(249, 250, 251) !important;
+}
+
+.dark .toast-custom .toast-title {
+  color: rgb(249, 250, 251) !important;
+}
+
+.dark .toast-custom .toast-description {
+  color: rgb(156, 163, 175) !important;
+}
+
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);

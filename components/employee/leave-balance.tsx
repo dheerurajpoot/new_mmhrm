@@ -105,7 +105,9 @@ export function EmployeeLeaveBalance() {
 
       if (!response.ok) throw new Error("Failed to submit leave request")
 
-      toast.success("Leave request submitted successfully")
+      toast.success("Leave request submitted successfully!", {
+        description: "Your leave request has been sent for approval.",
+      })
 
       setLeaveRequest({
         leave_type: "",
@@ -117,7 +119,9 @@ export function EmployeeLeaveBalance() {
       fetchLeaveData()
     } catch (error) {
       console.error("Error submitting leave request:", error)
-      toast.error("Failed to submit leave request")
+      toast.error("Failed to submit leave request", {
+        description: "There was an error submitting your leave request. Please try again.",
+      })
     }
   }
 

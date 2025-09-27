@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Search, Check, X, Calendar } from "lucide-react"
+import { toast } from "sonner"
 import type { LeaveRequest, Profile } from "@/lib/types"
 
 interface LeaveRequestWithProfile extends LeaveRequest {
@@ -48,6 +49,10 @@ export function LeaveApprovals() {
 
   const handleApproveReject = async (requestId: string, status: "approved" | "rejected") => {
     try {
+      toast.loading(`${status === "approved" ? "Approving" : "Rejecting"} leave request...`, {
+        description: "Please wait while we process your request.",
+      });
+
       const response = await fetch(`/api/leave-requests/${requestId}`, {
         method: "PATCH",
         headers: {
@@ -61,18 +66,15 @@ export function LeaveApprovals() {
 
       if (!response.ok) throw new Error("Failed to update leave request")
 
-      toast({
-        title: "Success",
-        description: `Leave request ${status} successfully`,
+      toast.success(`Leave request ${status} successfully!`, {
+        description: status === "approved" ? "The leave request has been approved." : "The leave request has been rejected.",
       })
 
       fetchLeaveRequests()
     } catch (error) {
       console.error("Error updating leave request:", error)
-      toast({
-        title: "Error",
-        description: "Failed to update leave request",
-        variant: "destructive",
+      toast.error("Failed to update leave request", {
+        description: "There was an error processing your request. Please try again.",
       })
     }
   }

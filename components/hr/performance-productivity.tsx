@@ -22,7 +22,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Target, Award, BarChart3, Star } from "lucide-react"
-import { toast } from "@/hooks/use-toast"
+import { toast } from "sonner"
 
 interface PerformanceReview {
   id: string

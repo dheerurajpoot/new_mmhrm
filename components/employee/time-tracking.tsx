@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Clock, Play, Pause, Calendar } from "lucide-react"
 import { getCurrentUser } from "@/lib/auth/client"
+import { toast } from "sonner"
 
 interface TimeEntry {
   id: string
@@ -77,23 +78,42 @@ export function TimeTracking() {
   const handleClockInOut = async () => {
     if (!currentUser) return
 
+    const action = isCurrentlyClockedIn ? "clock_out" : "clock_in"
+    const actionText = isCurrentlyClockedIn ? "Clock Out" : "Clock In"
+
     try {
+      toast.loading(`${actionText}...`, {
+        description: `Processing your ${actionText.toLowerCase()} request.`,
+      });
+
       const response = await fetch("/api/time-entries", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          action: isCurrentlyClockedIn ? "clock_out" : "clock_in",
+          action,
           employee_id: currentUser._id,
         }),
       })
 
       if (response.ok) {
+        toast.success(`${actionText} successful!`, {
+          description: isCurrentlyClockedIn 
+            ? "You have been clocked out successfully." 
+            : "You have been clocked in successfully.",
+        });
         fetchTimeEntries()
+      } else {
+        toast.error(`${actionText} failed`, {
+          description: `There was an error processing your ${actionText.toLowerCase()} request.`,
+        });
       }
     } catch (error) {
       console.error("Error clocking in/out:", error)
+      toast.error(`${actionText} failed`, {
+        description: "An unexpected error occurred. Please try again.",
+      });
     }
   }
 

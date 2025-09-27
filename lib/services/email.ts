@@ -31,13 +31,10 @@ try {
     });
     console.log('[Email Service] SMTP transport created successfully');
     
-    // Test the connection
-    try {
-      await transport.verify();
-      console.log('[Email Service] SMTP connection verified successfully');
-    } catch (verifyError) {
-      console.error('[Email Service] SMTP connection verification failed:', verifyError);
-    }
+    // Test the connection asynchronously
+    transport.verify()
+      .then(() => console.log('[Email Service] SMTP connection verified successfully'))
+      .catch((verifyError) => console.error('[Email Service] SMTP connection verification failed:', verifyError));
   } else {
     console.log('[Email Service] SMTP credentials not configured, email sending will be disabled');
     console.log('[Email Service] Please set SMTP_USER and SMTP_PASS environment variables');
@@ -65,7 +62,7 @@ export async function sendVerificationEmail(
     await transport!.verify();
     console.log('[Email Service] SMTP connection verified successfully');
 
-    const verificationUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/auth/verify-email?token=${verificationToken}`
+    const verificationUrl = `${getBaseUrl()}/auth/verify-email?token=${verificationToken}`
 
     const mailOptions = {
       from: process.env.FROM_EMAIL || process.env.SMTP_USER || 'noreply@yourcompany.com',
@@ -139,6 +136,11 @@ export async function sendVerificationEmail(
 
 export function generateVerificationToken(): string {
   return crypto.randomBytes(32).toString('hex')
+}
+
+// Helper function to get the base URL from environment variables
+export function getBaseUrl(): string {
+  return process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || 'http://localhost:3000'
 }
 
 // Leave request notification to admins/HR

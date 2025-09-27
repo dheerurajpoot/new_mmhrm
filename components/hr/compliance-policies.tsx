@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Shield, FileText } from "lucide-react"
-import { toast } from "@/hooks/use-toast"
+import { toast } from "sonner"
 
 interface Policy {
   id: string
