@@ -185,11 +185,8 @@ export function PerformanceProductivity() {
       ])
     } catch (error) {
       console.error("Error fetching data:", error)
-      toast({
-        title: "Error",
-        description: "Failed to fetch performance data",
-        variant: "destructive",
-      })
+      toast("Failed to fetch performance data",
+       )
     } finally {
       setLoading(false)
     }
@@ -212,16 +209,11 @@ export function PerformanceProductivity() {
       setIsReviewDialogOpen(false)
       resetReviewForm()
 
-      toast({
-        title: "Success",
-        description: "Performance review created successfully",
-      })
+      toast("Performance review created successfully",
+      )
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create performance review",
-        variant: "destructive",
-      })
+      toast("Failed to create performance review",
+       )
     } finally {
       setLoading(false)
     }
@@ -244,16 +236,11 @@ export function PerformanceProductivity() {
       setIsGoalDialogOpen(false)
       resetGoalForm()
 
-      toast({
-        title: "Success",
-        description: "Goal created successfully",
-      })
+      toast("Goal created successfully",
+      )
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create goal",
-        variant: "destructive",
-      })
+      toast("Failed to create goal",
+       )
     } finally {
       setLoading(false)
     }
@@ -277,16 +264,11 @@ export function PerformanceProductivity() {
       setIsMetricDialogOpen(false)
       resetMetricForm()
 
-      toast({
-        title: "Success",
-        description: "Productivity metric created successfully",
-      })
+      toast("Productivity metric created successfully",
+      )
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create productivity metric",
-        variant: "destructive",
-      })
+      toast("Failed to create productivity metric",
+       )
     } finally {
       setLoading(false)
     }

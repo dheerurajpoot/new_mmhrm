@@ -180,11 +180,8 @@ export function RecruitmentOnboarding() {
       ])
     } catch (error) {
       console.error("Error fetching data:", error)
-      toast({
-        title: "Error",
-        description: "Failed to fetch recruitment data",
-        variant: "destructive",
-      })
+      toast("Failed to fetch recruitment data",
+       )
     } finally {
       setLoading(false)
     }
@@ -207,16 +204,11 @@ export function RecruitmentOnboarding() {
       setIsJobDialogOpen(false)
       resetJobForm()
 
-      toast({
-        title: "Success",
-        description: "Job posting created successfully",
-      })
+      toast("Job posting created successfully",
+      )
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create job posting",
-        variant: "destructive",
-      })
+      toast("Failed to create job posting",
+       )
     } finally {
       setLoading(false)
     }
@@ -238,16 +230,11 @@ export function RecruitmentOnboarding() {
       setIsCandidateDialogOpen(false)
       resetCandidateForm()
 
-      toast({
-        title: "Success",
-        description: "Candidate added successfully",
-      })
+      toast("Candidate added successfully",
+      )
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to add candidate",
-        variant: "destructive",
-      })
+      toast( "Failed to add candidate",
+       )
     } finally {
       setLoading(false)
     }
@@ -268,16 +255,11 @@ export function RecruitmentOnboarding() {
       setIsTaskDialogOpen(false)
       resetTaskForm()
 
-      toast({
-        title: "Success",
-        description: "Onboarding task created successfully",
-      })
+      toast( "Onboarding task created successfully",
+      )
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create onboarding task",
-        variant: "destructive",
-      })
+      toast("Failed to create onboarding task",
+       )
     } finally {
       setLoading(false)
     }
@@ -287,18 +269,14 @@ export function RecruitmentOnboarding() {
     setCandidates(
       candidates.map((candidate) => (candidate.id === candidateId ? { ...candidate, status: newStatus } : candidate)),
     )
-    toast({
-      title: "Success",
-      description: "Candidate status updated",
-    })
+    toast("Candidate status updated",
+    )
   }
 
   const updateTaskStatus = (taskId: string, newStatus: OnboardingTask["status"]) => {
     setOnboardingTasks(onboardingTasks.map((task) => (task.id === taskId ? { ...task, status: newStatus } : task)))
-    toast({
-      title: "Success",
-      description: "Task status updated",
-    })
+    toast( "Task status updated",
+    )
   }
 
   const resetJobForm = () => {

@@ -175,11 +175,8 @@ export function CompliancePolicies() {
       ])
     } catch (error) {
       console.error("Error fetching data:", error)
-      toast({
-        title: "Error",
-        description: "Failed to fetch compliance data",
-        variant: "destructive",
-      })
+      toast("Failed to fetch compliance data",
+       )
     } finally {
       setLoading(false)
     }
@@ -200,16 +197,11 @@ export function CompliancePolicies() {
       setIsPolicyDialogOpen(false)
       resetPolicyForm()
 
-      toast({
-        title: "Success",
-        description: "Policy created successfully",
-      })
+      toast( "Policy created successfully",
+      )
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create policy",
-        variant: "destructive",
-      })
+      toast("Failed to create policy",
+       )
     } finally {
       setLoading(false)
     }
@@ -230,16 +222,11 @@ export function CompliancePolicies() {
       setIsAuditDialogOpen(false)
       resetAuditForm()
 
-      toast({
-        title: "Success",
-        description: "Audit scheduled successfully",
-      })
+      toast("Audit scheduled successfully",
+      )
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to schedule audit",
-        variant: "destructive",
-      })
+      toast("Failed to schedule audit",
+       )
     } finally {
       setLoading(false)
     }
