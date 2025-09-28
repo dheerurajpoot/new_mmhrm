@@ -4,7 +4,7 @@ import { ProtectedRoute } from "@/components/shared/protected-route";
 
 export default function EmployeePage() {
 	return (
-		<ProtectedRoute requiredRole="employee">
+		<ProtectedRoute requiredRole='employee'>
 			<EmployeeDashboard />
 		</ProtectedRoute>
 	);
