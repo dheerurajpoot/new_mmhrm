@@ -20,7 +20,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Calendar, Plus, Clock, Plane, Heart, Stethoscope, Laptop, HeartHandshake, Timer, Zap, Flower } from "lucide-react"
+import { Calendar, Plus, Clock, Plane, Heart, Stethoscope, Laptop, HeartHandshake, Timer, Zap, Flower, Loader2 } from "lucide-react"
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts"
 import type { LeaveRequest } from "@/lib/types"
 
@@ -28,7 +28,8 @@ export function EmployeeLeaveBalance() {
   const [leaveBalances, setLeaveBalances] = useState<any[]>([])
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([])
   const [grantedLeaveTypes, setGrantedLeaveTypes] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isLeavePosting, setIsLeavePosting] = useState(false)
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false)
 
   const [leaveRequest, setLeaveRequest] = useState({
@@ -44,6 +45,7 @@ export function EmployeeLeaveBalance() {
 
   const fetchLeaveData = async () => {
     try {
+      setIsLoading(true)
       const [balancesResponse, requestsResponse, grantedTypesResponse] = await Promise.all([
         fetch("/api/employee/leave-balances"),
         fetch("/api/employee/leave-requests"),
@@ -53,18 +55,22 @@ export function EmployeeLeaveBalance() {
       if (balancesResponse.ok) {
         const balances = await balancesResponse.json()
         setLeaveBalances(balances || [])
+        setIsLoading(false)
       }
 
       if (requestsResponse.ok) {
         const requests = await requestsResponse.json()
         setLeaveRequests(requests || [])
+        setIsLoading(false)
       }
 
       if (grantedTypesResponse.ok) {
         const grantedTypes = await grantedTypesResponse.json()
         setGrantedLeaveTypes(grantedTypes || [])
+        setIsLoading(false)
       }
     } catch (error) {
+      setIsLoading(false)
       console.error("Error fetching leave data:", error)
     } finally {
       setIsLoading(false)
@@ -90,7 +96,7 @@ export function EmployeeLeaveBalance() {
         toast.error(`You only have ${selectedLeaveType.remaining_days} days left for ${leaveRequest.leave_type}`)
         return
       }
-
+      setIsLeavePosting(true)
       const response = await fetch("/api/employee/leave-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -104,19 +110,22 @@ export function EmployeeLeaveBalance() {
       })
 
       if (!response.ok) throw new Error("Failed to submit leave request")
+        
+        if (response.ok) {
+          toast.success("Leave request submitted successfully!", {
+            description: "Your leave request has been sent for approval.",
+          })
+          setLeaveRequest({
+            leave_type: "",
+            start_date: "",
+            end_date: "",
+            reason: "",
+          })
+          setIsRequestDialogOpen(false)
+          setIsLeavePosting(false)
+          fetchLeaveData()
+      }
 
-      toast.success("Leave request submitted successfully!", {
-        description: "Your leave request has been sent for approval.",
-      })
-
-      setLeaveRequest({
-        leave_type: "",
-        start_date: "",
-        end_date: "",
-        reason: "",
-      })
-      setIsRequestDialogOpen(false)
-      fetchLeaveData()
     } catch (error) {
       console.error("Error submitting leave request:", error)
       toast.error("Failed to submit leave request", {
@@ -269,7 +278,7 @@ export function EmployeeLeaveBalance() {
                     />
                   </div>
                   <Button type="submit" className="w-full">
-                    Submit Request
+                    {isLeavePosting ? 'Submitting...' : "Submit Request"}
                   </Button>
                 </form>
               </DialogContent>

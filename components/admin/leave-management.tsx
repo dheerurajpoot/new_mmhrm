@@ -43,7 +43,7 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Check, X, Edit, Plus, Trash2 } from "lucide-react";
+import { Calendar, Check, X, Edit, Plus, Trash2, Loader2 } from "lucide-react";
 import {
 	updateLeaveBalance,
 	createLeaveRequest,
@@ -99,6 +99,7 @@ export function LeaveManagement() {
 	const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
 	const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
 	const [loading, setLoading] = useState(true);
+	const [isLeaveUpdating, setIsLeaveUpdating] = useState(false);
 	const [isBalanceDialogOpen, setIsBalanceDialogOpen] = useState(false);
 	const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
 	const [isTypeDialogOpen, setIsTypeDialogOpen] = useState(false);
@@ -423,7 +424,7 @@ export function LeaveManagement() {
 		requestId: string,
 		status: "approved" | "rejected"
 	) => {
-		setLoading(true);
+		setIsLeaveUpdating(true);
 		try {
 			const response = await fetch(`/api/leave-requests/${requestId}`, {
 				method: "PATCH",
@@ -437,16 +438,19 @@ export function LeaveManagement() {
 			if (response.ok) {
 				toast.success(`Leave request ${status} successfully`);
 				fetchData();
+				setIsLeaveUpdating(false);
 			} else {
 				const errorData = await response.json();
 				toast.error(
 					errorData.error || "Failed to update leave request"
 				);
+				setIsLeaveUpdating(false);
 			}
 		} catch (error) {
 			toast.error("Failed to update leave request");
+			setIsLeaveUpdating(false);
 		} finally {
-			setLoading(false);
+			setIsLeaveUpdating(false);
 		}
 	};
 
@@ -842,7 +846,7 @@ export function LeaveManagement() {
 																			"approved"
 																		)
 																	}>
-																	<Check className='h-4 w-4' />
+																	{isLeaveUpdating ? (<Loader2 className='h-4 w-4 animate-spin' />) : (<Check className='h-4 w-4' />)}
 																</Button>
 																<Button
 																	variant='outline'
