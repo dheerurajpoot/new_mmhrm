@@ -53,13 +53,15 @@ export async function GET(request: NextRequest) {
 			// Seed defaults if empty
 			const count = await collection.countDocuments({});
 			if (count === 0) {
-				await collection.insertMany(
+				console.log("Seeding default leave types...");
+				const inserted = await collection.insertMany(
 					defaults.map((d) => ({
 						...d,
 						created_at: new Date(),
 						updated_at: new Date(),
 					}))
 				);
+				console.log("Inserted leave types:", inserted);
 			}
 
 			const docs = await collection.find({}).toArray();
@@ -67,9 +69,10 @@ export async function GET(request: NextRequest) {
 				id: (d as any)._id?.toString?.() || (d as any)._id,
 				name: d.name,
 				description: d.description,
-				days_per_year: d.max_days_per_year,
+				max_days_per_year: d.max_days_per_year,
 				carry_forward: d.carry_forward,
 			}));
+			console.log("Database leave types:", leaveTypes);
 		} catch (dbError) {
 			console.error("Database error:", dbError);
 			// Fallback to mock data for testing when database is not available
@@ -78,7 +81,7 @@ export async function GET(request: NextRequest) {
 					_id: "1",
 					name: "Casual leave",
 					description: "General purpose leave",
-					days_per_year: 12,
+					max_days_per_year: 12,
 					carry_forward: false,
 					created_at: new Date(),
 					updated_at: new Date(),
@@ -87,7 +90,7 @@ export async function GET(request: NextRequest) {
 					_id: "2",
 					name: "Sick leave",
 					description: "Illness or recovery",
-					days_per_year: 10,
+					max_days_per_year: 10,
 					carry_forward: true,
 					created_at: new Date(),
 					updated_at: new Date(),
@@ -96,7 +99,7 @@ export async function GET(request: NextRequest) {
 					_id: "3",
 					name: "Medical leave",
 					description: "Medical procedures",
-					days_per_year: 7,
+					max_days_per_year: 7,
 					carry_forward: false,
 					created_at: new Date(),
 					updated_at: new Date(),
@@ -105,7 +108,7 @@ export async function GET(request: NextRequest) {
 					_id: "4",
 					name: "Marriage leave",
 					description: "Marriage ceremony",
-					days_per_year: 7,
+					max_days_per_year: 7,
 					carry_forward: false,
 					created_at: new Date(),
 					updated_at: new Date(),
@@ -114,7 +117,7 @@ export async function GET(request: NextRequest) {
 					_id: "5",
 					name: "Halfday leave",
 					description: "Half-day absence",
-					days_per_year: 24,
+					max_days_per_year: 24,
 					carry_forward: false,
 					created_at: new Date(),
 					updated_at: new Date(),
@@ -123,7 +126,7 @@ export async function GET(request: NextRequest) {
 					_id: "6",
 					name: "Shortday leave",
 					description: "Short absence",
-					days_per_year: 24,
+					max_days_per_year: 24,
 					carry_forward: false,
 					created_at: new Date(),
 					updated_at: new Date(),
@@ -132,7 +135,7 @@ export async function GET(request: NextRequest) {
 					_id: "7",
 					name: "Mensuration leave",
 					description: "Period leave",
-					days_per_year: 12,
+					max_days_per_year: 12,
 					carry_forward: false,
 					created_at: new Date(),
 					updated_at: new Date(),
@@ -141,7 +144,7 @@ export async function GET(request: NextRequest) {
 					_id: "8",
 					name: "Workfrom home",
 					description: "WFH days",
-					days_per_year: 60,
+					max_days_per_year: 60,
 					carry_forward: false,
 					created_at: new Date(),
 					updated_at: new Date(),
@@ -154,12 +157,13 @@ export async function GET(request: NextRequest) {
 			id: type._id?.toString?.() || type._id,
 			name: type.name || "",
 			description: type.description || "",
-			days_per_year: type.days_per_year || type.max_days_per_year || 0,
+			max_days_per_year: type.max_days_per_year || type.days_per_year || 0,
 			carry_forward: type.carry_forward || false,
 			created_at: type.created_at || new Date(),
 			updated_at: type.updated_at || new Date(),
 		}));
 
+		console.log("Transformed leave types:", transformedLeaveTypes);
 		return NextResponse.json(transformedLeaveTypes);
 	} catch (error) {
 		console.error("API error:", error);

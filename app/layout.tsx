@@ -6,6 +6,7 @@ import { RealtimeProvider } from "@/components/shared/realtime-provider";
 import { UserProvider } from "@/context/user-context";
 import { GlobalSettingsProvider } from "@/components/shared/global-settings-provider";
 import { SettingsProvider } from "@/context/settings-context";
+import { PreloaderProvider } from "@/components/shared/preloader-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { getServerWebsiteSettings } from "@/lib/server-settings";
 
@@ -38,16 +39,18 @@ export default async function RootLayout({
 			<body
 				className="font-primary antialiased"
 				suppressHydrationWarning>
-				<RealtimeProvider>
-					<UserProvider>
-						<SettingsProvider initialSettings={settings}>
-							<GlobalSettingsProvider initialSettings={settings}>
-								<Suspense fallback={null}>{children}</Suspense>
-								<Toaster />
-							</GlobalSettingsProvider>
-						</SettingsProvider>
-					</UserProvider>
-				</RealtimeProvider>
+				<PreloaderProvider>
+					<RealtimeProvider>
+						<UserProvider>
+							<SettingsProvider initialSettings={settings}>
+								<GlobalSettingsProvider initialSettings={settings}>
+									<Suspense fallback={null}>{children}</Suspense>
+									<Toaster />
+								</GlobalSettingsProvider>
+							</SettingsProvider>
+						</UserProvider>
+					</RealtimeProvider>
+				</PreloaderProvider>
 			</body>
 		</html>
 	);

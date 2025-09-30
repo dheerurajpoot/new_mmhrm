@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
   try {
     const user = await getServerUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (user.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const collection = await getUsersCollection();
     const profile = await collection.findOne({ _id: new ObjectId(user._id!.toString()) });
@@ -43,19 +44,42 @@ export async function PATCH(request: NextRequest) {
   try {
     const user = await getServerUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (user.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    const { full_name, phone, address, birth_date, password } = await request.json();
+    const { 
+      full_name, 
+      email, 
+      phone, 
+      address, 
+      birth_date, 
+      department, 
+      position, 
+      hire_date, 
+      role, 
+      password 
+    } = await request.json();
 
     const collection = await getUsersCollection();
     
     // Prepare update data
     const updateData: any = {
       full_name: full_name || "",
+      email: email || "",
       phone: phone || "",
       address: address || "",
-      birth_date: birth_date || null,
+      department: department || "",
+      position: position || "",
+      role: role || "admin",
       updated_at: new Date(),
     };
+
+    // Handle dates
+    if (birth_date) {
+      updateData.birth_date = new Date(birth_date);
+    }
+    if (hire_date) {
+      updateData.hire_date = new Date(hire_date);
+    }
 
     // Handle password if provided
     if (password && password.trim() !== "") {

@@ -478,61 +478,240 @@ export function EmployeeLeaveBalance() {
       </Card>
 
       {/* Leave Requests History */}
-      <Card>
+      <Card className="bg-gradient-to-br from-green-50 via-white to-green-50/30 border-green-100">
         <CardHeader>
-          <CardTitle>Leave Request History</CardTitle>
-          <CardDescription>Your recent leave requests and their status</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-green-900">
+                <Calendar className="h-5 w-5" />
+                Leave Request History
+              </CardTitle>
+              <CardDescription className="text-green-700/80">
+                Track your leave requests and their current status
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-xs bg-green-100 text-green-700 border border-green-200 px-2 py-1 rounded-full">
+                {leaveRequests.length} requests
+              </span>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Type</TableHead>
-                  <TableHead className="hidden md:table-cell">Dates</TableHead>
-                  <TableHead className="hidden lg:table-cell">Days</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="hidden sm:table-cell">Submitted</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {leaveRequests.map((request) => (
-                  <TableRow key={request.id}>
-                    <TableCell>
-                      <Badge className={getLeaveTypeColor(request.leave_type)}>
-                        {request.leave_type.charAt(0).toUpperCase() + request.leave_type.slice(1)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      <div className="text-sm">
-                        <p>{new Date(request.start_date).toLocaleDateString()}</p>
-                        <p className="text-gray-500">to {new Date(request.end_date).toLocaleDateString()}</p>
+          {leaveRequests.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-20 h-20 bg-gradient-to-br from-green-100 to-green-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Calendar className="w-10 h-10 text-green-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Leave Requests Yet</h3>
+              <p className="text-gray-500 mb-4">You haven't submitted any leave requests.</p>
+              <Button 
+                onClick={() => setIsRequestDialogOpen(true)}
+                className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Submit Your First Request
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {leaveRequests.map((request, index) => {
+                // Get category colors and styles
+                const getCategoryStyle = (leaveType: string) => {
+                  switch (leaveType) {
+                    case 'annual':
+                      return {
+                        bg: 'bg-gradient-to-br from-blue-50 via-white to-blue-50/30',
+                        border: 'border-blue-100',
+                        hoverBorder: 'hover:border-blue-200',
+                        iconBg: 'bg-gradient-to-br from-blue-500 to-blue-600',
+                        icon: <Plane className="w-4 h-4 text-white" />,
+                        textColor: 'text-blue-900'
+                      };
+                    case 'sick':
+                      return {
+                        bg: 'bg-gradient-to-br from-red-50 via-white to-red-50/30',
+                        border: 'border-red-100',
+                        hoverBorder: 'hover:border-red-200',
+                        iconBg: 'bg-gradient-to-br from-red-500 to-red-600',
+                        icon: <Stethoscope className="w-4 h-4 text-white" />,
+                        textColor: 'text-red-900'
+                      };
+                    case 'personal':
+                      return {
+                        bg: 'bg-gradient-to-br from-purple-50 via-white to-purple-50/30',
+                        border: 'border-purple-100',
+                        hoverBorder: 'hover:border-purple-200',
+                        iconBg: 'bg-gradient-to-br from-purple-500 to-purple-600',
+                        icon: <Heart className="w-4 h-4 text-white" />,
+                        textColor: 'text-purple-900'
+                      };
+                    case 'emergency':
+                      return {
+                        bg: 'bg-gradient-to-br from-orange-50 via-white to-orange-50/30',
+                        border: 'border-orange-100',
+                        hoverBorder: 'hover:border-orange-200',
+                        iconBg: 'bg-gradient-to-br from-orange-500 to-orange-600',
+                        icon: <Zap className="w-4 h-4 text-white" />,
+                        textColor: 'text-orange-900'
+                      };
+                    case 'maternity':
+                      return {
+                        bg: 'bg-gradient-to-br from-pink-50 via-white to-pink-50/30',
+                        border: 'border-pink-100',
+                        hoverBorder: 'hover:border-pink-200',
+                        iconBg: 'bg-gradient-to-br from-pink-500 to-pink-600',
+                        icon: <Heart className="w-4 h-4 text-white" />,
+                        textColor: 'text-pink-900'
+                      };
+                    case 'paternity':
+                      return {
+                        bg: 'bg-gradient-to-br from-indigo-50 via-white to-indigo-50/30',
+                        border: 'border-indigo-100',
+                        hoverBorder: 'hover:border-indigo-200',
+                        iconBg: 'bg-gradient-to-br from-indigo-500 to-indigo-600',
+                        icon: <Heart className="w-4 h-4 text-white" />,
+                        textColor: 'text-indigo-900'
+                      };
+                    default:
+                      return {
+                        bg: 'bg-gradient-to-br from-gray-50 via-white to-gray-50/30',
+                        border: 'border-gray-100',
+                        hoverBorder: 'hover:border-gray-200',
+                        iconBg: 'bg-gradient-to-br from-gray-500 to-gray-600',
+                        icon: <Calendar className="w-4 h-4 text-white" />,
+                        textColor: 'text-gray-900'
+                      };
+                  }
+                };
+
+                const categoryStyle = getCategoryStyle(request.leave_type);
+
+                return (
+                  <div 
+                    key={request.id}
+                    className={`group relative ${categoryStyle.bg} backdrop-blur-sm rounded-xl border ${categoryStyle.border} p-4 hover:shadow-md ${categoryStyle.hoverBorder} transition-all duration-300 hover:bg-white/90`}
+                  >
+                    {/* Status Indicator */}
+                    <div className="absolute top-3 right-3">
+                      <div className={`w-2 h-2 rounded-full ${
+                        request.status === 'approved' ? 'bg-green-500' :
+                        request.status === 'pending' ? 'bg-yellow-500' :
+                        request.status === 'rejected' ? 'bg-red-500' : 'bg-gray-500'
+                      } ${request.status === 'pending' ? 'animate-pulse' : ''}`}></div>
+                    </div>
+
+                    {/* Compact Header */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shadow-sm ${categoryStyle.iconBg}`}>
+                          {categoryStyle.icon}
+                        </div>
+                        <div>
+                          <h3 className={`font-semibold text-sm capitalize ${categoryStyle.textColor}`}>
+                            {request.leave_type} Leave
+                          </h3>
+                          <p className="text-xs text-gray-500">
+                            {request.days_requested} day{request.days_requested !== 1 ? 's' : ''}
+                          </p>
+                        </div>
                       </div>
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      <span className="font-medium">{request.days_requested}</span>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getStatusBadgeColor(request.status)}>
+                      
+                      <Badge className={`px-2 py-0.5 text-xs font-medium ${
+                        request.status === 'approved' ? 'bg-green-100 text-green-800 border-green-200' :
+                        request.status === 'pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                        request.status === 'rejected' ? 'bg-red-100 text-red-800 border-red-200' :
+                        'bg-gray-100 text-gray-800 border-gray-200'
+                      }`}>
                         {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
                       </Badge>
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      <div className="flex items-center space-x-1 text-sm text-gray-500">
-                        <Clock className="w-3 h-3" />
-                        <span>{new Date(request.created_at).toLocaleDateString()}</span>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                    </div>
 
-          {leaveRequests.length === 0 && (
-            <div className="text-center py-8">
-              <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">No leave requests found.</p>
+                    {/* Compact Content */}
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      {/* Dates */}
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1 text-xs text-gray-600">
+                          {request.leave_type === 'annual' ? <Plane className="w-3 h-3" /> :
+                           request.leave_type === 'sick' ? <Stethoscope className="w-3 h-3" /> :
+                           request.leave_type === 'personal' ? <Heart className="w-3 h-3" /> :
+                           request.leave_type === 'emergency' ? <Zap className="w-3 h-3" /> :
+                           request.leave_type === 'maternity' ? <Heart className="w-3 h-3" /> :
+                           request.leave_type === 'paternity' ? <Heart className="w-3 h-3" /> :
+                           <Calendar className="w-3 h-3" />}
+                          <span className="font-medium">Duration</span>
+                        </div>
+                        <div className="bg-white/60 rounded-md p-2">
+                          <div className="text-xs font-medium text-gray-900">
+                            {new Date(request.start_date).toLocaleDateString()}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            to {new Date(request.end_date).toLocaleDateString()}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Submitted Date */}
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1 text-xs text-gray-600">
+                          <Clock className="w-3 h-3" />
+                          <span className="font-medium">Submitted</span>
+                        </div>
+                        <div className="bg-white/60 rounded-md p-2">
+                          <span className="text-xs font-medium text-gray-900">
+                            {new Date(request.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Reason (if exists) */}
+                    {request.reason && (
+                      <div className="mb-3">
+                        <div className="flex items-center gap-1 text-xs text-gray-600 mb-1">
+                          <HeartHandshake className="w-3 h-3" />
+                          <span className="font-medium">Reason</span>
+                        </div>
+                        <div className="bg-white/60 rounded-md p-2">
+                          <p className="text-xs text-gray-700 line-clamp-1">
+                            {request.reason}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Compact Progress Bar for Pending Requests */}
+                    {request.status === 'pending' && (
+                      <div className="pt-2 border-t border-gray-200">
+                        <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                          <span>Processing...</span>
+                          <span>Under Review</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-1.5">
+                          <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 h-1.5 rounded-full animate-pulse" style={{ width: '60%' }}></div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Compact Status for Approved/Rejected */}
+                    {(request.status === 'approved' || request.status === 'rejected') && (
+                      <div className="pt-2 border-t border-gray-200">
+                        <div className={`flex items-center gap-1 text-xs ${
+                          request.status === 'approved' ? 'text-green-700' : 'text-red-700'
+                        }`}>
+                          <div className={`w-1.5 h-1.5 rounded-full ${
+                            request.status === 'approved' ? 'bg-green-500' : 'bg-red-500'
+                          }`}></div>
+                          <span className="font-medium">
+                            {request.status === 'approved' ? 'Approved' : 'Rejected'}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </CardContent>

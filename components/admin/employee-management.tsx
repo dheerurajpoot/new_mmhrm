@@ -462,8 +462,11 @@ export function EmployeeManagement({
 													size='sm'
 													onClick={() =>
 														openEditDialog(employee)
-													}>
-													<Edit className='h-4 w-4' />
+													}
+													className="h-8 px-3 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 hover:text-blue-800"
+												>
+													<Edit className='h-4 w-4 mr-1' />
+													Edit
 												</Button>
 												{canDeleteEmployee(
 													employee
@@ -476,8 +479,11 @@ export function EmployeeManagement({
 																employee.id,
 																employee.role
 															)
-														}>
-														<Trash2 className='h-4 w-4' />
+														}
+														className="h-8 px-3 bg-red-50 hover:bg-red-100 border-red-200 text-red-700 hover:text-red-800"
+													>
+														<Trash2 className='h-4 w-4 mr-1' />
+														Delete
 													</Button>
 												)}
 											</div>

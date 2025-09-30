@@ -126,7 +126,7 @@ export const leaveApprovalTemplate = (
                     <table width="100%" style="border-spacing: 0;">
                         <tr>
                             <td style="padding: 0; text-align: left;">
-                                <h1 style="margin: 0; font-size: 28px; color: #1e293b; font-weight: 600;">${leaveDetails.status === "approved" ? "✅ Leave Request Approved" : "❌ Leave Request Status Update"}</h1>
+                                <h1 style="margin: 0; font-size: 28px; color: #1e293b; font-weight: 600;">${leaveDetails.status === "approved" ? "✅ Leave Request Approved" : "❌ Leave Request Rejected"}</h1>
                                 <p style="font-size: 16px; color: #64748b; margin-top: 5px;">Hello ${employeeName}, here is an update regarding your recent leave request.</p>
                             </td>
                         </tr>

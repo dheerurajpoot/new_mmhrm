@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { getCurrentUser, signOut } from "@/lib/auth/client";
+import { signOut } from "@/lib/auth/client";
 import { useRouter, usePathname } from "next/navigation";
 import { useWebsiteSettings } from "@/hooks/use-website-settings"
 import {
@@ -38,41 +37,17 @@ import {
 	CreditCard,
 	Home,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import type { Profile } from "@/lib/types";
 
 interface AppSidebarProps {
 	role: "admin" | "hr" | "employee";
 }
 
 export function AppSidebar({ role }: AppSidebarProps) {
-	const [currentUser, setCurrentUser] = useState<Profile | null>(null);
 	const router = useRouter();
 	const pathname = usePathname();
 	const { setOpenMobile } = useSidebar();
 	const { settings } = useWebsiteSettings();
-
-
-	useEffect(() => {
-		const fetchCurrentUser = async () => {
-			try {
-				const user = await getCurrentUser();
-				setCurrentUser(user as Profile);
-			} catch (error) {
-				console.log(" Error fetching user:", error);
-			}
-		};
-		fetchCurrentUser();
-
-		// Listen for profile updates
-		const handleProfileUpdate = () => {
-			fetchCurrentUser();
-		};
-
-		window.addEventListener("profileUpdated", handleProfileUpdate);
-		return () => window.removeEventListener("profileUpdated", handleProfileUpdate);
-	}, []);
 
 	const handleLogout = async () => {
 		try {
@@ -190,6 +165,14 @@ export function AppSidebar({ role }: AppSidebarProps) {
 						textColor: "text-teal-700"
 					},
 					{ 
+						id: "profile", 
+						label: "My Profile", 
+						icon: User, 
+						color: "from-indigo-500 to-indigo-600",
+						bgColor: "bg-indigo-50 hover:bg-indigo-100",
+						textColor: "text-indigo-700"
+					},
+					{ 
 						id: "settings", 
 						label: "Settings", 
 						icon: Settings, 
@@ -256,6 +239,14 @@ export function AppSidebar({ role }: AppSidebarProps) {
 						bgColor: "bg-slate-50 hover:bg-slate-100",
 						textColor: "text-slate-700"
 					},
+					{ 
+						id: "profile", 
+						label: "My Profile", 
+						icon: User, 
+						color: "from-indigo-500 to-indigo-600",
+						bgColor: "bg-indigo-50 hover:bg-indigo-100",
+						textColor: "text-indigo-700"
+					},
 				];
 			case "employee":
 				return [
@@ -305,31 +296,6 @@ export function AppSidebar({ role }: AppSidebarProps) {
 		}
 	};
 
-	const getRoleBadge = () => {
-		switch (role) {
-			case "admin":
-				return (
-					<Badge className='bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 shadow-lg'>
-						👑 Administrator
-					</Badge>
-				);
-			case "hr":
-				return (
-					<Badge className='bg-gradient-to-r from-purple-500 to-purple-600 text-white hover:from-purple-600 hover:to-purple-700 shadow-lg'>
-						💼 HR Manager
-					</Badge>
-				);
-			case "employee":
-				return (
-					<Badge className='bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 shadow-lg'>
-						👤 Employee
-					</Badge>
-				);
-			default:
-				return null;
-		}
-	};
-
 	const menuItems = getMenuItems();
 
 	return (
@@ -359,38 +325,6 @@ export function AppSidebar({ role }: AppSidebarProps) {
 						<span className='text-xs text-gray-500 font-medium'>HR Management</span>
 					</div>
 				</div>
-
-				{currentUser && (
-					<div className='mx-2 mt-4 p-4 bg-white/90 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100'>
-						<div className="flex items-center space-x-3">
-							{currentUser.profile_photo ? (
-								<img
-									src={currentUser.profile_photo}
-									alt="Profile"
-									className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md"
-								/>
-							) : (
-								<div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center shadow-md border-2 border-white">
-									<User className="w-6 h-6 text-white" />
-								</div>
-							)}
-							<div className='flex-1 min-w-0'>
-								<p className='font-semibold text-gray-900 text-sm truncate'>
-									{currentUser.full_name}
-								</p>
-								<div className='mt-2'>
-									{getRoleBadge()}
-								</div>
-								{currentUser.department && role === "employee" && (
-									<p className='text-xs text-gray-600 mt-2 flex items-center bg-gray-50 px-2 py-1 rounded-full'>
-										<Building className='w-3 h-3 mr-1' />
-										{currentUser.department}
-									</p>
-								)}
-							</div>
-						</div>
-					</div>
-				)}
 			</SidebarHeader>
 
 			<SidebarContent className='px-2 py-4'>

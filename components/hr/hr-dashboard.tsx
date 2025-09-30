@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/shared/app-sidebar"
 import { MobileBottomNav } from "@/components/shared/mobile-bottom-nav"
-import { ConnectionStatus } from "@/components/shared/connection-status"
+import { DashboardHeader } from "@/components/shared/dashboard-header"
 import { EmployeeManagement } from "./employee-management"
 import { LeaveApprovals } from "./leave-approvals"
 import { AttendanceOverview } from "./attendance-overview"
@@ -12,6 +12,7 @@ import { HRStats } from "./hr-stats"
 import { RecruitmentOnboarding } from "./recruitment-onboarding"
 import { PerformanceProductivity } from "./performance-productivity"
 import { CompliancePolicies } from "./compliance-policies"
+import { AdminProfile } from "../admin/admin-profile"
 
 export function HRDashboard() {
   const [activeSection, setActiveSection] = useState("overview")
@@ -41,6 +42,8 @@ export function HRDashboard() {
         return <PerformanceProductivity />
       case "compliance":
         return <CompliancePolicies />
+      case "profile":
+        return <AdminProfile />
       default:
         return <HRStats />
     }
@@ -62,6 +65,8 @@ export function HRDashboard() {
         return { title: "Performance & Productivity", description: "Track performance reviews, goals, and metrics" }
       case "compliance":
         return { title: "Compliance & Policies", description: "Manage policies, compliance tracking, and audits" }
+      case "profile":
+        return { title: "My Profile", description: "View and update your personal information" }
       default:
         return { title: "HR Dashboard", description: "Manage employees, leave requests, and attendance" }
     }
@@ -73,14 +78,11 @@ export function HRDashboard() {
     <SidebarProvider>
       <AppSidebar role="hr" />
       <SidebarInset>
-        <div className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
-          <div className="flex flex-col flex-1">
-            <h1 className="text-lg font-semibold">{title}</h1>
-            <p className="text-sm text-muted-foreground hidden sm:block">{description}</p>
-          </div>
-          <ConnectionStatus />
-        </div>
+        <DashboardHeader 
+          title={title} 
+          description={description} 
+          role="hr" 
+        />
         <div className="flex-1 p-4 pb-20 md:pb-4">{renderContent()}</div>
       </SidebarInset>
       <MobileBottomNav role="hr" activeSection={activeSection} onNavigate={setActiveSection} />

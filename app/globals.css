@@ -39,24 +39,41 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
+/* Fix for modal overlay persistence issues */
+[data-radix-dialog-overlay]:not([data-state="open"]) {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+[data-radix-dialog-content]:not([data-state="open"]) {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+/* Ensure proper cleanup of dialog overlays */
+[data-state="closed"] {
+  display: none !important;
+  pointer-events: none !important;
+}
+
 /* Custom Toast Styling */
 .toast-custom {
-  background: rgba(255, 255, 255, 0.329) !important;
-  backdrop-filter: blur(5px) !important;
+  background: rgba(255, 255, 255, 0.623) !important;
+  backdrop-filter: blur(10px) !important;
   border-radius: 16px !important;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
   color: rgb(17, 24, 39) !important;
   padding: 16px 20px !important;
   font-size: 14px !important;
   font-weight: 500 !important;
-  max-width: 400px !important;
-  min-width: 320px !important;
+  max-width: 320px !important;
   margin: 8px auto !important;
   position: relative !important;
   overflow: hidden !important;
   transform: translateY(-20px) scale(0.95) !important;
   animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
 }
+
 
 .toast-custom::before {
   content: '';

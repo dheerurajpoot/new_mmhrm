@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/shared/app-sidebar"
 import { MobileBottomNav } from "@/components/shared/mobile-bottom-nav"
-import { ConnectionStatus } from "@/components/shared/connection-status"
+import { DashboardHeader } from "@/components/shared/dashboard-header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { UserManagement } from "./user-management"
 import { AdminStats } from "./admin-stats"
@@ -14,6 +14,7 @@ import { LeaveManagement } from "./leave-management"
 import { AdminSettings } from "./admin-settings"
 import { TeamManagement } from "./team-management"
 import { AttendanceManagement } from "./attendance-management"
+import { AdminProfile } from "./admin-profile"
 
 export function AdminDashboard() {
   const [activeSection, setActiveSection] = useState("overview")
@@ -43,6 +44,8 @@ export function AdminDashboard() {
         return <LeaveManagement />
       case "attendance":
         return <AttendanceManagement />
+      case "profile":
+        return <AdminProfile />
       case "settings":
         return <AdminSettings />
       default:
@@ -66,6 +69,8 @@ export function AdminDashboard() {
         return { title: "Leave Management", description: "Manage leave requests, balances, and types" }
       case "attendance":
         return { title: "Attendance Management", description: "Monitor and manage employee attendance and time tracking" }
+      case "profile":
+        return { title: "My Profile", description: "View and update your personal information" }
       case "settings":
         return { title: "System Settings", description: "Configure system-wide settings and preferences" }
       default:
@@ -79,14 +84,11 @@ export function AdminDashboard() {
     <SidebarProvider>
       <AppSidebar role="admin" />
       <SidebarInset>
-        <div className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
-          <div className="flex flex-col flex-1">
-            <h1 className="text-lg font-semibold">{title}</h1>
-            <p className="text-sm text-muted-foreground hidden sm:block">{description}</p>
-          </div>
-          <ConnectionStatus />
-        </div>
+        <DashboardHeader 
+          title={title} 
+          description={description} 
+          role="admin" 
+        />
         <div className="flex-1 p-4 pb-20 md:pb-4">{renderContent()}</div>
       </SidebarInset>
       <MobileBottomNav role="admin" activeSection={activeSection} onNavigate={setActiveSection} />

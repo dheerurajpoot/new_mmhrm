@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import {
 	User,
@@ -28,6 +29,8 @@ import {
 	AlertTriangle,
 	Upload,
 	Camera,
+	Shield,
+	Briefcase,
 	Save,
 	X,
 	Check,
@@ -36,30 +39,33 @@ import {
 	Settings,
 	Eye,
 	EyeOff,
-	Briefcase,
-	Shield,
 } from "lucide-react";
 import type { Profile } from "@/lib/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 
-export function EmployeeProfile() {
+export function AdminProfile() {
 	const [profile, setProfile] = useState<Profile | null>(null);
 	const [isEditing, setIsEditing] = useState(false);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isSaving, setIsSaving] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [showPassword, setShowPassword] = useState(false);
 
 	const [editForm, setEditForm] = useState({
 		full_name: "",
+		email: "",
 		phone: "",
 		address: "",
 		birth_date: "",
+		department: "",
+		position: "",
+		hire_date: "",
+		role: "admin",
 		password: "",
 		confirmPassword: "",
 	});
 	const [uploadingPhoto, setUploadingPhoto] = useState(false);
-	const [showPassword, setShowPassword] = useState(false);
 
 	useEffect(() => {
 		fetchProfile();
@@ -67,24 +73,28 @@ export function EmployeeProfile() {
 
 	const fetchProfile = async () => {
 		try {
-			const response = await fetch("/api/employee/profile");
+			const response = await fetch("/api/admin/profile");
 			if (!response.ok) {
 				throw new Error("Failed to fetch profile");
 			}
-
 			const data = await response.json();
 			setProfile(data);
 			setEditForm({
 				full_name: data.full_name || "",
+				email: data.email || "",
 				phone: data.phone || "",
 				address: data.address || "",
 				birth_date: data.birth_date ? new Date(data.birth_date).toISOString().split('T')[0] : "",
+				department: data.department || "",
+				position: data.position || "",
+				hire_date: data.hire_date ? new Date(data.hire_date).toISOString().split('T')[0] : "",
+				role: data.role || "admin",
 				password: "",
 				confirmPassword: "",
 			});
 		} catch (error) {
 			console.error("Error fetching profile:", error);
-			setError("Failed to load profile. Please try again.");
+			setError("Failed to load profile");
 		} finally {
 			setIsLoading(false);
 		}
@@ -92,8 +102,6 @@ export function EmployeeProfile() {
 
 	const handleSave = async (e: React.FormEvent) => {
 		e.preventDefault();
-		if (!profile) return;
-
 		setIsSaving(true);
 		setError(null);
 
@@ -107,15 +115,22 @@ export function EmployeeProfile() {
 
 			const updateData = {
 				full_name: editForm.full_name,
+				email: editForm.email,
 				phone: editForm.phone,
 				address: editForm.address,
-				birth_date: editForm.birth_date,
+				birth_date: editForm.birth_date || null,
+				department: editForm.department,
+				position: editForm.position,
+				hire_date: editForm.hire_date || null,
+				role: editForm.role,
 				...(editForm.password && { password: editForm.password }),
 			};
 
-			const response = await fetch("/api/employee/profile", {
+			const response = await fetch("/api/admin/profile", {
 				method: "PATCH",
-				headers: { "Content-Type": "application/json" },
+				headers: {
+					"Content-Type": "application/json",
+				},
 				body: JSON.stringify(updateData),
 			});
 
@@ -124,88 +139,74 @@ export function EmployeeProfile() {
 				throw new Error(errorData.error || "Failed to update profile");
 			}
 
-			toast.success("Profile updated successfully!", {
-				description: "Your profile information has been saved.",
-			});
+			toast.success("Profile updated successfully!");
 			setIsEditing(false);
-			fetchProfile();
+			await fetchProfile();
 		} catch (error) {
 			console.error("Error updating profile:", error);
 			setError(error instanceof Error ? error.message : "Failed to update profile");
-			toast.error("Failed to update profile", {
-				description:
-					"There was an error updating your profile. Please try again.",
-			});
 		} finally {
 			setIsSaving(false);
 		}
 	};
 
-	const handleCancel = () => {
-		setEditForm({
-			full_name: profile?.full_name || "",
-			phone: profile?.phone || "",
-			address: profile?.address || "",
-			birth_date: profile?.birth_date ? new Date(profile.birth_date).toISOString().split('T')[0] : "",
-			password: "",
-			confirmPassword: "",
-		});
-		setIsEditing(false);
-		setError(null);
-	};
-
-	const handlePhotoUpload = async (
-		e: React.ChangeEvent<HTMLInputElement>
-	) => {
+	const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
 		if (!file) return;
 
-		if (file.size > 5 * 1024 * 1024) {
-			toast.error("File size too large", {
-				description: "Please select a file smaller than 5MB.",
-			});
+		// Validate file type
+		if (!file.type.startsWith("image/")) {
+			toast.error("Please select an image file");
 			return;
 		}
 
-		if (!file.type.startsWith("image/")) {
-			toast.error("Invalid file type", {
-				description:
-					"Please select a valid image file (JPG, PNG, etc.).",
-			});
+		// Validate file size (5MB max)
+		if (file.size > 5 * 1024 * 1024) {
+			toast.error("Image size must be less than 5MB");
 			return;
 		}
 
 		setUploadingPhoto(true);
 		try {
 			const formData = new FormData();
-			formData.append("profile_photo", file);
+			formData.append("photo", file);
 
-			const response = await fetch("/api/employee/profile/photo", {
+			const response = await fetch("/api/admin/profile/photo", {
 				method: "POST",
 				body: formData,
 			});
 
-			if (response.ok) {
-				toast.success("Profile photo updated!", {
-					description:
-						"Your profile photo has been updated successfully.",
-				});
-				fetchProfile();
-				// Dispatch event to update sidebar
-				window.dispatchEvent(new CustomEvent("profileUpdated"));
-			} else {
-				toast.error("Failed to upload photo", {
-					description:
-						"There was an error uploading your profile photo.",
-				});
+			if (!response.ok) {
+				throw new Error("Failed to upload photo");
 			}
+
+			toast.success("Profile photo updated successfully!");
+			await fetchProfile();
 		} catch (error) {
 			console.error("Error uploading photo:", error);
-			toast.error("Failed to upload photo", {
-				description: "There was an error uploading your profile photo.",
-			});
+			toast.error("Failed to upload photo");
 		} finally {
 			setUploadingPhoto(false);
+		}
+	};
+
+	const handleCancel = () => {
+		setIsEditing(false);
+		setError(null);
+		if (profile) {
+			setEditForm({
+				full_name: profile.full_name || "",
+				email: profile.email || "",
+				phone: profile.phone || "",
+				address: profile.address || "",
+				birth_date: profile.birth_date ? new Date(profile.birth_date).toISOString().split('T')[0] : "",
+				department: profile.department || "",
+				position: profile.position || "",
+				hire_date: profile.hire_date ? new Date(profile.hire_date).toISOString().split('T')[0] : "",
+				role: profile.role || "admin",
+				password: "",
+				confirmPassword: "",
+			});
 		}
 	};
 
@@ -256,22 +257,22 @@ export function EmployeeProfile() {
 	return (
 		<div className="space-y-6">
 			{/* Profile Header Card */}
-			<Card className="bg-gradient-to-br from-green-50 via-white to-green-50/30 border-green-100">
+			<Card className="bg-gradient-to-br from-red-50 via-white to-red-50/30 border-red-100">
 				<CardHeader>
 					<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 						<div className="flex items-center gap-4">
 							<div className="relative">
-								<Avatar className="h-20 w-20 ring-4 ring-green-100">
+								<Avatar className="h-20 w-20 ring-4 ring-red-100">
 									<AvatarImage
 										src={profile.profile_photo || ""}
-										alt={profile.full_name || "Employee"}
+										alt={profile.full_name || "Admin"}
 									/>
-									<AvatarFallback className="text-2xl bg-gradient-to-r from-green-500 to-green-600 text-white">
-										{profile.full_name?.charAt(0) || profile.email?.charAt(0) || "E"}
+									<AvatarFallback className="text-2xl bg-gradient-to-r from-red-500 to-red-600 text-white">
+										{profile.full_name?.charAt(0) || profile.email?.charAt(0) || "A"}
 									</AvatarFallback>
 								</Avatar>
 								{isEditing && (
-									<label className="absolute -bottom-2 -right-2 bg-green-600 text-white p-2 rounded-full cursor-pointer hover:bg-green-700 transition-colors">
+									<label className="absolute -bottom-2 -right-2 bg-red-600 text-white p-2 rounded-full cursor-pointer hover:bg-red-700 transition-colors">
 										<Camera className="h-4 w-4" />
 										<input
 											type="file"
@@ -285,13 +286,13 @@ export function EmployeeProfile() {
 							</div>
 							<div>
 								<CardTitle className="text-2xl text-gray-900">
-									{profile.full_name || "Employee User"}
+									{profile.full_name || "Admin User"}
 								</CardTitle>
 								<CardDescription className="text-base">
 									<div className="flex items-center gap-2 mt-1">
-										<Badge className="bg-green-100 text-green-800 border-green-200">
-											<User className="h-3 w-3 mr-1" />
-											{profile.role?.toUpperCase() || "EMPLOYEE"}
+										<Badge className="bg-red-100 text-red-800 border-red-200">
+											<Shield className="h-3 w-3 mr-1" />
+											{profile.role?.toUpperCase() || "ADMIN"}
 										</Badge>
 										{profile.department && (
 											<Badge variant="outline" className="text-gray-600">
@@ -306,7 +307,7 @@ export function EmployeeProfile() {
 						{!isEditing && (
 							<Button
 								onClick={() => setIsEditing(true)}
-								className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg">
+								className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg">
 								<Edit className="w-4 h-4 mr-2" />
 								Edit Profile
 							</Button>
@@ -354,13 +355,14 @@ export function EmployeeProfile() {
 										/>
 									</div>
 									<div className="space-y-2">
-										<Label htmlFor="email">Email Address (Read-only)</Label>
+										<Label htmlFor="email">Email Address *</Label>
 										<Input
 											id="email"
 											type="email"
-											value={profile?.email || ""}
-											disabled
-											className="bg-gray-50"
+											value={editForm.email}
+											onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+											placeholder="Enter your email"
+											required
 										/>
 									</div>
 									<div className="space-y-2">
@@ -373,42 +375,67 @@ export function EmployeeProfile() {
 										/>
 									</div>
 									<div className="space-y-2">
-										<Label htmlFor="department">Department (Read-only)</Label>
-										<Input
-											id="department"
-											value={profile?.department || "Not assigned"}
-											disabled
-											className="bg-gray-50"
-										/>
+										<Label htmlFor="role">Role</Label>
+										<Select
+											value={editForm.role}
+											onValueChange={(value) => setEditForm({ ...editForm, role: value })}
+										>
+											<SelectTrigger>
+												<SelectValue placeholder="Select role" />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value="admin">Admin</SelectItem>
+												<SelectItem value="hr">HR</SelectItem>
+												<SelectItem value="employee">Employee</SelectItem>
+											</SelectContent>
+										</Select>
 									</div>
 								</div>
 							</div>
 
 							<Separator />
 
-							{/* Personal Information */}
+							{/* Professional Information */}
 							<div className="space-y-4">
 								<h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-									<Calendar className="h-4 w-4" />
-									Personal Information
+									<Briefcase className="h-4 w-4" />
+									Professional Information
 								</h3>
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 									<div className="space-y-2">
-										<Label htmlFor="birth_date">Date of Birth</Label>
+										<Label htmlFor="department">Department</Label>
+										<Input
+											id="department"
+											value={editForm.department}
+											onChange={(e) => setEditForm({ ...editForm, department: e.target.value })}
+											placeholder="Enter your department"
+										/>
+									</div>
+									<div className="space-y-2">
+										<Label htmlFor="position">Position</Label>
+										<Input
+											id="position"
+											value={editForm.position}
+											onChange={(e) => setEditForm({ ...editForm, position: e.target.value })}
+											placeholder="Enter your position"
+										/>
+									</div>
+									<div className="space-y-2">
+										<Label htmlFor="hire_date">Hire Date</Label>
+										<Input
+											id="hire_date"
+											type="date"
+											value={editForm.hire_date}
+											onChange={(e) => setEditForm({ ...editForm, hire_date: e.target.value })}
+										/>
+									</div>
+									<div className="space-y-2">
+										<Label htmlFor="birth_date">Birth Date</Label>
 										<Input
 											id="birth_date"
 											type="date"
 											value={editForm.birth_date}
 											onChange={(e) => setEditForm({ ...editForm, birth_date: e.target.value })}
-										/>
-									</div>
-									<div className="space-y-2">
-										<Label htmlFor="position">Position (Read-only)</Label>
-										<Input
-											id="position"
-											value={profile?.position || "Not assigned"}
-											disabled
-											className="bg-gray-50"
 										/>
 									</div>
 								</div>
@@ -486,7 +513,7 @@ export function EmployeeProfile() {
 								<Button
 									type="submit"
 									disabled={isSaving}
-									className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg flex-1">
+									className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg flex-1">
 									{isSaving ? (
 										<>
 											<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -540,9 +567,9 @@ export function EmployeeProfile() {
 									<div className="space-y-2">
 										<Label className="text-sm font-medium text-gray-500">Role</Label>
 										<div className="flex items-center gap-2">
-											<User className="h-4 w-4 text-gray-400" />
-											<Badge className="bg-green-100 text-green-800 border-green-200">
-												{profile.role?.toUpperCase() || "EMPLOYEE"}
+											<Shield className="h-4 w-4 text-gray-400" />
+											<Badge className="bg-red-100 text-red-800 border-red-200">
+												{profile.role?.toUpperCase() || "ADMIN"}
 											</Badge>
 										</div>
 									</div>
@@ -562,14 +589,14 @@ export function EmployeeProfile() {
 										<Label className="text-sm font-medium text-gray-500">Department</Label>
 										<div className="flex items-center gap-2">
 											<Building className="h-4 w-4 text-gray-400" />
-											<p className="text-gray-900 font-medium">{profile.department || "Not assigned"}</p>
+											<p className="text-gray-900 font-medium">{profile.department || "Not provided"}</p>
 										</div>
 									</div>
 									<div className="space-y-2">
 										<Label className="text-sm font-medium text-gray-500">Position</Label>
 										<div className="flex items-center gap-2">
 											<Briefcase className="h-4 w-4 text-gray-400" />
-											<p className="text-gray-900 font-medium">{profile.position || "Not assigned"}</p>
+											<p className="text-gray-900 font-medium">{profile.position || "Not provided"}</p>
 										</div>
 									</div>
 									<div className="space-y-2">
@@ -582,7 +609,7 @@ export function EmployeeProfile() {
 										</div>
 									</div>
 									<div className="space-y-2">
-										<Label className="text-sm font-medium text-gray-500">Date of Birth</Label>
+										<Label className="text-sm font-medium text-gray-500">Birth Date</Label>
 										<div className="flex items-center gap-2">
 											<Calendar className="h-4 w-4 text-gray-400" />
 											<p className="text-gray-900 font-medium">

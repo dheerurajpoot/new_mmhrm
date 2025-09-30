@@ -32,7 +32,9 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SearchableSelect } from "@/components/ui/searchable-select";
-import { Users, Plus, Edit, Trash2, UserCheck } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
+import { Users, Plus, Edit, Trash2, UserCheck, Search, Crown, Shield, Briefcase, Mail, Phone, MapPin, Calendar, MoreHorizontal, Filter, Download, UserPlus, Users2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Profile } from "@/lib/types";
 
@@ -47,6 +49,7 @@ interface Team {
 export function TeamManagement() {
 	const [teams, setTeams] = useState<Team[]>([]);
 	const [employees, setEmployees] = useState<Profile[]>([]);
+	const [searchTerm, setSearchTerm] = useState("");
 	const [isLoading, setIsLoading] = useState(true);
 	const [isCreateTeamOpen, setIsCreateTeamOpen] = useState(false);
 	const [isCreatingTeam, setIsCreatingTeam] = useState(false);
@@ -225,46 +228,147 @@ export function TeamManagement() {
 		}
 	};
 
+	const getTeamStats = () => {
+		const totalTeams = teams.length;
+		const totalMembers = teams.reduce((sum, team) => sum + team.members.length, 0);
+		const averageTeamSize = totalTeams > 0 ? Math.round(totalMembers / totalTeams) : 0;
+		const teamsWithLeaders = teams.filter(team => team.leader).length;
+		
+		return { totalTeams, totalMembers, averageTeamSize, teamsWithLeaders };
+	};
+
+	const filteredTeams = teams.filter(team =>
+		team.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+		team.leader.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+		team.leader.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+		team.members.some(member => 
+			member.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+			member.email.toLowerCase().includes(searchTerm.toLowerCase())
+		)
+	);
+
 	if (isLoading) {
 		return (
-			<Card>
-				<CardContent className='p-6'>
-					<div className='animate-pulse space-y-4'>
-						<div className='h-4 bg-gray-200 rounded w-1/4'></div>
-						<div className='h-10 bg-gray-200 rounded'></div>
-						<div className='space-y-3'>
-							{[...Array(3)].map((_, i) => (
-								<div
-									key={i}
-									className='h-16 bg-gray-200 rounded'></div>
-							))}
+			<div className="space-y-6">
+				{/* Stats Cards Skeleton */}
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+					{[...Array(4)].map((_, i) => (
+						<Card key={i} className="animate-pulse">
+							<CardContent className="p-6">
+								<div className="flex items-center justify-between">
+									<div className="space-y-2">
+										<div className="h-4 bg-gray-200 rounded w-20"></div>
+										<div className="h-8 bg-gray-200 rounded w-16"></div>
+									</div>
+									<div className="w-12 h-12 bg-gray-200 rounded-lg"></div>
+								</div>
+							</CardContent>
+						</Card>
+					))}
+				</div>
+				
+				{/* Main Content Skeleton */}
+				<Card className="animate-pulse">
+					<CardContent className="p-6">
+						<div className="space-y-4">
+							<div className="h-4 bg-gray-200 rounded w-1/4"></div>
+							<div className="h-10 bg-gray-200 rounded"></div>
+							<div className="space-y-3">
+								{[...Array(3)].map((_, i) => (
+									<div key={i} className="h-20 bg-gray-200 rounded"></div>
+								))}
+							</div>
 						</div>
-					</div>
-				</CardContent>
-			</Card>
+					</CardContent>
+				</Card>
+			</div>
 		);
 	}
 
+	const stats = getTeamStats();
+
 	return (
-		<div className='space-y-6'>
-			<Card>
-				<CardHeader>
-					<div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
-						<div>
-							<CardTitle className='flex items-center gap-2'>
-								<Users className='w-5 h-5' />
-								Team Management
-							</CardTitle>
-							<CardDescription>
-								Create and manage teams for better collaboration
-							</CardDescription>
+		<div className="space-y-8">
+			{/* Team Statistics */}
+			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+				<Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-blue-50 via-white to-blue-50/30 border-blue-100">
+					<CardContent className="p-6">
+						<div className="flex items-center justify-between">
+							<div className="flex-1">
+								<p className="text-sm font-medium text-blue-700 mb-2">Total Teams</p>
+								<p className="text-3xl font-bold text-blue-900">{stats.totalTeams}</p>
+								<p className="text-xs text-blue-600 mt-1">Active teams</p>
+							</div>
+							<div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+								<Users2 className="w-7 h-7 text-white" />
+							</div>
 						</div>
-						<Dialog
-							open={isCreateTeamOpen}
-							onOpenChange={setIsCreateTeamOpen}>
+					</CardContent>
+				</Card>
+
+				<Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-emerald-50 via-white to-emerald-50/30 border-emerald-100">
+					<CardContent className="p-6">
+						<div className="flex items-center justify-between">
+							<div className="flex-1">
+								<p className="text-sm font-medium text-emerald-700 mb-2">Total Members</p>
+								<p className="text-3xl font-bold text-emerald-900">{stats.totalMembers}</p>
+								<p className="text-xs text-emerald-600 mt-1">Across all teams</p>
+							</div>
+							<div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+								<Users className="w-7 h-7 text-white" />
+							</div>
+						</div>
+					</CardContent>
+				</Card>
+
+				<Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-purple-50 via-white to-purple-50/30 border-purple-100">
+					<CardContent className="p-6">
+						<div className="flex items-center justify-between">
+							<div className="flex-1">
+								<p className="text-sm font-medium text-purple-700 mb-2">Avg Team Size</p>
+								<p className="text-3xl font-bold text-purple-900">{stats.averageTeamSize}</p>
+								<p className="text-xs text-purple-600 mt-1">Members per team</p>
+							</div>
+							<div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+								<UserCheck className="w-7 h-7 text-white" />
+							</div>
+						</div>
+					</CardContent>
+				</Card>
+
+				<Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-amber-50 via-white to-amber-50/30 border-amber-100">
+					<CardContent className="p-6">
+						<div className="flex items-center justify-between">
+							<div className="flex-1">
+								<p className="text-sm font-medium text-amber-700 mb-2">Team Leaders</p>
+								<p className="text-3xl font-bold text-amber-900">{stats.teamsWithLeaders}</p>
+								<p className="text-xs text-amber-600 mt-1">Assigned leaders</p>
+							</div>
+							<div className="w-14 h-14 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg">
+								<Crown className="w-7 h-7 text-white" />
+							</div>
+						</div>
+					</CardContent>
+				</Card>
+			</div>
+
+			{/* Main Team Management Card */}
+			<Card className="border-0 shadow-lg bg-gradient-to-br from-slate-50 via-white to-slate-50/30 border-slate-100">
+				<CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100/50 border-b border-slate-200">
+					<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+						<div className="flex items-center gap-3">
+							<div className="w-10 h-10 bg-gradient-to-br from-slate-500 to-slate-600 rounded-lg flex items-center justify-center">
+								<Users2 className="w-5 h-5 text-white" />
+							</div>
+							<div>
+								<CardTitle className="text-slate-900">Team Management</CardTitle>
+								<CardDescription className="text-slate-600">Create and manage teams for better collaboration</CardDescription>
+							</div>
+						</div>
+						<Dialog open={isCreateTeamOpen} onOpenChange={setIsCreateTeamOpen}>
 							<DialogTrigger asChild>
-								<Button className='bg-gradient-to-r from-red-600 to-blue-600 hover:from-red-700 hover:to-blue-700'>
-									<Plus className='w-4 h-4 mr-2' />
+								<Button className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300">
+									<Plus className="w-4 h-4 mr-2" />
 									Create Team
 								</Button>
 							</DialogTrigger>
@@ -395,129 +499,115 @@ export function TeamManagement() {
 						</Dialog>
 					</div>
 				</CardHeader>
-				<CardContent>
-					<div className='rounded-md border'>
-						<Table>
-							<TableHeader>
-								<TableRow>
-									<TableHead>Team Name</TableHead>
-									<TableHead>Leader</TableHead>
-									<TableHead>Members</TableHead>
-									<TableHead>Actions</TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{teams.map((team) => (
-									<TableRow key={team.id}>
-										<TableCell>
-											<div className='flex items-center gap-2'>
-												<Users className='w-4 h-4 text-gray-500' />
-												<span className='font-medium'>
-													{team.name}
-												</span>
+				<CardContent className="p-0">
+					{/* Search Section */}
+					<div className="p-6 border-b border-slate-200 bg-gradient-to-r from-slate-50/50 to-white">
+						<div className="relative">
+							<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+							<Input
+								placeholder="Search teams by name, leader, or members..."
+								value={searchTerm}
+								onChange={(e) => setSearchTerm(e.target.value)}
+								className="pl-10 bg-white border-slate-200 focus:border-slate-400"
+							/>
+						</div>
+					</div>
+
+					{/* Teams List */}
+					<div className="overflow-hidden">
+						{filteredTeams.length > 0 ? (
+							<div className="divide-y divide-slate-200">
+								{filteredTeams.map((team, index) => (
+									<div key={team.id} className={`p-6 hover:bg-slate-50/50 transition-colors ${
+										index % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'
+									}`}>
+										<div className="flex items-center justify-between">
+											{/* Team Info */}
+											<div className="flex items-center gap-4">
+												<div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+													<Users2 className="w-6 h-6 text-white" />
+												</div>
+												
+												<div className="space-y-1">
+													<div className="flex items-center gap-2">
+														<h3 className="font-semibold text-slate-900">{team.name}</h3>
+														<Badge className="bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border-blue-300 border-0 shadow-sm">
+															{team.members.length + 1} member{team.members.length + 1 !== 1 ? 's' : ''}
+														</Badge>
+													</div>
+													
+													<div className="flex items-center gap-4 text-sm text-slate-600">
+														<div className="flex items-center gap-1">
+															<Crown className="w-3 h-3" />
+															<span className="font-medium">Leader:</span>
+															<span>{team.leader.full_name || team.leader.email}</span>
+														</div>
+														<div className="flex items-center gap-1">
+															<Calendar className="w-3 h-3" />
+															<span>Created {new Date(team.created_at).toLocaleDateString()}</span>
+														</div>
+													</div>
+												</div>
 											</div>
-										</TableCell>
-										<TableCell>
-											<div className='flex items-center gap-2'>
-												<Avatar className='w-6 h-6'>
-													<AvatarImage
-														src={
-															team.leader
-																.profile_photo ||
-															""
-														}
-													/>
-													<AvatarFallback className='text-xs'>
-														{team.leader.full_name?.charAt(
-															0
-														) ||
-															team.leader.email.charAt(
-																0
-															)}
-													</AvatarFallback>
-												</Avatar>
-												<span className='text-sm'>
-													{team.leader.full_name ||
-														team.leader.email}
-												</span>
-											</div>
-										</TableCell>
-										<TableCell>
-											<div className='flex items-center gap-1'>
-												{team.members
-													.slice(0, 3)
-													.map((member) => (
-														<Avatar
-															key={member.id}
-															className='w-6 h-6'>
-															<AvatarImage
-																src={
-																	member.profile_photo ||
-																	""
-																}
-															/>
-															<AvatarFallback className='text-xs'>
-																{member.full_name?.charAt(
-																	0
-																) ||
-																	member.email.charAt(
-																		0
-																	)}
+
+											{/* Team Members Preview */}
+											<div className="flex items-center gap-2">
+												<div className="flex items-center gap-1">
+													{team.members.slice(0, 3).map((member) => (
+														<Avatar key={member.id} className="w-8 h-8 border-2 border-white shadow-sm">
+															<AvatarImage src={member.profile_photo || ""} />
+															<AvatarFallback className="bg-gradient-to-br from-slate-100 to-slate-200 text-slate-700 text-xs font-semibold">
+																{member.full_name?.charAt(0) || member.email.charAt(0)}
 															</AvatarFallback>
 														</Avatar>
 													))}
-												{team.members.length > 3 && (
-													<Badge
-														variant='secondary'
-														className='text-xs'>
-														+
-														{team.members.length -
-															3}
-													</Badge>
-												)}
-											</div>
-										</TableCell>
-										<TableCell>
-											<div className='flex items-center space-x-2'>
+													{team.members.length > 3 && (
+														<div className="w-8 h-8 bg-gradient-to-br from-slate-200 to-slate-300 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+															<span className="text-xs font-semibold text-slate-600">+{team.members.length - 3}</span>
+														</div>
+													)}
+												</div>
+												
+												{/* Edit Button */}
 												<Button
-													size='sm'
-													variant='outline'
-													onClick={() =>
-														openEditTeam(team)
-													}>
-													<Edit className='w-3 h-3 mr-1' />
+													variant="outline"
+													size="sm"
+													onClick={() => openEditTeam(team)}
+													className="h-8 px-3 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 hover:text-blue-800"
+												>
+													<Edit className="w-4 h-4 mr-1" />
 													Edit
 												</Button>
+												
+												{/* Delete Button */}
 												<Button
-													size='sm'
-													variant='destructive'
-													onClick={() =>
-														handleDeleteTeam(
-															team.id
-														)
-													}>
-													<Trash2 className='w-3 h-3 mr-1' />
+													variant="outline"
+													size="sm"
+													onClick={() => handleDeleteTeam(team.id)}
+													className="h-8 px-3 bg-red-50 hover:bg-red-100 border-red-200 text-red-700 hover:text-red-800"
+												>
+													<Trash2 className="w-4 h-4 mr-1" />
 													Delete
 												</Button>
 											</div>
-										</TableCell>
-									</TableRow>
+										</div>
+									</div>
 								))}
-							</TableBody>
-						</Table>
+							</div>
+						) : (
+							<div className="text-center py-12">
+								<div className="w-16 h-16 bg-gradient-to-br from-slate-200 to-slate-300 rounded-full flex items-center justify-center mx-auto mb-4">
+									<Users2 className="w-8 h-8 text-slate-500" />
+								</div>
+								<p className="text-slate-600 font-medium">No teams found</p>
+								<p className="text-sm text-slate-400 mt-2">
+									{searchTerm 
+										? "Try adjusting your search criteria." 
+										: "Get started by creating your first team."}
+								</p>
+							</div>
+						)}
 					</div>
-
-					{teams.length === 0 && (
-						<div className='text-center py-8'>
-							<Users className='w-12 h-12 text-gray-400 mx-auto mb-4' />
-							<p className='text-gray-500'>
-								No teams created yet.
-							</p>
-							<p className='text-sm text-gray-400'>
-								Create your first team to get started.
-							</p>
-						</div>
-					)}
 				</CardContent>
 			</Card>
 

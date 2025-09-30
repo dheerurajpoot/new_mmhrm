@@ -24,14 +24,14 @@ export function ConnectionStatus() {
   const getStatusColor = () => {
     switch (connectionStatus) {
       case "connected":
-        return "bg-blue-100 text-blue-800"
+        return "bg-green-300/30 backdrop-blur-[5px] text-green-900"
       case "connecting":
-        return "bg-yellow-100 text-yellow-800"
+        return "bg-yellow-300/30 backdrop-blur-[5px] text-yellow-800"
       case "disconnected":
       case "error":
-        return "bg-red-100 text-red-800"
+        return "bg-red-300/30 backdrop-blur-[5px] text-red-800"
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-300/30 backdrop-blur-[5px] text-gray-800"
     }
   }
 

@@ -5,10 +5,10 @@ import { getCurrentUser } from "@/lib/auth/client";
 import {
 	SidebarProvider,
 	SidebarInset,
-	SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/shared/app-sidebar";
 import { MobileBottomNav } from "@/components/shared/mobile-bottom-nav";
+import { DashboardHeader } from "@/components/shared/dashboard-header";
 import { EmployeeProfile } from "./employee-profile";
 import { LeaveBalance } from "./leave-balance";
 import { TimeTracking } from "./time-tracking";
@@ -193,51 +193,11 @@ export function EmployeeDashboard() {
 		<SidebarProvider>
 			<AppSidebar role='employee' />
 			<SidebarInset>
-				<div className='flex h-14 md:h-16 shrink-0 items-center gap-2 border-b px-3 md:px-4 bg-white/80 backdrop-blur-sm'>
-					<SidebarTrigger className='-ml-1' />
-
-					{/* Mobile Logo and User Name - Only visible on mobile */}
-					<div className='flex items-center space-x-2 md:hidden'>
-						{settings?.site_logo &&
-						settings.site_logo !== "/placeholder-logo.png" ? (
-							<img
-								src={settings.site_logo}
-								alt='Logo'
-								className='w-6 h-6 object-contain'
-								onError={(e) => {
-									e.currentTarget.style.display = "none";
-									const fallback = e.currentTarget
-										.nextElementSibling as HTMLElement;
-									if (fallback)
-										fallback.style.display = "flex";
-								}}
-							/>
-						) : null}
-						<div
-							className='w-6 h-6 bg-gradient-to-r from-red-600 to-blue-600 rounded-lg flex items-center justify-center'
-							style={{
-								display:
-									settings?.site_logo &&
-									settings.site_logo !==
-										"/placeholder-logo.png"
-										? "none"
-										: "flex",
-							}}>
-							<span className='text-white font-bold text-xs'>
-								MM
-							</span>
-						</div>
-					</div>
-
-					<div className='flex flex-col min-w-0 flex-1'>
-						<h1 className='text-base md:text-lg font-semibold truncate'>
-							{title}
-						</h1>
-						<p className='text-xs md:text-sm text-muted-foreground hidden sm:block truncate'>
-							{description}
-						</p>
-					</div>
-				</div>
+				<DashboardHeader 
+					title={title} 
+					description={description} 
+					role="employee" 
+				/>
 				<div className='flex-1 p-3 md:p-4 pb-20 md:pb-4 bg-gray-50/50 min-h-screen'>
 					<div className='max-w-7xl mx-auto'>{renderContent()}</div>
 				</div>
