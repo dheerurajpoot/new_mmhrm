@@ -54,9 +54,39 @@ import {
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
-import { Calendar, Check, X, Edit, Plus, Trash2, Loader2, Search, Users, Clock, TrendingUp, MoreHorizontal, Filter, Download, Plane, Stethoscope, Heart, Zap, HeartHandshake, Briefcase, Mail, Phone, MapPin, UserCheck } from "lucide-react";
+import {
+	Calendar,
+	Check,
+	X,
+	Edit,
+	Plus,
+	Trash2,
+	Loader2,
+	Search,
+	Users,
+	Clock,
+	TrendingUp,
+	MoreHorizontal,
+	Filter,
+	Download,
+	Plane,
+	Stethoscope,
+	Heart,
+	Zap,
+	HeartHandshake,
+	Briefcase,
+	Mail,
+	Phone,
+	MapPin,
+	UserCheck,
+} from "lucide-react";
 import {
 	updateLeaveBalance,
 	createLeaveRequest,
@@ -113,14 +143,22 @@ export function LeaveManagement() {
 	const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [loading, setLoading] = useState(true);
-	const [isLeaveUpdating, setIsLeaveUpdating] = useState<Record<string, boolean>>({});
+	const [isLeaveUpdating, setIsLeaveUpdating] = useState<
+		Record<string, boolean>
+	>({});
 	const [isBalanceDialogOpen, setIsBalanceDialogOpen] = useState(false);
 	const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
 	const [isTypeDialogOpen, setIsTypeDialogOpen] = useState(false);
+	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 	const [editingBalance, setEditingBalance] = useState<LeaveBalance | null>(
 		null
 	);
 	const [editingType, setEditingType] = useState<LeaveType | null>(null);
+	const [deletingItem, setDeletingItem] = useState<{
+		type: "request" | "balance" | "type";
+		id: string;
+		data: any;
+	} | null>(null);
 
 	const [balanceFormData, setBalanceFormData] = useState({
 		employee_id: "",
@@ -407,6 +445,45 @@ export function LeaveManagement() {
 		}
 	};
 
+	const handleDeleteConfirm = async () => {
+		if (!deletingItem) return;
+
+		try {
+			let endpoint = "";
+			let successMessage = "";
+
+			switch (deletingItem.type) {
+				case "request":
+					endpoint = `/api/leave-requests/${deletingItem.id}`;
+					successMessage = "Leave request deleted successfully";
+					break;
+				case "balance":
+					endpoint = `/api/leave-balances/${deletingItem.id}`;
+					successMessage = "Leave balance deleted successfully";
+					break;
+				case "type":
+					endpoint = `/api/leave-types/${deletingItem.id}`;
+					successMessage = "Leave type deleted successfully";
+					break;
+			}
+
+			const response = await fetch(endpoint, {
+				method: "DELETE",
+			});
+
+			if (response.ok) {
+				toast.success(successMessage);
+				fetchData();
+				setIsDeleteDialogOpen(false);
+				setDeletingItem(null);
+			} else {
+				toast.error("Failed to delete item");
+			}
+		} catch (error) {
+			toast.error("Failed to delete item");
+		}
+	};
+
 	const openTypeDialog = (type?: LeaveType) => {
 		if (type) {
 			setEditingType(type);
@@ -423,11 +500,20 @@ export function LeaveManagement() {
 		setIsTypeDialogOpen(true);
 	};
 
+	const openDeleteDialog = (
+		type: "request" | "balance" | "type",
+		id: string,
+		data: any
+	) => {
+		setDeletingItem({ type, id, data });
+		setIsDeleteDialogOpen(true);
+	};
+
 	const handleRequestUpdate = async (
 		requestId: string,
 		status: "approved" | "rejected"
 	) => {
-		setIsLeaveUpdating(prev => ({ ...prev, [requestId]: true }));
+		setIsLeaveUpdating((prev) => ({ ...prev, [requestId]: true }));
 		try {
 			const response = await fetch(`/api/leave-requests/${requestId}`, {
 				method: "PATCH",
@@ -450,7 +536,7 @@ export function LeaveManagement() {
 		} catch (error) {
 			toast.error("Failed to update leave request");
 		} finally {
-			setIsLeaveUpdating(prev => ({ ...prev, [requestId]: false }));
+			setIsLeaveUpdating((prev) => ({ ...prev, [requestId]: false }));
 		}
 	};
 
@@ -517,148 +603,173 @@ export function LeaveManagement() {
 	const getLeaveStats = () => {
 		const totalEmployees = employees.length;
 		const totalRequests = leaveRequests.length;
-		const pendingRequests = leaveRequests.filter(r => r.status === "pending").length;
-		const approvedRequests = leaveRequests.filter(r => r.status === "approved").length;
+		const pendingRequests = leaveRequests.filter(
+			(r) => r.status === "pending"
+		).length;
+		const approvedRequests = leaveRequests.filter(
+			(r) => r.status === "approved"
+		).length;
 		const totalLeaveTypes = leaveTypes.length;
 		const totalBalances = leaveBalances.length;
-		
-		return { 
-			totalEmployees, 
-			totalRequests, 
-			pendingRequests, 
-			approvedRequests, 
-			totalLeaveTypes, 
-			totalBalances 
+
+		return {
+			totalEmployees,
+			totalRequests,
+			pendingRequests,
+			approvedRequests,
+			totalLeaveTypes,
+			totalBalances,
 		};
 	};
 
 	const getLeaveTypeStyle = (leaveType: string) => {
 		switch (leaveType.toLowerCase()) {
-			case 'annual':
-			case 'vacation':
+			case "annual":
+			case "vacation":
 				return {
-					bg: 'bg-gradient-to-br from-blue-50 via-white to-blue-50/30',
-					border: 'border-blue-100',
-					hoverBorder: 'hover:border-blue-200',
-					iconBg: 'bg-gradient-to-br from-blue-500 to-blue-600',
-					dotBg: 'bg-blue-500',
-					icon: <Plane className="w-5 h-5 text-white" />,
-					textColor: 'text-blue-900',
-					accentColor: 'text-blue-600'
+					bg: "bg-gradient-to-br from-blue-50 via-white to-blue-50/30",
+					border: "border-blue-100",
+					hoverBorder: "hover:border-blue-200",
+					iconBg: "bg-gradient-to-br from-blue-500 to-blue-600",
+					dotBg: "bg-blue-500",
+					icon: <Plane className='w-5 h-5 text-white' />,
+					textColor: "text-blue-900",
+					accentColor: "text-blue-600",
 				};
-			case 'sick':
+			case "sick":
 				return {
-					bg: 'bg-gradient-to-br from-red-50 via-white to-red-50/30',
-					border: 'border-red-100',
-					hoverBorder: 'hover:border-red-200',
-					iconBg: 'bg-gradient-to-br from-red-500 to-red-600',
-					dotBg: 'bg-red-500',
-					icon: <Stethoscope className="w-5 h-5 text-white" />,
-					textColor: 'text-red-900',
-					accentColor: 'text-red-600'
+					bg: "bg-gradient-to-br from-red-50 via-white to-red-50/30",
+					border: "border-red-100",
+					hoverBorder: "hover:border-red-200",
+					iconBg: "bg-gradient-to-br from-red-500 to-red-600",
+					dotBg: "bg-red-500",
+					icon: <Stethoscope className='w-5 h-5 text-white' />,
+					textColor: "text-red-900",
+					accentColor: "text-red-600",
 				};
-			case 'personal':
+			case "personal":
 				return {
-					bg: 'bg-gradient-to-br from-purple-50 via-white to-purple-50/30',
-					border: 'border-purple-100',
-					hoverBorder: 'hover:border-purple-200',
-					iconBg: 'bg-gradient-to-br from-purple-500 to-purple-600',
-					dotBg: 'bg-purple-500',
-					icon: <Heart className="w-5 h-5 text-white" />,
-					textColor: 'text-purple-900',
-					accentColor: 'text-purple-600'
+					bg: "bg-gradient-to-br from-purple-50 via-white to-purple-50/30",
+					border: "border-purple-100",
+					hoverBorder: "hover:border-purple-200",
+					iconBg: "bg-gradient-to-br from-purple-500 to-purple-600",
+					dotBg: "bg-purple-500",
+					icon: <Heart className='w-5 h-5 text-white' />,
+					textColor: "text-purple-900",
+					accentColor: "text-purple-600",
 				};
-			case 'emergency':
+			case "emergency":
 				return {
-					bg: 'bg-gradient-to-br from-orange-50 via-white to-orange-50/30',
-					border: 'border-orange-100',
-					hoverBorder: 'hover:border-orange-200',
-					iconBg: 'bg-gradient-to-br from-orange-500 to-orange-600',
-					dotBg: 'bg-orange-500',
-					icon: <Zap className="w-5 h-5 text-white" />,
-					textColor: 'text-orange-900',
-					accentColor: 'text-orange-600'
+					bg: "bg-gradient-to-br from-orange-50 via-white to-orange-50/30",
+					border: "border-orange-100",
+					hoverBorder: "hover:border-orange-200",
+					iconBg: "bg-gradient-to-br from-orange-500 to-orange-600",
+					dotBg: "bg-orange-500",
+					icon: <Zap className='w-5 h-5 text-white' />,
+					textColor: "text-orange-900",
+					accentColor: "text-orange-600",
 				};
-			case 'maternity':
+			case "maternity":
 				return {
-					bg: 'bg-gradient-to-br from-pink-50 via-white to-pink-50/30',
-					border: 'border-pink-100',
-					hoverBorder: 'hover:border-pink-200',
-					iconBg: 'bg-gradient-to-br from-pink-500 to-pink-600',
-					dotBg: 'bg-pink-500',
-					icon: <HeartHandshake className="w-5 h-5 text-white" />,
-					textColor: 'text-pink-900',
-					accentColor: 'text-pink-600'
+					bg: "bg-gradient-to-br from-pink-50 via-white to-pink-50/30",
+					border: "border-pink-100",
+					hoverBorder: "hover:border-pink-200",
+					iconBg: "bg-gradient-to-br from-pink-500 to-pink-600",
+					dotBg: "bg-pink-500",
+					icon: <HeartHandshake className='w-5 h-5 text-white' />,
+					textColor: "text-pink-900",
+					accentColor: "text-pink-600",
 				};
-			case 'paternity':
+			case "paternity":
 				return {
-					bg: 'bg-gradient-to-br from-indigo-50 via-white to-indigo-50/30',
-					border: 'border-indigo-100',
-					hoverBorder: 'hover:border-indigo-200',
-					iconBg: 'bg-gradient-to-br from-indigo-500 to-indigo-600',
-					dotBg: 'bg-indigo-500',
-					icon: <HeartHandshake className="w-5 h-5 text-white" />,
-					textColor: 'text-indigo-900',
-					accentColor: 'text-indigo-600'
+					bg: "bg-gradient-to-br from-indigo-50 via-white to-indigo-50/30",
+					border: "border-indigo-100",
+					hoverBorder: "hover:border-indigo-200",
+					iconBg: "bg-gradient-to-br from-indigo-500 to-indigo-600",
+					dotBg: "bg-indigo-500",
+					icon: <HeartHandshake className='w-5 h-5 text-white' />,
+					textColor: "text-indigo-900",
+					accentColor: "text-indigo-600",
 				};
-			case 'compensatory':
-			case 'comp':
+			case "compensatory":
+			case "comp":
 				return {
-					bg: 'bg-gradient-to-br from-emerald-50 via-white to-emerald-50/30',
-					border: 'border-emerald-100',
-					hoverBorder: 'hover:border-emerald-200',
-					iconBg: 'bg-gradient-to-br from-emerald-500 to-emerald-600',
-					dotBg: 'bg-emerald-500',
-					icon: <Clock className="w-5 h-5 text-white" />,
-					textColor: 'text-emerald-900',
-					accentColor: 'text-emerald-600'
+					bg: "bg-gradient-to-br from-emerald-50 via-white to-emerald-50/30",
+					border: "border-emerald-100",
+					hoverBorder: "hover:border-emerald-200",
+					iconBg: "bg-gradient-to-br from-emerald-500 to-emerald-600",
+					dotBg: "bg-emerald-500",
+					icon: <Clock className='w-5 h-5 text-white' />,
+					textColor: "text-emerald-900",
+					accentColor: "text-emerald-600",
 				};
-			case 'study':
-			case 'education':
+			case "study":
+			case "education":
 				return {
-					bg: 'bg-gradient-to-br from-amber-50 via-white to-amber-50/30',
-					border: 'border-amber-100',
-					hoverBorder: 'hover:border-amber-200',
-					iconBg: 'bg-gradient-to-br from-amber-500 to-amber-600',
-					dotBg: 'bg-amber-500',
-					icon: <TrendingUp className="w-5 h-5 text-white" />,
-					textColor: 'text-amber-900',
-					accentColor: 'text-amber-600'
+					bg: "bg-gradient-to-br from-amber-50 via-white to-amber-50/30",
+					border: "border-amber-100",
+					hoverBorder: "hover:border-amber-200",
+					iconBg: "bg-gradient-to-br from-amber-500 to-amber-600",
+					dotBg: "bg-amber-500",
+					icon: <TrendingUp className='w-5 h-5 text-white' />,
+					textColor: "text-amber-900",
+					accentColor: "text-amber-600",
 				};
 			default:
 				return {
-					bg: 'bg-gradient-to-br from-slate-50 via-white to-slate-50/30',
-					border: 'border-slate-100',
-					hoverBorder: 'hover:border-slate-200',
-					iconBg: 'bg-gradient-to-br from-slate-500 to-slate-600',
-					dotBg: 'bg-slate-500',
-					icon: <Calendar className="w-5 h-5 text-white" />,
-					textColor: 'text-slate-900',
-					accentColor: 'text-slate-600'
+					bg: "bg-gradient-to-br from-slate-50 via-white to-slate-50/30",
+					border: "border-slate-100",
+					hoverBorder: "hover:border-slate-200",
+					iconBg: "bg-gradient-to-br from-slate-500 to-slate-600",
+					dotBg: "bg-slate-500",
+					icon: <Calendar className='w-5 h-5 text-white' />,
+					textColor: "text-slate-900",
+					accentColor: "text-slate-600",
 				};
 		}
 	};
 
-	const filteredLeaveRequests = leaveRequests.filter(request =>
-		request.employee?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-		request.employee?.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-		request.employee?.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-		request.employee?.position?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-		request.leave_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-		request.reason.toLowerCase().includes(searchTerm.toLowerCase())
+	const filteredLeaveRequests = leaveRequests.filter(
+		(request) =>
+			request.employee?.full_name
+				?.toLowerCase()
+				.includes(searchTerm.toLowerCase()) ||
+			request.employee?.email
+				.toLowerCase()
+				.includes(searchTerm.toLowerCase()) ||
+			request.employee?.department
+				?.toLowerCase()
+				.includes(searchTerm.toLowerCase()) ||
+			request.employee?.position
+				?.toLowerCase()
+				.includes(searchTerm.toLowerCase()) ||
+			request.leave_type
+				.toLowerCase()
+				.includes(searchTerm.toLowerCase()) ||
+			request.reason.toLowerCase().includes(searchTerm.toLowerCase())
 	);
 
-	const filteredLeaveBalances = leaveBalances.filter(balance =>
-		balance.employee?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-		balance.employee?.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-		balance.employee?.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-		balance.employee?.position?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-		balance.leave_type.toLowerCase().includes(searchTerm.toLowerCase())
+	const filteredLeaveBalances = leaveBalances.filter(
+		(balance) =>
+			balance.employee?.full_name
+				?.toLowerCase()
+				.includes(searchTerm.toLowerCase()) ||
+			balance.employee?.email
+				.toLowerCase()
+				.includes(searchTerm.toLowerCase()) ||
+			balance.employee?.department
+				?.toLowerCase()
+				.includes(searchTerm.toLowerCase()) ||
+			balance.employee?.position
+				?.toLowerCase()
+				.includes(searchTerm.toLowerCase()) ||
+			balance.leave_type.toLowerCase().includes(searchTerm.toLowerCase())
 	);
 
-	const filteredLeaveTypes = leaveTypes.filter(type =>
-		type.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-		type.description.toLowerCase().includes(searchTerm.toLowerCase())
+	const filteredLeaveTypes = leaveTypes.filter(
+		(type) =>
+			type.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+			type.description.toLowerCase().includes(searchTerm.toLowerCase())
 	);
 
 	const calculateDays = () => {
@@ -676,33 +787,35 @@ export function LeaveManagement() {
 
 	if (loading && leaveBalances.length === 0) {
 		return (
-			<div className="space-y-6">
+			<div className='space-y-6'>
 				{/* Stats Cards Skeleton */}
-				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+				<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
 					{[...Array(4)].map((_, i) => (
-						<Card key={i} className="animate-pulse">
-							<CardContent className="p-6">
-								<div className="flex items-center justify-between">
-									<div className="space-y-2">
-										<div className="h-4 bg-gray-200 rounded w-20"></div>
-										<div className="h-8 bg-gray-200 rounded w-16"></div>
+						<Card key={i} className='animate-pulse'>
+							<CardContent className='p-6'>
+								<div className='flex items-center justify-between'>
+									<div className='space-y-2'>
+										<div className='h-4 bg-gray-200 rounded w-20'></div>
+										<div className='h-8 bg-gray-200 rounded w-16'></div>
 									</div>
-									<div className="w-12 h-12 bg-gray-200 rounded-lg"></div>
+									<div className='w-12 h-12 bg-gray-200 rounded-lg'></div>
 								</div>
 							</CardContent>
 						</Card>
 					))}
 				</div>
-				
+
 				{/* Main Content Skeleton */}
-				<Card className="animate-pulse">
-					<CardContent className="p-6">
-						<div className="space-y-4">
-							<div className="h-4 bg-gray-200 rounded w-1/4"></div>
-							<div className="h-10 bg-gray-200 rounded"></div>
-							<div className="space-y-3">
+				<Card className='animate-pulse'>
+					<CardContent className='p-6'>
+						<div className='space-y-4'>
+							<div className='h-4 bg-gray-200 rounded w-1/4'></div>
+							<div className='h-10 bg-gray-200 rounded'></div>
+							<div className='space-y-3'>
 								{[...Array(3)].map((_, i) => (
-									<div key={i} className="h-20 bg-gray-200 rounded"></div>
+									<div
+										key={i}
+										className='h-20 bg-gray-200 rounded'></div>
 								))}
 							</div>
 						</div>
@@ -715,64 +828,88 @@ export function LeaveManagement() {
 	const stats = getLeaveStats();
 
 	return (
-		<div className="space-y-8">
+		<div className='space-y-8'>
 			{/* Leave Statistics */}
-			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-				<Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-blue-50 via-white to-blue-50/30 border-blue-100">
-					<CardContent className="p-6">
-						<div className="flex items-center justify-between">
-							<div className="flex-1">
-								<p className="text-sm font-medium text-blue-700 mb-2">Total Employees</p>
-								<p className="text-3xl font-bold text-blue-900">{stats.totalEmployees}</p>
-								<p className="text-xs text-blue-600 mt-1">All employees</p>
+			<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
+				<Card className='group relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-blue-50 via-white to-blue-50/30 border-blue-100'>
+					<CardContent className='p-6'>
+						<div className='flex items-center justify-between'>
+							<div className='flex-1'>
+								<p className='text-sm font-medium text-blue-700 mb-2'>
+									Total Employees
+								</p>
+								<p className='text-3xl font-bold text-blue-900'>
+									{stats.totalEmployees}
+								</p>
+								<p className='text-xs text-blue-600 mt-1'>
+									All employees
+								</p>
 							</div>
-							<div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-								<Users className="w-7 h-7 text-white" />
-							</div>
-						</div>
-					</CardContent>
-				</Card>
-
-				<Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-emerald-50 via-white to-emerald-50/30 border-emerald-100">
-					<CardContent className="p-6">
-						<div className="flex items-center justify-between">
-							<div className="flex-1">
-								<p className="text-sm font-medium text-emerald-700 mb-2">Leave Requests</p>
-								<p className="text-3xl font-bold text-emerald-900">{stats.totalRequests}</p>
-								<p className="text-xs text-emerald-600 mt-1">Total requests</p>
-							</div>
-							<div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
-								<Calendar className="w-7 h-7 text-white" />
+							<div className='w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg'>
+								<Users className='w-7 h-7 text-white' />
 							</div>
 						</div>
 					</CardContent>
 				</Card>
 
-				<Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-amber-50 via-white to-amber-50/30 border-amber-100">
-					<CardContent className="p-6">
-						<div className="flex items-center justify-between">
-							<div className="flex-1">
-								<p className="text-sm font-medium text-amber-700 mb-2">Pending</p>
-								<p className="text-3xl font-bold text-amber-900">{stats.pendingRequests}</p>
-								<p className="text-xs text-amber-600 mt-1">Awaiting approval</p>
+				<Card className='group relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-emerald-50 via-white to-emerald-50/30 border-emerald-100'>
+					<CardContent className='p-6'>
+						<div className='flex items-center justify-between'>
+							<div className='flex-1'>
+								<p className='text-sm font-medium text-emerald-700 mb-2'>
+									Leave Requests
+								</p>
+								<p className='text-3xl font-bold text-emerald-900'>
+									{stats.totalRequests}
+								</p>
+								<p className='text-xs text-emerald-600 mt-1'>
+									Total requests
+								</p>
 							</div>
-							<div className="w-14 h-14 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg">
-								<Clock className="w-7 h-7 text-white" />
+							<div className='w-14 h-14 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg'>
+								<Calendar className='w-7 h-7 text-white' />
 							</div>
 						</div>
 					</CardContent>
 				</Card>
 
-				<Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-purple-50 via-white to-purple-50/30 border-purple-100">
-					<CardContent className="p-6">
-						<div className="flex items-center justify-between">
-							<div className="flex-1">
-								<p className="text-sm font-medium text-purple-700 mb-2">Leave Types</p>
-								<p className="text-3xl font-bold text-purple-900">{stats.totalLeaveTypes}</p>
-								<p className="text-xs text-purple-600 mt-1">Available types</p>
+				<Card className='group relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-amber-50 via-white to-amber-50/30 border-amber-100'>
+					<CardContent className='p-6'>
+						<div className='flex items-center justify-between'>
+							<div className='flex-1'>
+								<p className='text-sm font-medium text-amber-700 mb-2'>
+									Pending
+								</p>
+								<p className='text-3xl font-bold text-amber-900'>
+									{stats.pendingRequests}
+								</p>
+								<p className='text-xs text-amber-600 mt-1'>
+									Awaiting approval
+								</p>
 							</div>
-							<div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-								<TrendingUp className="w-7 h-7 text-white" />
+							<div className='w-14 h-14 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg'>
+								<Clock className='w-7 h-7 text-white' />
+							</div>
+						</div>
+					</CardContent>
+				</Card>
+
+				<Card className='group relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-purple-50 via-white to-purple-50/30 border-purple-100'>
+					<CardContent className='p-6'>
+						<div className='flex items-center justify-between'>
+							<div className='flex-1'>
+								<p className='text-sm font-medium text-purple-700 mb-2'>
+									Leave Types
+								</p>
+								<p className='text-3xl font-bold text-purple-900'>
+									{stats.totalLeaveTypes}
+								</p>
+								<p className='text-xs text-purple-600 mt-1'>
+									Available types
+								</p>
+							</div>
+							<div className='w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg'>
+								<TrendingUp className='w-7 h-7 text-white' />
 							</div>
 						</div>
 					</CardContent>
@@ -780,922 +917,1115 @@ export function LeaveManagement() {
 			</div>
 
 			{/* Main Leave Management Card */}
-			<Card className="border-0 shadow-lg bg-gradient-to-br from-slate-50 via-white to-slate-50/30 border-slate-100">
-				<CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100/50 border-b border-slate-200">
-					<div className="flex items-center gap-3">
-						<div className="w-10 h-10 bg-gradient-to-br from-slate-500 to-slate-600 rounded-lg flex items-center justify-center">
-							<Calendar className="w-5 h-5 text-white" />
+			<Card className='border-0 shadow-lg bg-gradient-to-br from-slate-50 via-white to-slate-50/30 border-slate-100'>
+				<CardHeader className='bg-gradient-to-r from-slate-50 to-slate-100/50 border-b border-slate-200'>
+					<div className='flex items-center gap-3'>
+						<div className='w-10 h-10 bg-gradient-to-br from-slate-500 to-slate-600 rounded-lg flex items-center justify-center'>
+							<Calendar className='w-5 h-5 text-white' />
 						</div>
 						<div>
-							<CardTitle className="text-slate-900">Leave Management</CardTitle>
-							<CardDescription className="text-slate-600">Manage employee leave balances, requests, and types</CardDescription>
+							<CardTitle className='text-slate-900'>
+								Leave Management
+							</CardTitle>
+							<CardDescription className='text-slate-600'>
+								Manage employee leave balances, requests, and
+								types
+							</CardDescription>
 						</div>
 					</div>
 				</CardHeader>
-				<CardContent className="p-0">
-					<Tabs defaultValue='requests' className="w-full">
-						<div className="p-6 border-b border-slate-200 bg-gradient-to-r from-slate-50/50 to-white">
-							<TabsList className="grid w-full grid-cols-3">
-								<TabsTrigger value='requests' className="flex items-center gap-2">
-									<Calendar className="w-4 h-4" />
+				<CardContent className='p-0'>
+					<Tabs defaultValue='requests' className='w-full'>
+						<div className='p-6 border-b border-slate-200 bg-gradient-to-r from-slate-50/50 to-white'>
+							<TabsList className='grid w-full grid-cols-3'>
+								<TabsTrigger
+									value='requests'
+									className='flex items-center gap-2'>
+									<Calendar className='w-4 h-4' />
 									Leave Requests
 								</TabsTrigger>
-								<TabsTrigger value='balances' className="flex items-center gap-2">
-									<UserCheck className="w-4 h-4" />
+								<TabsTrigger
+									value='balances'
+									className='flex items-center gap-2'>
+									<UserCheck className='w-4 h-4' />
 									Leave Balances
 								</TabsTrigger>
-								<TabsTrigger value='types' className="flex items-center gap-2">
-									<TrendingUp className="w-4 h-4" />
+								<TabsTrigger
+									value='types'
+									className='flex items-center gap-2'>
+									<TrendingUp className='w-4 h-4' />
 									Leave Types
 								</TabsTrigger>
 							</TabsList>
 						</div>
 
-						<TabsContent value='requests' className="p-6">
+						<TabsContent value='requests' className='p-6'>
 							{/* Search and Actions */}
-							<div className="flex flex-col lg:flex-row gap-4 mb-6">
-								<div className="flex-1">
-									<div className="relative">
-										<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+							<div className='flex flex-col lg:flex-row gap-4 mb-6'>
+								<div className='flex-1'>
+									<div className='relative'>
+										<Search className='absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400' />
 										<Input
-											placeholder="Search leave requests by employee, leave type, or reason..."
+											placeholder='Search leave requests by employee, leave type, or reason...'
 											value={searchTerm}
-											onChange={(e) => setSearchTerm(e.target.value)}
-											className="pl-10 bg-white border-slate-200 focus:border-slate-400"
+											onChange={(e) =>
+												setSearchTerm(e.target.value)
+											}
+											className='pl-10 bg-white border-slate-200 focus:border-slate-400'
 										/>
 									</div>
 								</div>
-								<Dialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen}>
+								<Dialog
+									open={isRequestDialogOpen}
+									onOpenChange={setIsRequestDialogOpen}>
 									<DialogTrigger asChild>
-										<Button 
-											onClick={() => setIsRequestDialogOpen(true)}
-											className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
-										>
-											<Plus className="mr-2 h-4 w-4" />
+										<Button
+											onClick={() =>
+												setIsRequestDialogOpen(true)
+											}
+											className='bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300'>
+											<Plus className='mr-2 h-4 w-4' />
 											Create Leave Request
 										</Button>
 									</DialogTrigger>
-							<DialogContent className='max-w-2xl'>
-								<DialogHeader>
-									<DialogTitle>
-										Create Leave Request
-									</DialogTitle>
-									<DialogDescription>
-										Create a new leave request for an
-										employee
-									</DialogDescription>
-								</DialogHeader>
-								<form
-									onSubmit={handleRequestSubmit}
-									className='space-y-4'>
-									<div className='grid grid-cols-2 gap-4'>
-										<div className='space-y-2'>
-											<Label htmlFor='request_employee_id'>
-												Employee
-											</Label>
-											<SearchableSelect
-												options={employees.map(
-													(employee) => ({
-														value: employee.id,
-														label:
-															employee.full_name ||
-															employee.email,
-														description:
-															employee.position ||
-															employee.department,
-														profile_photo:
-															employee.profile_photo,
-														email: employee.email,
-													})
-												)}
-												value={
-													requestFormData.employee_id
-												}
-												onValueChange={(value) =>
-													setRequestFormData({
-														...requestFormData,
-														employee_id: value,
-													})
-												}
-												placeholder='Select employee'
-												searchPlaceholder='Search employees...'
-												emptyMessage='No employees found.'
-											/>
-										</div>
-										<div className='space-y-2'>
-											<Label htmlFor='request_leave_type'>
-												Leave Type
-											</Label>
-											<SimpleSelect
-												options={leaveTypes.map(
-													(type) => ({
-														value: type.name,
-														label: type.name,
-													})
-												)}
-												value={
-													requestFormData.leave_type
-												}
-												onValueChange={(value) =>
-													setRequestFormData({
-														...requestFormData,
-														leave_type: value,
-													})
-												}
-												placeholder='Select leave type'
-											/>
-										</div>
-									</div>
-									<div className='grid grid-cols-3 gap-4'>
-										<div className='space-y-2'>
-											<Label htmlFor='start_date'>
-												Start Date
-											</Label>
-											<Input
-												id='start_date'
-												type='date'
-												value={
-													requestFormData.start_date
-												}
-												onChange={(e) => {
-													setRequestFormData({
-														...requestFormData,
-														start_date:
-															e.target.value,
-													});
-													setTimeout(
-														calculateDays,
-														100
-													);
-												}}
-												required
-											/>
-										</div>
-										<div className='space-y-2'>
-											<Label htmlFor='end_date'>
-												End Date
-											</Label>
-											<Input
-												id='end_date'
-												type='date'
-												value={requestFormData.end_date}
-												onChange={(e) => {
-													setRequestFormData({
-														...requestFormData,
-														end_date:
-															e.target.value,
-													});
-													setTimeout(
-														calculateDays,
-														100
-													);
-												}}
-												required
-											/>
-										</div>
-										<div className='space-y-2'>
-											<Label htmlFor='days_requested'>
-												Days Requested
-											</Label>
-											<Input
-												id='days_requested'
-												type='number'
-												value={
-													requestFormData.days_requested
-												}
-												onChange={(e) =>
-													setRequestFormData({
-														...requestFormData,
-														days_requested:
-															e.target.value,
-													})
-												}
-												required
-											/>
-										</div>
-									</div>
-									<div className='space-y-2'>
-										<Label htmlFor='reason'>Reason</Label>
-										<Textarea
-											id='reason'
-											value={requestFormData.reason}
-											onChange={(e) =>
-												setRequestFormData({
-													...requestFormData,
-													reason: e.target.value,
-												})
-											}
-											required
-										/>
-									</div>
-									<div className='flex justify-end space-x-2'>
-										<Button
-											type='button'
-											variant='outline'
-											onClick={() =>
-												setIsRequestDialogOpen(false)
-											}>
-											Cancel
-										</Button>
-										<Button
-											type='submit'
-											disabled={loading}>
-											{loading
-												? "Creating..."
-												: "Create Request"}
-										</Button>
-									</div>
-								</form>
-							</DialogContent>
-						</Dialog>
-					</div>
+									<DialogContent className='max-w-2xl'>
+										<DialogHeader>
+											<DialogTitle>
+												Create Leave Request
+											</DialogTitle>
+											<DialogDescription>
+												Create a new leave request for
+												an employee
+											</DialogDescription>
+										</DialogHeader>
+										<form
+											onSubmit={handleRequestSubmit}
+											className='space-y-4'>
+											<div className='grid grid-cols-2 gap-4'>
+												<div className='space-y-2'>
+													<Label htmlFor='request_employee_id'>
+														Employee
+													</Label>
+													<SearchableSelect
+														options={employees.map(
+															(employee) => ({
+																value: employee.id,
+																label:
+																	employee.full_name ||
+																	employee.email,
+																description:
+																	employee.position ||
+																	employee.department,
+																profile_photo:
+																	employee.profile_photo,
+																email: employee.email,
+															})
+														)}
+														value={
+															requestFormData.employee_id
+														}
+														onValueChange={(
+															value
+														) =>
+															setRequestFormData({
+																...requestFormData,
+																employee_id:
+																	value,
+															})
+														}
+														placeholder='Select employee'
+														searchPlaceholder='Search employees...'
+														emptyMessage='No employees found.'
+													/>
+												</div>
+												<div className='space-y-2'>
+													<Label htmlFor='request_leave_type'>
+														Leave Type
+													</Label>
+													<SimpleSelect
+														options={leaveTypes.map(
+															(type) => ({
+																value: type.name,
+																label: type.name,
+															})
+														)}
+														value={
+															requestFormData.leave_type
+														}
+														onValueChange={(
+															value
+														) =>
+															setRequestFormData({
+																...requestFormData,
+																leave_type:
+																	value,
+															})
+														}
+														placeholder='Select leave type'
+													/>
+												</div>
+											</div>
+											<div className='grid grid-cols-3 gap-4'>
+												<div className='space-y-2'>
+													<Label htmlFor='start_date'>
+														Start Date
+													</Label>
+													<Input
+														id='start_date'
+														type='date'
+														value={
+															requestFormData.start_date
+														}
+														onChange={(e) => {
+															setRequestFormData({
+																...requestFormData,
+																start_date:
+																	e.target
+																		.value,
+															});
+															setTimeout(
+																calculateDays,
+																100
+															);
+														}}
+														required
+													/>
+												</div>
+												<div className='space-y-2'>
+													<Label htmlFor='end_date'>
+														End Date
+													</Label>
+													<Input
+														id='end_date'
+														type='date'
+														value={
+															requestFormData.end_date
+														}
+														onChange={(e) => {
+															setRequestFormData({
+																...requestFormData,
+																end_date:
+																	e.target
+																		.value,
+															});
+															setTimeout(
+																calculateDays,
+																100
+															);
+														}}
+														required
+													/>
+												</div>
+												<div className='space-y-2'>
+													<Label htmlFor='days_requested'>
+														Days Requested
+													</Label>
+													<Input
+														id='days_requested'
+														type='number'
+														value={
+															requestFormData.days_requested
+														}
+														onChange={(e) =>
+															setRequestFormData({
+																...requestFormData,
+																days_requested:
+																	e.target
+																		.value,
+															})
+														}
+														required
+													/>
+												</div>
+											</div>
+											<div className='space-y-2'>
+												<Label htmlFor='reason'>
+													Reason
+												</Label>
+												<Textarea
+													id='reason'
+													value={
+														requestFormData.reason
+													}
+													onChange={(e) =>
+														setRequestFormData({
+															...requestFormData,
+															reason: e.target
+																.value,
+														})
+													}
+													required
+												/>
+											</div>
+											<div className='flex justify-end space-x-2'>
+												<Button
+													type='button'
+													variant='outline'
+													onClick={() =>
+														setIsRequestDialogOpen(
+															false
+														)
+													}>
+													Cancel
+												</Button>
+												<Button
+													type='submit'
+													disabled={loading}>
+													{loading
+														? "Creating..."
+														: "Create Request"}
+												</Button>
+											</div>
+										</form>
+									</DialogContent>
+								</Dialog>
+							</div>
 
 							{/* Leave Requests List */}
-							<div className="overflow-hidden">
+							<div className='overflow-hidden'>
 								{filteredLeaveRequests.length > 0 ? (
-									<div className="divide-y divide-slate-200">
-										{filteredLeaveRequests.map((request, index) => (
-											<div key={request.id} className={`p-6 hover:bg-slate-50/50 transition-colors ${
-												index % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'
-											}`}>
-												<div className="flex items-center justify-between">
-													{/* Employee Info */}
-													<div className="flex items-center gap-4">
-														<Avatar className="w-12 h-12 border-2 border-slate-200">
-															<AvatarImage src={request.employee?.profile_photo || ""} />
-															<AvatarFallback className="bg-gradient-to-br from-slate-100 to-slate-200 text-slate-700 font-semibold">
-																{request.employee?.full_name?.charAt(0) || request.employee?.email?.charAt(0) || "?"}
-															</AvatarFallback>
-														</Avatar>
-														
-														<div className="space-y-1">
-															<div className="flex items-center gap-2">
-																<h3 className="font-semibold text-slate-900">{request.employee?.full_name || "Unknown Employee"}</h3>
-																<Badge className={`${getStatusColor(request.status)} border-0 shadow-sm`}>
-																	{request.status.toUpperCase()}
-																</Badge>
-															</div>
-															
-															<div className="flex items-center gap-4 text-sm text-slate-600">
-																<div className="flex items-center gap-1">
-																	{getLeaveTypeStyle(request.leave_type).icon}
-																	<span className="capitalize">{request.leave_type}</span>
-																</div>
-																<div className="flex items-center gap-1">
-																	<Calendar className="w-3 h-3" />
-																	<span>{new Date(request.start_date).toLocaleDateString()} - {new Date(request.end_date).toLocaleDateString()}</span>
-																</div>
-																<div className="flex items-center gap-1">
-																	<Clock className="w-3 h-3" />
-																	<span>{request.days_requested} days</span>
-																</div>
-															</div>
-														</div>
-													</div>
+									<div className='divide-y divide-slate-200'>
+										{filteredLeaveRequests.map(
+											(request, index) => (
+												<div
+													key={request.id}
+													className={`p-6 hover:bg-slate-50/50 transition-colors ${
+														index % 2 === 0
+															? "bg-white"
+															: "bg-slate-50/30"
+													}`}>
+													<div className='flex items-center justify-between'>
+														{/* Employee Info */}
+														<div className='flex items-center gap-4'>
+															<Avatar className='w-12 h-12 border-2 border-slate-200'>
+																<AvatarImage
+																	src={
+																		request
+																			.employee
+																			?.profile_photo ||
+																		""
+																	}
+																/>
+																<AvatarFallback className='bg-gradient-to-br from-slate-100 to-slate-200 text-slate-700 font-semibold'>
+																	{request.employee?.full_name?.charAt(
+																		0
+																	) ||
+																		request.employee?.email?.charAt(
+																			0
+																		) ||
+																		"?"}
+																</AvatarFallback>
+															</Avatar>
 
-													{/* Request Details */}
-													<div className="flex items-center gap-6">
-														<div className="text-center max-w-xs">
-															<p className="text-xs text-slate-500 mb-1">Reason</p>
-															<p className="text-sm text-slate-900 line-clamp-2">{request.reason}</p>
+															<div className='space-y-1'>
+																<div className='flex items-center gap-2'>
+																	<h3 className='font-semibold text-slate-900'>
+																		{request
+																			.employee
+																			?.full_name ||
+																			"Unknown Employee"}
+																	</h3>
+																	<Badge
+																		className={`${getStatusColor(
+																			request.status
+																		)} border-0 shadow-sm`}>
+																		{request.status.toUpperCase()}
+																	</Badge>
+																</div>
+
+																<div className='flex items-center gap-4 text-sm text-slate-600'>
+																	<div className='flex items-center gap-1'>
+																		{
+																			getLeaveTypeStyle(
+																				request.leave_type
+																			)
+																				.icon
+																		}
+																		<span className='capitalize'>
+																			{
+																				request.leave_type
+																			}
+																		</span>
+																	</div>
+																	<div className='flex items-center gap-1'>
+																		<Calendar className='w-3 h-3' />
+																		<span>
+																			{new Date(
+																				request.start_date
+																			).toLocaleDateString()}{" "}
+																			-{" "}
+																			{new Date(
+																				request.end_date
+																			).toLocaleDateString()}
+																		</span>
+																	</div>
+																	<div className='flex items-center gap-1'>
+																		<Clock className='w-3 h-3' />
+																		<span>
+																			{
+																				request.days_requested
+																			}{" "}
+																			days
+																		</span>
+																	</div>
+																</div>
+															</div>
 														</div>
-														
-														<div className="flex items-center gap-2">
-															{request.status === "pending" && (
-																<>
-																	<Button
-																		variant="outline"
-																		size="sm"
-																		disabled={isLeaveUpdating[request.id]}
-																		onClick={() => handleRequestUpdate(request.id, "approved")}
-																		className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200"
-																	>
-																		{isLeaveUpdating[request.id] ? (
-																			<Loader2 className="h-4 w-4 animate-spin" />
-																		) : (
-																			<Check className="h-4 w-4" />
-																		)}
-																	</Button>
-																	<Button
-																		variant="outline"
-																		size="sm"
-																		disabled={isLeaveUpdating[request.id]}
-																		onClick={() => handleRequestUpdate(request.id, "rejected")}
-																		className="bg-red-50 hover:bg-red-100 text-red-700 border-red-200"
-																	>
-																		{isLeaveUpdating[request.id] ? (
-																			<Loader2 className="h-4 w-4 animate-spin" />
-																		) : (
-																			<X className="h-4 w-4" />
-																		)}
-																	</Button>
-																</>
-															)}
-															
-															{/* Edit Button */}
-															<Button
-																variant="outline"
-																size="sm"
-																onClick={() => setIsRequestDialogOpen(true)}
-																className="h-8 px-3 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 hover:text-blue-800"
-															>
-																<Edit className="w-4 h-4 mr-1" />
-																Edit
-															</Button>
-															
-															{/* Delete Button */}
-															<AlertDialog>
-																<AlertDialogTrigger asChild>
-																	<Button
-																		variant="outline"
-																		size="sm"
-																		className="h-8 px-3 bg-red-50 hover:bg-red-100 border-red-200 text-red-700 hover:text-red-800"
-																	>
-																		<Trash2 className="w-4 h-4 mr-1" />
-																		Delete
-																	</Button>
-																</AlertDialogTrigger>
-																<AlertDialogContent>
-																	<AlertDialogHeader>
-																		<AlertDialogTitle>Delete Leave Request</AlertDialogTitle>
-																		<AlertDialogDescription>
-																			Are you sure you want to delete this leave request? This action cannot be undone.
-																			<br /><br />
-																			<strong>Employee:</strong> {request.employee?.full_name || "Unknown"}
-																			<br />
-																			<strong>Leave Type:</strong> {request.leave_type}
-																			<br />
-																			<strong>Duration:</strong> {request.days_requested} days
-																			<br />
-																			<strong>Reason:</strong> {request.reason}
-																		</AlertDialogDescription>
-																	</AlertDialogHeader>
-																	<AlertDialogFooter>
-																		<AlertDialogCancel>Cancel</AlertDialogCancel>
-																		<AlertDialogAction
-																			onClick={() => handleDeleteRequest(request.id)}
-																			className="bg-red-600 hover:bg-red-700">
-																			Delete
-																		</AlertDialogAction>
-																	</AlertDialogFooter>
-																</AlertDialogContent>
-															</AlertDialog>
+
+														{/* Request Details */}
+														<div className='flex items-center gap-6'>
+															<div className='text-center max-w-xs'>
+																<p className='text-xs text-slate-500 mb-1'>
+																	Reason
+																</p>
+																<p className='text-sm text-slate-900 line-clamp-2'>
+																	{
+																		request.reason
+																	}
+																</p>
+															</div>
+
+															<div className='flex items-center gap-2'>
+																{request.status ===
+																	"pending" && (
+																	<>
+																		<Button
+																			variant='outline'
+																			size='sm'
+																			disabled={
+																				isLeaveUpdating[
+																					request
+																						.id
+																				]
+																			}
+																			onClick={() =>
+																				handleRequestUpdate(
+																					request.id,
+																					"approved"
+																				)
+																			}
+																			className='bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'>
+																			{isLeaveUpdating[
+																				request
+																					.id
+																			] ? (
+																				<Loader2 className='h-4 w-4 animate-spin' />
+																			) : (
+																				<Check className='h-4 w-4' />
+																			)}
+																		</Button>
+																		<Button
+																			variant='outline'
+																			size='sm'
+																			disabled={
+																				isLeaveUpdating[
+																					request
+																						.id
+																				]
+																			}
+																			onClick={() =>
+																				handleRequestUpdate(
+																					request.id,
+																					"rejected"
+																				)
+																			}
+																			className='bg-red-50 hover:bg-red-100 text-red-700 border-red-200'>
+																			{isLeaveUpdating[
+																				request
+																					.id
+																			] ? (
+																				<Loader2 className='h-4 w-4 animate-spin' />
+																			) : (
+																				<X className='h-4 w-4' />
+																			)}
+																		</Button>
+																	</>
+																)}
+
+																{/* Edit Button */}
+																<Button
+																	variant='outline'
+																	size='sm'
+																	onClick={() =>
+																		setIsRequestDialogOpen(
+																			true
+																		)
+																	}
+																	className='h-8 px-3 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 hover:text-blue-800'>
+																	<Edit className='w-4 h-4 mr-1' />
+																	Edit
+																</Button>
+
+																{/* Delete Button */}
+																<Button
+																	variant='outline'
+																	size='sm'
+																	onClick={() =>
+																		openDeleteDialog(
+																			"request",
+																			request.id,
+																			request
+																		)
+																	}
+																	className='h-8 px-3 bg-red-50 hover:bg-red-100 border-red-200 text-red-700 hover:text-red-800'>
+																	<Trash2 className='w-4 h-4 mr-1' />
+																	Delete
+																</Button>
+															</div>
 														</div>
 													</div>
 												</div>
-											</div>
-										))}
+											)
+										)}
 									</div>
 								) : (
-									<div className="text-center py-12">
-										<div className="w-16 h-16 bg-gradient-to-br from-slate-200 to-slate-300 rounded-full flex items-center justify-center mx-auto mb-4">
-											<Calendar className="w-8 h-8 text-slate-500" />
+									<div className='text-center py-12'>
+										<div className='w-16 h-16 bg-gradient-to-br from-slate-200 to-slate-300 rounded-full flex items-center justify-center mx-auto mb-4'>
+											<Calendar className='w-8 h-8 text-slate-500' />
 										</div>
-										<p className="text-slate-600 font-medium">No leave requests found</p>
-										<p className="text-sm text-slate-400 mt-2">
-											{searchTerm 
-												? "Try adjusting your search criteria." 
+										<p className='text-slate-600 font-medium'>
+											No leave requests found
+										</p>
+										<p className='text-sm text-slate-400 mt-2'>
+											{searchTerm
+												? "Try adjusting your search criteria."
 												: "Get started by creating leave requests for employees."}
 										</p>
 									</div>
 								)}
 							</div>
-				</TabsContent>
+						</TabsContent>
 
-						<TabsContent value='balances' className="p-6">
+						<TabsContent value='balances' className='p-6'>
 							{/* Search and Actions */}
-							<div className="flex flex-col lg:flex-row gap-4 mb-6">
-								<div className="flex-1">
-									<div className="relative">
-										<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+							<div className='flex flex-col lg:flex-row gap-4 mb-6'>
+								<div className='flex-1'>
+									<div className='relative'>
+										<Search className='absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400' />
 										<Input
-											placeholder="Search leave balances by employee or leave type..."
+											placeholder='Search leave balances by employee or leave type...'
 											value={searchTerm}
-											onChange={(e) => setSearchTerm(e.target.value)}
-											className="pl-10 bg-white border-slate-200 focus:border-slate-400"
+											onChange={(e) =>
+												setSearchTerm(e.target.value)
+											}
+											className='pl-10 bg-white border-slate-200 focus:border-slate-400'
 										/>
 									</div>
 								</div>
-								<Dialog open={isBalanceDialogOpen} onOpenChange={setIsBalanceDialogOpen}>
+								<Dialog
+									open={isBalanceDialogOpen}
+									onOpenChange={setIsBalanceDialogOpen}>
 									<DialogTrigger asChild>
-										<Button 
+										<Button
 											onClick={() => openBalanceDialog()}
-											className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
-										>
-											<Calendar className="mr-2 h-4 w-4" />
+											className='bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300'>
+											<Calendar className='mr-2 h-4 w-4' />
 											Update Leave Balance
 										</Button>
 									</DialogTrigger>
-							<DialogContent className='max-w-2xl'>
-								<DialogHeader>
-									<DialogTitle>
-										{editingBalance ? "Edit" : "Add"} Leave
-										Balance
-									</DialogTitle>
-									<DialogDescription>
-										{editingBalance ? "Update" : "Set"}{" "}
-										leave balance for an employee
-									</DialogDescription>
-								</DialogHeader>
-								<form
-									onSubmit={handleBalanceSubmit}
-									className='space-y-4'>
-									<div className='grid grid-cols-2 gap-4'>
-										<div className='space-y-2'>
-											<Label htmlFor='balance_employee_id'>
-												Employee
-											</Label>
-											<SearchableSelect
-												options={employees.map(
-													(employee) => ({
-														value: employee.id,
-														label:
-															employee.full_name ||
-															employee.email,
-														description:
-															employee.position ||
-															employee.department,
-														profile_photo:
-															employee.profile_photo,
-														email: employee.email,
-													})
-												)}
-												value={
-													balanceFormData.employee_id
-												}
-												onValueChange={(value) =>
-													setBalanceFormData({
-														...balanceFormData,
-														employee_id: value,
-													})
-												}
-												placeholder='Select employee'
-												searchPlaceholder='Search employees...'
-												emptyMessage='No employees found.'
-												disabled={!!editingBalance}
-											/>
-										</div>
-										<div className='space-y-2'>
-											<Label htmlFor='balance_leave_type'>
-												Leave Type
-											</Label>
-											<SimpleSelect
-												options={leaveTypes.map(
-													(type) => ({
-														value: type.name,
-														label: type.name,
-													})
-												)}
-												value={
-													balanceFormData.leave_type
-												}
-												onValueChange={(value) =>
-													setBalanceFormData({
-														...balanceFormData,
-														leave_type: value,
-													})
-												}
-												placeholder='Select leave type'
-												disabled={!!editingBalance}
-											/>
-										</div>
-									</div>
-									<div className='grid grid-cols-3 gap-4'>
-										<div className='space-y-2'>
-											<Label htmlFor='year'>Year</Label>
-											<Input
-												id='year'
-												type='number'
-												value={balanceFormData.year}
-												onChange={(e) =>
-													setBalanceFormData({
-														...balanceFormData,
-														year: Number.parseInt(
-															e.target.value
-														),
-													})
-												}
-												required
-											/>
-										</div>
-										<div className='space-y-2'>
-											<Label htmlFor='total_days'>
-												Total Days
-											</Label>
-											<Input
-												id='total_days'
-												type='number'
-												value={
-													balanceFormData.total_days
-												}
-												onChange={(e) =>
-													setBalanceFormData({
-														...balanceFormData,
-														total_days:
-															e.target.value,
-													})
-												}
-												required
-											/>
-										</div>
-										<div className='space-y-2'>
-											<Label htmlFor='used_days'>
-												Used Days
-											</Label>
-											<Input
-												id='used_days'
-												type='number'
-												value={
-													balanceFormData.used_days
-												}
-												onChange={(e) =>
-													setBalanceFormData({
-														...balanceFormData,
-														used_days:
-															e.target.value,
-													})
-												}
-											/>
-										</div>
-									</div>
-									<div className='flex justify-end space-x-2'>
-										<Button
-											type='button'
-											variant='outline'
-											onClick={() =>
-												setIsBalanceDialogOpen(false)
-											}>
-											Cancel
-										</Button>
-										<Button
-											type='submit'
-											disabled={loading}>
-											{loading
-												? "Saving..."
-												: editingBalance
-												? "Update"
-												: "Add"}{" "}
-											Balance
-										</Button>
-									</div>
-								</form>
-							</DialogContent>
-						</Dialog>
-					</div>
-
-							{/* Leave Balances List */}
-							<div className="overflow-hidden">
-								{filteredLeaveBalances.length > 0 ? (
-									<div className="divide-y divide-slate-200">
-										{filteredLeaveBalances.map((balance, index) => (
-											<div key={balance.id} className={`p-6 hover:bg-slate-50/50 transition-colors ${
-												index % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'
-											}`}>
-												<div className="flex items-center justify-between">
-													{/* Employee Info */}
-													<div className="flex items-center gap-4">
-														<Avatar className="w-12 h-12 border-2 border-slate-200">
-															<AvatarImage src={balance.employee?.profile_photo || ""} />
-															<AvatarFallback className="bg-gradient-to-br from-slate-100 to-slate-200 text-slate-700 font-semibold">
-																{balance.employee?.full_name?.charAt(0) || balance.employee?.email?.charAt(0) || "?"}
-															</AvatarFallback>
-														</Avatar>
-														
-														<div className="space-y-1">
-															<div className="flex items-center gap-2">
-																<h3 className="font-semibold text-slate-900">{balance.employee?.full_name || "Unknown Employee"}</h3>
-																<Badge className="bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border-blue-300 border-0 shadow-sm">
-																	{balance.year}
-																</Badge>
-															</div>
-															
-															<div className="flex items-center gap-4 text-sm text-slate-600">
-																<div className="flex items-center gap-1">
-																	{getLeaveTypeStyle(balance.leave_type).icon}
-																	<span className="capitalize">{balance.leave_type}</span>
-																</div>
-																<div className="flex items-center gap-1">
-																	<Briefcase className="w-3 h-3" />
-																	<span>{balance.employee?.position || "No position"}</span>
-																</div>
-															</div>
-														</div>
-													</div>
-
-													{/* Balance Info */}
-													<div className="flex items-center gap-6">
-														<div className="text-center">
-															<p className="text-xs text-slate-500 mb-1">Total Days</p>
-															<p className="font-semibold text-slate-900">{balance.total_days}</p>
-														</div>
-														<div className="text-center">
-															<p className="text-xs text-slate-500 mb-1">Used Days</p>
-															<p className="font-semibold text-amber-600">{balance.used_days}</p>
-														</div>
-														<div className="text-center">
-															<p className="text-xs text-slate-500 mb-1">Remaining</p>
-															<p className="font-semibold text-emerald-600 text-lg">{balance.remaining_days}</p>
-														</div>
-														
-														{/* Edit Button */}
-														<Button
-															variant="outline"
-															size="sm"
-															onClick={() => openBalanceDialog(balance)}
-															className="h-8 px-3 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 hover:text-blue-800"
-														>
-															<Edit className="w-4 h-4 mr-1" />
-															Edit
-														</Button>
-														
-														{/* Delete Button */}
-														<AlertDialog>
-															<AlertDialogTrigger asChild>
-																<Button
-																	variant="outline"
-																	size="sm"
-																	className="h-8 px-3 bg-red-50 hover:bg-red-100 border-red-200 text-red-700 hover:text-red-800"
-																>
-																	<Trash2 className="w-4 h-4 mr-1" />
-																	Delete
-																</Button>
-															</AlertDialogTrigger>
-															<AlertDialogContent>
-																<AlertDialogHeader>
-																	<AlertDialogTitle>Delete Leave Balance</AlertDialogTitle>
-																	<AlertDialogDescription>
-																		Are you sure you want to delete this leave balance? This action cannot be undone.
-																		<br /><br />
-																		<strong>Employee:</strong> {balance.employee?.full_name || "Unknown"}
-																		<br />
-																		<strong>Leave Type:</strong> {balance.leave_type}
-																		<br />
-																		<strong>Year:</strong> {balance.year}
-																		<br />
-																		<strong>Total Days:</strong> {balance.total_days}
-																	</AlertDialogDescription>
-																</AlertDialogHeader>
-																<AlertDialogFooter>
-																	<AlertDialogCancel>Cancel</AlertDialogCancel>
-																	<AlertDialogAction
-																		onClick={() => handleDeleteBalance(balance.id)}
-																		className="bg-red-600 hover:bg-red-700">
-																		Delete
-																	</AlertDialogAction>
-																</AlertDialogFooter>
-															</AlertDialogContent>
-														</AlertDialog>
-													</div>
+									<DialogContent className='max-w-2xl'>
+										<DialogHeader>
+											<DialogTitle>
+												{editingBalance
+													? "Edit"
+													: "Add"}{" "}
+												Leave Balance
+											</DialogTitle>
+											<DialogDescription>
+												{editingBalance
+													? "Update"
+													: "Set"}{" "}
+												leave balance for an employee
+											</DialogDescription>
+										</DialogHeader>
+										<form
+											onSubmit={handleBalanceSubmit}
+											className='space-y-4'>
+											<div className='grid grid-cols-2 gap-4'>
+												<div className='space-y-2'>
+													<Label htmlFor='balance_employee_id'>
+														Employee
+													</Label>
+													<SearchableSelect
+														options={employees.map(
+															(employee) => ({
+																value: employee.id,
+																label:
+																	employee.full_name ||
+																	employee.email,
+																description:
+																	employee.position ||
+																	employee.department,
+																profile_photo:
+																	employee.profile_photo,
+																email: employee.email,
+															})
+														)}
+														value={
+															balanceFormData.employee_id
+														}
+														onValueChange={(
+															value
+														) =>
+															setBalanceFormData({
+																...balanceFormData,
+																employee_id:
+																	value,
+															})
+														}
+														placeholder='Select employee'
+														searchPlaceholder='Search employees...'
+														emptyMessage='No employees found.'
+														disabled={
+															!!editingBalance
+														}
+													/>
+												</div>
+												<div className='space-y-2'>
+													<Label htmlFor='balance_leave_type'>
+														Leave Type
+													</Label>
+													<SimpleSelect
+														options={leaveTypes.map(
+															(type) => ({
+																value: type.name,
+																label: type.name,
+															})
+														)}
+														value={
+															balanceFormData.leave_type
+														}
+														onValueChange={(
+															value
+														) =>
+															setBalanceFormData({
+																...balanceFormData,
+																leave_type:
+																	value,
+															})
+														}
+														placeholder='Select leave type'
+														disabled={
+															!!editingBalance
+														}
+													/>
 												</div>
 											</div>
-										))}
+											<div className='grid grid-cols-3 gap-4'>
+												<div className='space-y-2'>
+													<Label htmlFor='year'>
+														Year
+													</Label>
+													<Input
+														id='year'
+														type='number'
+														value={
+															balanceFormData.year
+														}
+														onChange={(e) =>
+															setBalanceFormData({
+																...balanceFormData,
+																year: Number.parseInt(
+																	e.target
+																		.value
+																),
+															})
+														}
+														required
+													/>
+												</div>
+												<div className='space-y-2'>
+													<Label htmlFor='total_days'>
+														Total Days
+													</Label>
+													<Input
+														id='total_days'
+														type='number'
+														value={
+															balanceFormData.total_days
+														}
+														onChange={(e) =>
+															setBalanceFormData({
+																...balanceFormData,
+																total_days:
+																	e.target
+																		.value,
+															})
+														}
+														required
+													/>
+												</div>
+												<div className='space-y-2'>
+													<Label htmlFor='used_days'>
+														Used Days
+													</Label>
+													<Input
+														id='used_days'
+														type='number'
+														value={
+															balanceFormData.used_days
+														}
+														onChange={(e) =>
+															setBalanceFormData({
+																...balanceFormData,
+																used_days:
+																	e.target
+																		.value,
+															})
+														}
+													/>
+												</div>
+											</div>
+											<div className='flex justify-end space-x-2'>
+												<Button
+													type='button'
+													variant='outline'
+													onClick={() =>
+														setIsBalanceDialogOpen(
+															false
+														)
+													}>
+													Cancel
+												</Button>
+												<Button
+													type='submit'
+													disabled={loading}>
+													{loading
+														? "Saving..."
+														: editingBalance
+														? "Update"
+														: "Add"}{" "}
+													Balance
+												</Button>
+											</div>
+										</form>
+									</DialogContent>
+								</Dialog>
+							</div>
+
+							{/* Leave Balances List */}
+							<div className='overflow-hidden'>
+								{filteredLeaveBalances.length > 0 ? (
+									<div className='divide-y divide-slate-200'>
+										{filteredLeaveBalances.map(
+											(balance, index) => (
+												<div
+													key={balance.id}
+													className={`p-6 hover:bg-slate-50/50 transition-colors ${
+														index % 2 === 0
+															? "bg-white"
+															: "bg-slate-50/30"
+													}`}>
+													<div className='flex items-center justify-between'>
+														{/* Employee Info */}
+														<div className='flex items-center gap-4'>
+															<Avatar className='w-12 h-12 border-2 border-slate-200'>
+																<AvatarImage
+																	src={
+																		balance
+																			.employee
+																			?.profile_photo ||
+																		""
+																	}
+																/>
+																<AvatarFallback className='bg-gradient-to-br from-slate-100 to-slate-200 text-slate-700 font-semibold'>
+																	{balance.employee?.full_name?.charAt(
+																		0
+																	) ||
+																		balance.employee?.email?.charAt(
+																			0
+																		) ||
+																		"?"}
+																</AvatarFallback>
+															</Avatar>
+
+															<div className='space-y-1'>
+																<div className='flex items-center gap-2'>
+																	<h3 className='font-semibold text-slate-900'>
+																		{balance
+																			.employee
+																			?.full_name ||
+																			"Unknown Employee"}
+																	</h3>
+																	<Badge className='bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border-blue-300 border-0 shadow-sm'>
+																		{
+																			balance.year
+																		}
+																	</Badge>
+																</div>
+
+																<div className='flex items-center gap-4 text-sm text-slate-600'>
+																	<div className='flex items-center gap-1'>
+																		{
+																			getLeaveTypeStyle(
+																				balance.leave_type
+																			)
+																				.icon
+																		}
+																		<span className='capitalize'>
+																			{
+																				balance.leave_type
+																			}
+																		</span>
+																	</div>
+																	<div className='flex items-center gap-1'>
+																		<Briefcase className='w-3 h-3' />
+																		<span>
+																			{balance
+																				.employee
+																				?.position ||
+																				"No position"}
+																		</span>
+																	</div>
+																</div>
+															</div>
+														</div>
+
+														{/* Balance Info */}
+														<div className='flex items-center gap-6'>
+															<div className='text-center'>
+																<p className='text-xs text-slate-500 mb-1'>
+																	Total Days
+																</p>
+																<p className='font-semibold text-slate-900'>
+																	{
+																		balance.total_days
+																	}
+																</p>
+															</div>
+															<div className='text-center'>
+																<p className='text-xs text-slate-500 mb-1'>
+																	Used Days
+																</p>
+																<p className='font-semibold text-amber-600'>
+																	{
+																		balance.used_days
+																	}
+																</p>
+															</div>
+															<div className='text-center'>
+																<p className='text-xs text-slate-500 mb-1'>
+																	Remaining
+																</p>
+																<p className='font-semibold text-emerald-600 text-lg'>
+																	{
+																		balance.remaining_days
+																	}
+																</p>
+															</div>
+
+															{/* Edit Button */}
+															<Button
+																variant='outline'
+																size='sm'
+																onClick={() =>
+																	openBalanceDialog(
+																		balance
+																	)
+																}
+																className='h-8 px-3 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 hover:text-blue-800'>
+																<Edit className='w-4 h-4 mr-1' />
+																Edit
+															</Button>
+
+															{/* Delete Button */}
+															<Button
+																variant='outline'
+																size='sm'
+																onClick={() =>
+																	openDeleteDialog(
+																		"balance",
+																		balance.id,
+																		balance
+																	)
+																}
+																className='h-8 px-3 bg-red-50 hover:bg-red-100 border-red-200 text-red-700 hover:text-red-800'>
+																<Trash2 className='w-4 h-4 mr-1' />
+																Delete
+															</Button>
+														</div>
+													</div>
+												</div>
+											)
+										)}
 									</div>
 								) : (
-									<div className="text-center py-12">
-										<div className="w-16 h-16 bg-gradient-to-br from-slate-200 to-slate-300 rounded-full flex items-center justify-center mx-auto mb-4">
-											<UserCheck className="w-8 h-8 text-slate-500" />
+									<div className='text-center py-12'>
+										<div className='w-16 h-16 bg-gradient-to-br from-slate-200 to-slate-300 rounded-full flex items-center justify-center mx-auto mb-4'>
+											<UserCheck className='w-8 h-8 text-slate-500' />
 										</div>
-										<p className="text-slate-600 font-medium">No leave balances found</p>
-										<p className="text-sm text-slate-400 mt-2">
-											{searchTerm 
-												? "Try adjusting your search criteria." 
+										<p className='text-slate-600 font-medium'>
+											No leave balances found
+										</p>
+										<p className='text-sm text-slate-400 mt-2'>
+											{searchTerm
+												? "Try adjusting your search criteria."
 												: "Get started by adding leave balances for employees."}
 										</p>
 									</div>
 								)}
 							</div>
-				</TabsContent>
+						</TabsContent>
 
-						<TabsContent value='types' className="p-6">
+						<TabsContent value='types' className='p-6'>
 							{/* Search and Actions */}
-							<div className="flex flex-col lg:flex-row gap-4 mb-6">
-								<div className="flex-1">
-									<div className="relative">
-										<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+							<div className='flex flex-col lg:flex-row gap-4 mb-6'>
+								<div className='flex-1'>
+									<div className='relative'>
+										<Search className='absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400' />
 										<Input
-											placeholder="Search leave types by name or description..."
+											placeholder='Search leave types by name or description...'
 											value={searchTerm}
-											onChange={(e) => setSearchTerm(e.target.value)}
-											className="pl-10 bg-white border-slate-200 focus:border-slate-400"
+											onChange={(e) =>
+												setSearchTerm(e.target.value)
+											}
+											className='pl-10 bg-white border-slate-200 focus:border-slate-400'
 										/>
 									</div>
 								</div>
-								<Dialog open={isTypeDialogOpen} onOpenChange={setIsTypeDialogOpen}>
+								<Dialog
+									open={isTypeDialogOpen}
+									onOpenChange={setIsTypeDialogOpen}>
 									<DialogTrigger asChild>
-										<Button 
+										<Button
 											onClick={() => openTypeDialog()}
-											className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
-										>
-											<Plus className="mr-2 h-4 w-4" />
+											className='bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300'>
+											<Plus className='mr-2 h-4 w-4' />
 											Add Leave Type
 										</Button>
 									</DialogTrigger>
-							<DialogContent className='max-w-2xl'>
-								<DialogHeader>
-									<DialogTitle>
-										{editingType
-											? "Edit Leave Type"
-											: "Add Leave Type"}
-									</DialogTitle>
-									<DialogDescription>
-										{editingType
-											? "Update the leave type details"
-											: "Create a new leave type for the organization"}
-									</DialogDescription>
-								</DialogHeader>
-								<form
-									onSubmit={handleTypeSubmit}
-									className='space-y-4'>
-									<div className='grid grid-cols-2 gap-4'>
-										<div className='space-y-2'>
-											<Label htmlFor='type_name'>
-												Name
-											</Label>
-											<Input
-												id='type_name'
-												value={typeFormData.name}
-												onChange={(e) =>
-													setTypeFormData({
-														...typeFormData,
-														name: e.target.value,
-													})
-												}
-												required
-											/>
-										</div>
-										<div className='space-y-2'>
-											<Label htmlFor='max_days'>
-												Max Days Per Year
-											</Label>
-											<Input
-												id='max_days'
-												type='number'
-												value={
-													typeFormData.max_days_per_year
-												}
-												onChange={(e) =>
-													setTypeFormData({
-														...typeFormData,
-														max_days_per_year:
-															e.target.value,
-													})
-												}
-												required
-											/>
-										</div>
-									</div>
-									<div className='space-y-2'>
-										<Label htmlFor='description'>
-											Description
-										</Label>
-										<Textarea
-											id='description'
-											value={typeFormData.description}
-											onChange={(e) =>
-												setTypeFormData({
-													...typeFormData,
-													description: e.target.value,
-												})
-											}
-										/>
-									</div>
-									<div className='flex items-center space-x-2'>
-										<input
-											type='checkbox'
-											id='carry_forward'
-											checked={typeFormData.carry_forward}
-											onChange={(e) =>
-												setTypeFormData({
-													...typeFormData,
-													carry_forward:
-														e.target.checked,
-												})
-											}
-										/>
-										<Label htmlFor='carry_forward'>
-											Allow carry forward to next year
-										</Label>
-									</div>
-									<div className='flex justify-end space-x-2'>
-										<Button
-											type='button'
-											variant='outline'
-											onClick={() =>
-												setIsTypeDialogOpen(false)
-											}>
-											Cancel
-										</Button>
-										<Button
-											type='submit'
-											disabled={loading}>
-											{loading
-												? editingType
-													? "Updating..."
-													: "Creating..."
-												: editingType
-												? "Update Leave Type"
-												: "Create Leave Type"}
-										</Button>
-									</div>
-								</form>
-							</DialogContent>
-						</Dialog>
-					</div>
+									<DialogContent className='max-w-2xl'>
+										<DialogHeader>
+											<DialogTitle>
+												{editingType
+													? "Edit Leave Type"
+													: "Add Leave Type"}
+											</DialogTitle>
+											<DialogDescription>
+												{editingType
+													? "Update the leave type details"
+													: "Create a new leave type for the organization"}
+											</DialogDescription>
+										</DialogHeader>
+										<form
+											onSubmit={handleTypeSubmit}
+											className='space-y-4'>
+											<div className='grid grid-cols-2 gap-4'>
+												<div className='space-y-2'>
+													<Label htmlFor='type_name'>
+														Name
+													</Label>
+													<Input
+														id='type_name'
+														value={
+															typeFormData.name
+														}
+														onChange={(e) =>
+															setTypeFormData({
+																...typeFormData,
+																name: e.target
+																	.value,
+															})
+														}
+														required
+													/>
+												</div>
+												<div className='space-y-2'>
+													<Label htmlFor='max_days'>
+														Max Days Per Year
+													</Label>
+													<Input
+														id='max_days'
+														type='number'
+														value={
+															typeFormData.max_days_per_year
+														}
+														onChange={(e) =>
+															setTypeFormData({
+																...typeFormData,
+																max_days_per_year:
+																	e.target
+																		.value,
+															})
+														}
+														required
+													/>
+												</div>
+											</div>
+											<div className='space-y-2'>
+												<Label htmlFor='description'>
+													Description
+												</Label>
+												<Textarea
+													id='description'
+													value={
+														typeFormData.description
+													}
+													onChange={(e) =>
+														setTypeFormData({
+															...typeFormData,
+															description:
+																e.target.value,
+														})
+													}
+												/>
+											</div>
+											<div className='flex items-center space-x-2'>
+												<input
+													type='checkbox'
+													id='carry_forward'
+													checked={
+														typeFormData.carry_forward
+													}
+													onChange={(e) =>
+														setTypeFormData({
+															...typeFormData,
+															carry_forward:
+																e.target
+																	.checked,
+														})
+													}
+												/>
+												<Label htmlFor='carry_forward'>
+													Allow carry forward to next
+													year
+												</Label>
+											</div>
+											<div className='flex justify-end space-x-2'>
+												<Button
+													type='button'
+													variant='outline'
+													onClick={() =>
+														setIsTypeDialogOpen(
+															false
+														)
+													}>
+													Cancel
+												</Button>
+												<Button
+													type='submit'
+													disabled={loading}>
+													{loading
+														? editingType
+															? "Updating..."
+															: "Creating..."
+														: editingType
+														? "Update Leave Type"
+														: "Create Leave Type"}
+												</Button>
+											</div>
+										</form>
+									</DialogContent>
+								</Dialog>
+							</div>
 
 							{/* Leave Types List */}
-							<div className="overflow-hidden">
+							<div className='overflow-hidden'>
 								{filteredLeaveTypes.length > 0 ? (
-									<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+									<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
 										{filteredLeaveTypes.map((type) => {
-											const style = getLeaveTypeStyle(type.name);
+											const style = getLeaveTypeStyle(
+												type.name
+											);
 											return (
-												<Card key={type.id} className={`group relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 ${style.bg} ${style.border} ${style.hoverBorder}`}>
-													<CardContent className="p-6">
-														<div className="flex items-start justify-between mb-4">
-															<div className="flex items-center gap-4">
-																<div className={`w-14 h-14 ${style.iconBg} rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+												<Card
+													key={type.id}
+													className={`group relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 ${style.bg} ${style.border} ${style.hoverBorder}`}>
+													<CardContent className='p-6'>
+														<div className='flex items-start justify-between mb-4'>
+															<div className='flex items-center gap-4'>
+																<div
+																	className={`w-14 h-14 ${style.iconBg} rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
 																	{style.icon}
 																</div>
-																<div className="flex-1">
-																	<h3 className={`font-bold text-lg ${style.textColor} mb-1`}>{type.name}</h3>
-																	<div className="flex items-center gap-2">
-																		<div className={`w-2 h-2 rounded-full ${style.dotBg}`}></div>
-																		<p className={`text-sm font-medium ${style.accentColor}`}>{type.max_days_per_year} days/year</p>
+																<div className='flex-1'>
+																	<h3
+																		className={`font-bold text-lg ${style.textColor} mb-1`}>
+																		{
+																			type.name
+																		}
+																	</h3>
+																	<div className='flex items-center gap-2'>
+																		<div
+																			className={`w-2 h-2 rounded-full ${style.dotBg}`}></div>
+																		<p
+																			className={`text-sm font-medium ${style.accentColor}`}>
+																			{
+																				type.max_days_per_year
+																			}{" "}
+																			days/year
+																		</p>
 																	</div>
 																</div>
 															</div>
-															
-															{/* Edit Button */}
-															<Button
-																variant="outline"
-																size="sm"
-																onClick={() => openTypeDialog(type)}
-																className="h-8 px-3 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 hover:text-blue-800 hover:bg-white/80"
-															>
-																<Edit className="w-4 h-4 mr-1" />
-																Edit
-															</Button>
-															
-															{/* Delete Button */}
-															<AlertDialog>
-																<AlertDialogTrigger asChild>
-																	<Button
-																		variant="outline"
-																		size="sm"
-																		className="h-8 px-3 bg-red-50 hover:bg-red-100 border-red-200 text-red-700 hover:text-red-800 hover:bg-white/80"
-																	>
-																		<Trash2 className="w-4 h-4 mr-1" />
-																		Delete
-																	</Button>
-																</AlertDialogTrigger>
-																<AlertDialogContent>
-																	<AlertDialogHeader>
-																		<AlertDialogTitle>Delete Leave Type</AlertDialogTitle>
-																		<AlertDialogDescription>
-																			Are you sure you want to delete this leave type? This action cannot be undone.
-																			<br /><br />
-																			<strong>Name:</strong> {type.name}
-																			<br />
-																			<strong>Description:</strong> {type.description}
-																			<br />
-																			<strong>Max Days Per Year:</strong> {type.max_days_per_year}
-																			<br />
-																			<strong>Carry Forward:</strong> {type.carry_forward ? "Yes" : "No"}
-																		</AlertDialogDescription>
-																	</AlertDialogHeader>
-																	<AlertDialogFooter>
-																		<AlertDialogCancel>Cancel</AlertDialogCancel>
-																		<AlertDialogAction
-																			onClick={() => handleDeleteType(type.id)}
-																			className="bg-red-600 hover:bg-red-700">
-																			Delete
-																		</AlertDialogAction>
-																	</AlertDialogFooter>
-																</AlertDialogContent>
-															</AlertDialog>
+
+															<div>
+																{/* Edit Button */}
+																<Button
+																	variant='outline'
+																	size='sm'
+																	onClick={() =>
+																		openTypeDialog(
+																			type
+																		)
+																	}
+																	className='h-8 px-3 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 hover:text-blue-800'>
+																	<Edit className='w-4 h-4 mr-1' />
+																	Edit
+																</Button>
+
+																{/* Delete Button */}
+																<Button
+																	variant='outline'
+																	size='sm'
+																	onClick={() =>
+																		openDeleteDialog(
+																			"type",
+																			type.id,
+																			type
+																		)
+																	}
+																	className='h-8 px-3 bg-red-50 hover:bg-red-100 border-red-200 text-red-700 hover:text-red-800'>
+																	<Trash2 className='w-4 h-4 mr-1' />
+																	Delete
+																</Button>
+															</div>
 														</div>
-														
-														<div className="space-y-4">
-															<div className="bg-white/60 backdrop-blur-sm rounded-lg p-4 border border-white/40">
-																<p className={`text-xs font-medium ${style.accentColor} mb-2 uppercase tracking-wide`}>Description</p>
-																<p className={`text-sm ${style.textColor} line-clamp-3 leading-relaxed`}>
-																	{type.description || "No description provided for this leave type."}
+
+														<div className='space-y-4'>
+															<div className='bg-white/60 backdrop-blur-sm rounded-lg p-4 border border-white/40'>
+																<p
+																	className={`text-xs font-medium ${style.accentColor} mb-2 uppercase tracking-wide`}>
+																	Description
+																</p>
+																<p
+																	className={`text-sm ${style.textColor} line-clamp-3 leading-relaxed`}>
+																	{type.description ||
+																		"No description provided for this leave type."}
 																</p>
 															</div>
-															
-															<div className="flex items-center justify-between">
-																<div className="flex items-center gap-3">
-																	<div className={`w-8 h-8 rounded-lg ${style.iconBg} flex items-center justify-center`}>
-																		<Calendar className="w-4 h-4 text-white" />
+
+															<div className='flex items-center justify-between'>
+																<div className='flex items-center gap-3'>
+																	<div
+																		className={`w-8 h-8 rounded-lg ${style.iconBg} flex items-center justify-center`}>
+																		<Calendar className='w-4 h-4 text-white' />
 																	</div>
 																	<div>
-																		<p className={`text-xs font-medium ${style.accentColor} uppercase tracking-wide`}>Carry Forward</p>
-																		<Badge className={`${
-																			type.carry_forward 
-																				? "bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-800 border-emerald-300" 
-																				: "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border-gray-300"
-																		} border-0 shadow-sm font-medium`}>
-																			{type.carry_forward ? "✓ Allowed" : "✗ Not Allowed"}
+																		<p
+																			className={`text-xs font-medium ${style.accentColor} uppercase tracking-wide`}>
+																			Carry
+																			Forward
+																		</p>
+																		<Badge
+																			className={`${
+																				type.carry_forward
+																					? "bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-800 border-emerald-300"
+																					: "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border-gray-300"
+																			} border-0 shadow-sm font-medium`}>
+																			{type.carry_forward
+																				? "✓ Allowed"
+																				: "✗ Not Allowed"}
 																		</Badge>
 																	</div>
 																</div>
@@ -1707,14 +2037,16 @@ export function LeaveManagement() {
 										})}
 									</div>
 								) : (
-									<div className="text-center py-12">
-										<div className="w-16 h-16 bg-gradient-to-br from-slate-200 to-slate-300 rounded-full flex items-center justify-center mx-auto mb-4">
-											<TrendingUp className="w-8 h-8 text-slate-500" />
+									<div className='text-center py-12'>
+										<div className='w-16 h-16 bg-gradient-to-br from-slate-200 to-slate-300 rounded-full flex items-center justify-center mx-auto mb-4'>
+											<TrendingUp className='w-8 h-8 text-slate-500' />
 										</div>
-										<p className="text-slate-600 font-medium">No leave types found</p>
-										<p className="text-sm text-slate-400 mt-2">
-											{searchTerm 
-												? "Try adjusting your search criteria." 
+										<p className='text-slate-600 font-medium'>
+											No leave types found
+										</p>
+										<p className='text-sm text-slate-400 mt-2'>
+											{searchTerm
+												? "Try adjusting your search criteria."
 												: "Get started by creating leave types for your organization."}
 										</p>
 									</div>
@@ -1724,6 +2056,214 @@ export function LeaveManagement() {
 					</Tabs>
 				</CardContent>
 			</Card>
+
+			{/* Delete Confirmation Dialog */}
+			<Dialog
+				open={isDeleteDialogOpen}
+				onOpenChange={setIsDeleteDialogOpen}>
+				<DialogContent className='max-w-2xl'>
+					<DialogHeader>
+						<DialogTitle className='text-red-600'>
+							{deletingItem?.type === "request" &&
+								"Delete Leave Request"}
+							{deletingItem?.type === "balance" &&
+								"Delete Leave Balance"}
+							{deletingItem?.type === "type" &&
+								"Delete Leave Type"}
+						</DialogTitle>
+						<DialogDescription>
+							Are you sure you want to delete this item? This
+							action cannot be undone.
+						</DialogDescription>
+					</DialogHeader>
+
+					{deletingItem && (
+						<div className='space-y-4'>
+							{deletingItem.type === "request" && (
+								<div className='bg-red-50 border border-red-200 rounded-lg p-4'>
+									<h4 className='font-semibold text-red-800 mb-3'>
+										Leave Request Details
+									</h4>
+									<div className='grid grid-cols-2 gap-4 text-sm'>
+										<div>
+											<strong className='text-red-700'>
+												Employee:
+											</strong>
+											<p className='text-red-600'>
+												{deletingItem.data.employee
+													?.full_name || "Unknown"}
+											</p>
+										</div>
+										<div>
+											<strong className='text-red-700'>
+												Leave Type:
+											</strong>
+											<p className='text-red-600'>
+												{deletingItem.data.leave_type}
+											</p>
+										</div>
+										<div>
+											<strong className='text-red-700'>
+												Duration:
+											</strong>
+											<p className='text-red-600'>
+												{
+													deletingItem.data
+														.days_requested
+												}{" "}
+												days
+											</p>
+										</div>
+										<div>
+											<strong className='text-red-700'>
+												Status:
+											</strong>
+											<p className='text-red-600 capitalize'>
+												{deletingItem.data.status}
+											</p>
+										</div>
+										<div className='col-span-2'>
+											<strong className='text-red-700'>
+												Reason:
+											</strong>
+											<p className='text-red-600'>
+												{deletingItem.data.reason}
+											</p>
+										</div>
+									</div>
+								</div>
+							)}
+
+							{deletingItem.type === "balance" && (
+								<div className='bg-red-50 border border-red-200 rounded-lg p-4'>
+									<h4 className='font-semibold text-red-800 mb-3'>
+										Leave Balance Details
+									</h4>
+									<div className='grid grid-cols-2 gap-4 text-sm'>
+										<div>
+											<strong className='text-red-700'>
+												Employee:
+											</strong>
+											<p className='text-red-600'>
+												{deletingItem.data.employee
+													?.full_name || "Unknown"}
+											</p>
+										</div>
+										<div>
+											<strong className='text-red-700'>
+												Leave Type:
+											</strong>
+											<p className='text-red-600'>
+												{deletingItem.data.leave_type}
+											</p>
+										</div>
+										<div>
+											<strong className='text-red-700'>
+												Year:
+											</strong>
+											<p className='text-red-600'>
+												{deletingItem.data.year}
+											</p>
+										</div>
+										<div>
+											<strong className='text-red-700'>
+												Total Days:
+											</strong>
+											<p className='text-red-600'>
+												{deletingItem.data.total_days}
+											</p>
+										</div>
+										<div>
+											<strong className='text-red-700'>
+												Used Days:
+											</strong>
+											<p className='text-red-600'>
+												{deletingItem.data.used_days}
+											</p>
+										</div>
+										<div>
+											<strong className='text-red-700'>
+												Remaining:
+											</strong>
+											<p className='text-red-600'>
+												{
+													deletingItem.data
+														.remaining_days
+												}
+											</p>
+										</div>
+									</div>
+								</div>
+							)}
+
+							{deletingItem.type === "type" && (
+								<div className='bg-red-50 border border-red-200 rounded-lg p-4'>
+									<h4 className='font-semibold text-red-800 mb-3'>
+										Leave Type Details
+									</h4>
+									<div className='grid grid-cols-2 gap-4 text-sm'>
+										<div>
+											<strong className='text-red-700'>
+												Name:
+											</strong>
+											<p className='text-red-600'>
+												{deletingItem.data.name}
+											</p>
+										</div>
+										<div>
+											<strong className='text-red-700'>
+												Max Days/Year:
+											</strong>
+											<p className='text-red-600'>
+												{
+													deletingItem.data
+														.max_days_per_year
+												}
+											</p>
+										</div>
+										<div>
+											<strong className='text-red-700'>
+												Carry Forward:
+											</strong>
+											<p className='text-red-600'>
+												{deletingItem.data.carry_forward
+													? "Yes"
+													: "No"}
+											</p>
+										</div>
+										<div className='col-span-2'>
+											<strong className='text-red-700'>
+												Description:
+											</strong>
+											<p className='text-red-600'>
+												{deletingItem.data
+													.description ||
+													"No description"}
+											</p>
+										</div>
+									</div>
+								</div>
+							)}
+						</div>
+					)}
+
+					<div className='flex justify-end space-x-2'>
+						<Button
+							type='button'
+							variant='outline'
+							onClick={() => setIsDeleteDialogOpen(false)}>
+							Cancel
+						</Button>
+						<Button
+							type='button'
+							onClick={handleDeleteConfirm}
+							className='bg-red-600 hover:bg-red-700 text-white'>
+							<Trash2 className='w-4 h-4 mr-2' />
+							Delete
+						</Button>
+					</div>
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }
