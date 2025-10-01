@@ -683,7 +683,7 @@ export function EmployeeLeaveBalance() {
                       }`}
                       onClick={() => setLeaveRequest({ ...leaveRequest, leave_type: leaveType.leave_type })}
                     >
-                      <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2">
+                      <div className="flex sm:flex-row items-center gap-1 sm:gap-2">
                         <span className="text-sm sm:text-base">{getLeaveIcon(leaveType.leave_type)}</span>
                         <span className="text-xs sm:text-sm font-medium text-gray-800 text-center truncate">{leaveType.leave_type}</span>
                       </div>
