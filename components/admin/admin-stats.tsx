@@ -396,10 +396,13 @@ export function AdminStats() {
 
 		// Show exact time for recent activities (less than 1 hour)
 		if (diffInMinutes < 60) {
-			return time.toLocaleTimeString([], {
-				hour: "2-digit",
-				minute: "2-digit",
-			});
+			// Use UTC methods to avoid timezone issues
+			const hours = time.getUTCHours();
+			const minutes = time.getUTCMinutes();
+			const ampm = hours >= 12 ? 'PM' : 'AM';
+			const displayHours = hours % 12 || 12;
+			const displayMinutes = minutes.toString().padStart(2, '0');
+			return `${displayHours}:${displayMinutes} ${ampm}`;
 		}
 
 		// Show relative time for older activities

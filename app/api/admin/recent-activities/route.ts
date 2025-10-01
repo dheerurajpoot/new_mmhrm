@@ -49,6 +49,18 @@ export async function GET(request: NextRequest) {
 			}
 		};
 
+		// Helper function to format time consistently
+		const formatTime = (date: Date | string) => {
+			const d = new Date(date);
+			// Use UTC methods to avoid timezone issues
+			const hours = d.getUTCHours();
+			const minutes = d.getUTCMinutes();
+			const ampm = hours >= 12 ? 'PM' : 'AM';
+			const displayHours = hours % 12 || 12;
+			const displayMinutes = minutes.toString().padStart(2, '0');
+			return `${displayHours}:${displayMinutes} ${ampm}`;
+		};
+
 		try {
 			// Get recent leave requests
 			const leaveRequestsCollection = await getLeaveRequestsCollection();
@@ -257,12 +269,7 @@ export async function GET(request: NextRequest) {
 						title: "Clock In",
 						description: `${
 							employee.full_name || employee.email
-						} clocked in at ${new Date(
-							timeEntry.clock_in
-						).toLocaleTimeString([], {
-							hour: "2-digit",
-							minute: "2-digit",
-						})}`,
+						} clocked in at ${formatTime(timeEntry.clock_in)}`,
 						details: {
 							clockIn: timeEntry.clock_in,
 							clockOut: timeEntry.clock_out,
@@ -289,12 +296,7 @@ export async function GET(request: NextRequest) {
 							title: "Clock Out",
 							description: `${
 								employee.full_name || employee.email
-							} clocked out at ${new Date(
-								timeEntry.clock_out
-							).toLocaleTimeString([], {
-								hour: "2-digit",
-								minute: "2-digit",
-							})}`,
+							} clocked out at ${formatTime(timeEntry.clock_out)}`,
 							details: {
 								clockIn: timeEntry.clock_in,
 								clockOut: timeEntry.clock_out,

@@ -212,7 +212,14 @@ export function TimeTrackingWidget() {
   }
 
   const formatTime = (timeString: string) => {
-    return new Date(timeString).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    const time = new Date(timeString);
+    // Use UTC methods to avoid timezone issues
+    const hours = time.getUTCHours();
+    const minutes = time.getUTCMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+    const displayMinutes = minutes.toString().padStart(2, '0');
+    return `${displayHours}:${displayMinutes} ${ampm}`;
   }
 
   if (isLoading) {
