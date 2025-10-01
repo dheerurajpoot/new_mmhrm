@@ -206,7 +206,7 @@ export function AdminStats() {
 		fetchStats();
 
 		// Set up real-time updates every 5 seconds
-		const interval = setInterval(fetchStats, 5000);
+		const interval = setInterval(fetchStats, 1000);
 
 		return () => clearInterval(interval);
 	}, []);
