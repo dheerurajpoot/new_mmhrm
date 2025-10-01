@@ -7,6 +7,7 @@ import { UserProvider } from "@/context/user-context";
 import { GlobalSettingsProvider } from "@/components/shared/global-settings-provider";
 import { SettingsProvider } from "@/context/settings-context";
 import { PreloaderProvider } from "@/components/shared/preloader-provider";
+import { PostLoginPreloader } from "@/components/shared/post-login-preloader";
 import { Toaster } from "@/components/ui/sonner";
 import { getServerWebsiteSettings } from "@/lib/server-settings";
 
@@ -42,12 +43,14 @@ export default async function RootLayout({
 				<PreloaderProvider>
 					<RealtimeProvider>
 						<UserProvider>
-							<SettingsProvider initialSettings={settings}>
-								<GlobalSettingsProvider initialSettings={settings}>
-									<Suspense fallback={null}>{children}</Suspense>
-									<Toaster />
-								</GlobalSettingsProvider>
-							</SettingsProvider>
+							<PostLoginPreloader>
+								<SettingsProvider initialSettings={settings}>
+									<GlobalSettingsProvider initialSettings={settings}>
+										<Suspense fallback={null}>{children}</Suspense>
+										<Toaster />
+									</GlobalSettingsProvider>
+								</SettingsProvider>
+							</PostLoginPreloader>
 						</UserProvider>
 					</RealtimeProvider>
 				</PreloaderProvider>

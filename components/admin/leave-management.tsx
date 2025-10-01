@@ -2,6 +2,7 @@
 
 import type React from "react";
 import { toast } from "sonner";
+import { DeleteConfirmationModal, type DeleteItem } from "@/components/ui/delete-confirmation-modal";
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -159,6 +160,10 @@ export function LeaveManagement() {
 		id: string;
 		data: any;
 	} | null>(null);
+
+	// New delete modal state
+	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+	const [leaveToDelete, setLeaveToDelete] = useState<DeleteItem | null>(null);
 
 	const [balanceFormData, setBalanceFormData] = useState({
 		employee_id: "",
@@ -445,7 +450,38 @@ export function LeaveManagement() {
 		}
 	};
 
+	// New delete modal functions
+	const openDeleteModal = (request: LeaveRequest) => {
+		setLeaveToDelete({
+			id: request.id,
+			type: 'leave',
+			data: request
+		});
+		setIsDeleteModalOpen(true);
+	};
+
 	const handleDeleteConfirm = async () => {
+		if (!leaveToDelete) return;
+
+		try {
+			const response = await fetch(`/api/leave-requests/${leaveToDelete.id}`, {
+				method: "DELETE",
+			});
+
+			if (response.ok) {
+				setLeaveRequests(prev => prev.filter(r => r.id !== leaveToDelete.id));
+				toast.success("Leave request deleted successfully");
+				setIsDeleteModalOpen(false);
+				setLeaveToDelete(null);
+			} else {
+				toast.error("Failed to delete leave request");
+			}
+		} catch (error) {
+			toast.error("Failed to delete leave request");
+		}
+	};
+
+	const handleDeleteConfirmOld = async () => {
 		if (!deletingItem) return;
 
 		try {
@@ -1189,12 +1225,11 @@ export function LeaveManagement() {
 											(request, index) => (
 												<div
 													key={request.id}
-													className={`p-6 hover:bg-slate-50/50 transition-colors ${
-														index % 2 === 0
+													className={`p-6 hover:bg-slate-50/50 transition-colors ${index % 2 === 0
 															? "bg-white"
 															: "bg-slate-50/30"
-													}`}>
-													<div className='flex items-center justify-between'>
+														}`}>
+													<div className='flex items-center justify-between md:flex-row flex-col gap-4 items-start'>
 														{/* Employee Info */}
 														<div className='flex items-center gap-4'>
 															<Avatar className='w-12 h-12 border-2 border-slate-200'>
@@ -1273,8 +1308,8 @@ export function LeaveManagement() {
 														</div>
 
 														{/* Request Details */}
-														<div className='flex items-center gap-6'>
-															<div className='text-center max-w-xs'>
+														<div className='flex items-center gap-6 md:flex-row flex-col gap-4 items-start'>
+															<div className='text-center max-w-xs sm:text-left'>
 																<p className='text-xs text-slate-500 mb-1'>
 																	Reason
 																</p>
@@ -1288,59 +1323,59 @@ export function LeaveManagement() {
 															<div className='flex items-center gap-2'>
 																{request.status ===
 																	"pending" && (
-																	<>
-																		<Button
-																			variant='outline'
-																			size='sm'
-																			disabled={
-																				isLeaveUpdating[
+																		<>
+																			<Button
+																				variant='outline'
+																				size='sm'
+																				disabled={
+																					isLeaveUpdating[
 																					request
 																						.id
-																				]
-																			}
-																			onClick={() =>
-																				handleRequestUpdate(
-																					request.id,
-																					"approved"
-																				)
-																			}
-																			className='bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'>
-																			{isLeaveUpdating[
-																				request
-																					.id
-																			] ? (
-																				<Loader2 className='h-4 w-4 animate-spin' />
-																			) : (
-																				<Check className='h-4 w-4' />
-																			)}
-																		</Button>
-																		<Button
-																			variant='outline'
-																			size='sm'
-																			disabled={
-																				isLeaveUpdating[
+																					]
+																				}
+																				onClick={() =>
+																					handleRequestUpdate(
+																						request.id,
+																						"approved"
+																					)
+																				}
+																				className='bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'>
+																				{isLeaveUpdating[
 																					request
 																						.id
-																				]
-																			}
-																			onClick={() =>
-																				handleRequestUpdate(
-																					request.id,
-																					"rejected"
-																				)
-																			}
-																			className='bg-red-50 hover:bg-red-100 text-red-700 border-red-200'>
-																			{isLeaveUpdating[
-																				request
-																					.id
-																			] ? (
-																				<Loader2 className='h-4 w-4 animate-spin' />
-																			) : (
-																				<X className='h-4 w-4' />
-																			)}
-																		</Button>
-																	</>
-																)}
+																				] ? (
+																					<Loader2 className='h-4 w-4 animate-spin' />
+																				) : (
+																					<Check className='h-4 w-4' />
+																				)}
+																			</Button>
+																			<Button
+																				variant='outline'
+																				size='sm'
+																				disabled={
+																					isLeaveUpdating[
+																					request
+																						.id
+																					]
+																				}
+																				onClick={() =>
+																					handleRequestUpdate(
+																						request.id,
+																						"rejected"
+																					)
+																				}
+																				className='bg-red-50 hover:bg-red-100 text-red-700 border-red-200'>
+																				{isLeaveUpdating[
+																					request
+																						.id
+																				] ? (
+																					<Loader2 className='h-4 w-4 animate-spin' />
+																				) : (
+																					<X className='h-4 w-4' />
+																				)}
+																			</Button>
+																		</>
+																	)}
 
 																{/* Edit Button */}
 																<Button
@@ -1353,23 +1388,17 @@ export function LeaveManagement() {
 																	}
 																	className='h-8 px-3 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 hover:text-blue-800'>
 																	<Edit className='w-4 h-4 mr-1' />
-																	Edit
+																	
 																</Button>
 
 																{/* Delete Button */}
 																<Button
 																	variant='outline'
 																	size='sm'
-																	onClick={() =>
-																		openDeleteDialog(
-																			"request",
-																			request.id,
-																			request
-																		)
-																	}
+																	onClick={() => openDeleteModal(request)}
 																	className='h-8 px-3 bg-red-50 hover:bg-red-100 border-red-200 text-red-700 hover:text-red-800'>
 																	<Trash2 className='w-4 h-4 mr-1' />
-																	Delete
+																	
 																</Button>
 															</div>
 														</div>
@@ -1412,16 +1441,19 @@ export function LeaveManagement() {
 										/>
 									</div>
 								</div>
+								<div>
+									<Button
+										onClick={() => openBalanceDialog()}
+										className='bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300'>
+										<Calendar className='mr-2 h-4 w-4' />
+										Update Leave Balance
+									</Button>
+								</div>
 								<Dialog
 									open={isBalanceDialogOpen}
 									onOpenChange={setIsBalanceDialogOpen}>
 									<DialogTrigger asChild>
-										<Button
-											onClick={() => openBalanceDialog()}
-											className='bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300'>
-											<Calendar className='mr-2 h-4 w-4' />
-											Update Leave Balance
-										</Button>
+
 									</DialogTrigger>
 									<DialogContent className='max-w-2xl'>
 										<DialogHeader>
@@ -1593,8 +1625,8 @@ export function LeaveManagement() {
 													{loading
 														? "Saving..."
 														: editingBalance
-														? "Update"
-														: "Add"}{" "}
+															? "Update"
+															: "Add"}{" "}
 													Balance
 												</Button>
 											</div>
@@ -1611,12 +1643,11 @@ export function LeaveManagement() {
 											(balance, index) => (
 												<div
 													key={balance.id}
-													className={`p-6 hover:bg-slate-50/50 transition-colors ${
-														index % 2 === 0
+													className={`p-6 hover:bg-slate-50/50 transition-colors ${index % 2 === 0
 															? "bg-white"
 															: "bg-slate-50/30"
-													}`}>
-													<div className='flex items-center justify-between'>
+														}`}>
+													<div className='flex items-center justify-between md:flex-row flex-col gap-4 items-start'>
 														{/* Employee Info */}
 														<div className='flex items-center gap-4'>
 															<Avatar className='w-12 h-12 border-2 border-slate-200'>
@@ -1723,9 +1754,9 @@ export function LeaveManagement() {
 																		balance
 																	)
 																}
-																className='h-8 px-3 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 hover:text-blue-800'>
-																<Edit className='w-4 h-4 mr-1' />
-																Edit
+																className='h-8 px-1 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 hover:text-blue-800'>
+																<Edit className='w-4 h-4' />
+																
 															</Button>
 
 															{/* Delete Button */}
@@ -1739,9 +1770,9 @@ export function LeaveManagement() {
 																		balance
 																	)
 																}
-																className='h-8 px-3 bg-red-50 hover:bg-red-100 border-red-200 text-red-700 hover:text-red-800'>
-																<Trash2 className='w-4 h-4 mr-1' />
-																Delete
+																className='h-8 px-1 bg-red-50 hover:bg-red-100 border-red-200 text-red-700 hover:text-red-800'>
+																<Trash2 className='w-4 h-4' />
+																
 															</Button>
 														</div>
 													</div>
@@ -1783,16 +1814,19 @@ export function LeaveManagement() {
 										/>
 									</div>
 								</div>
-								<Dialog
-									open={isTypeDialogOpen}
-									onOpenChange={setIsTypeDialogOpen}>
-									<DialogTrigger asChild>
-										<Button
+								<div>
+								<Button
 											onClick={() => openTypeDialog()}
 											className='bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300'>
 											<Plus className='mr-2 h-4 w-4' />
 											Add Leave Type
 										</Button>
+								</div>
+								<Dialog
+									open={isTypeDialogOpen}
+									onOpenChange={setIsTypeDialogOpen}>
+									<DialogTrigger asChild>
+										
 									</DialogTrigger>
 									<DialogContent className='max-w-2xl'>
 										<DialogHeader>
@@ -1910,8 +1944,8 @@ export function LeaveManagement() {
 															? "Updating..."
 															: "Creating..."
 														: editingType
-														? "Update Leave Type"
-														: "Create Leave Type"}
+															? "Update Leave Type"
+															: "Create Leave Type"}
 												</Button>
 											</div>
 										</form>
@@ -2018,11 +2052,10 @@ export function LeaveManagement() {
 																			Forward
 																		</p>
 																		<Badge
-																			className={`${
-																				type.carry_forward
+																			className={`${type.carry_forward
 																					? "bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-800 border-emerald-300"
 																					: "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border-gray-300"
-																			} border-0 shadow-sm font-medium`}>
+																				} border-0 shadow-sm font-medium`}>
 																			{type.carry_forward
 																				? "✓ Allowed"
 																				: "✗ Not Allowed"}
@@ -2264,6 +2297,18 @@ export function LeaveManagement() {
 					</div>
 				</DialogContent>
 			</Dialog>
+
+			{/* Delete Confirmation Modal */}
+			<DeleteConfirmationModal
+				isOpen={isDeleteModalOpen}
+				onClose={() => {
+					setIsDeleteModalOpen(false);
+					setLeaveToDelete(null);
+				}}
+				onConfirm={handleDeleteConfirm}
+				item={leaveToDelete}
+				loading={false}
+			/>
 		</div>
 	);
 }

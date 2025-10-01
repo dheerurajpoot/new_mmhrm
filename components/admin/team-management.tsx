@@ -19,24 +19,14 @@ import {
 	DialogDescription,
 	DialogHeader,
 	DialogTitle,
-	DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SearchableSelect } from "@/components/ui/searchable-select";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Separator } from "@/components/ui/separator";
-import { Users, Plus, Edit, Trash2, UserCheck, Search, Crown, Shield, Briefcase, Mail, Phone, MapPin, Calendar, MoreHorizontal, Filter, Download, UserPlus, Users2 } from "lucide-react";
+import { Users, Plus, Edit, Trash2, UserCheck, Search, Crown, Calendar, Users2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Profile } from "@/lib/types";
+import { DeleteConfirmationModal, type DeleteItem } from "@/components/ui/delete-confirmation-modal";
 
 interface Team {
 	id: string;
@@ -56,6 +46,10 @@ export function TeamManagement() {
 	const [editingTeam, setEditingTeam] = useState<Team | null>(null);
 	const [isEditOpen, setIsEditOpen] = useState(false);
 	const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+	// Delete modal state
+	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+	const [teamToDelete, setTeamToDelete] = useState<DeleteItem | null>(null);
 
 	// Team form state
 	const [newTeam, setNewTeam] = useState({
@@ -96,17 +90,11 @@ export function TeamManagement() {
 				department: u.department ?? null,
 				position: u.position ?? null,
 				profile_photo: u.profile_photo ?? null,
-				hire_date: u.hire_date
-					? new Date(u.hire_date).toISOString()
-					: null,
+				hire_date: u.hire_date ? new Date(u.hire_date).toISOString() : null,
 				phone: u.phone ?? null,
 				address: u.address ?? null,
-				created_at: u.created_at
-					? new Date(u.created_at).toISOString()
-					: "",
-				updated_at: u.updated_at
-					? new Date(u.updated_at).toISOString()
-					: "",
+				created_at: u.created_at ? new Date(u.created_at).toISOString() : "",
+				updated_at: u.updated_at ? new Date(u.updated_at).toISOString() : "",
 			}));
 
 			setEmployees(mapped.filter((emp) => emp.role === "employee"));
@@ -158,6 +146,38 @@ export function TeamManagement() {
 			if (!response.ok) throw new Error("Failed to delete team");
 			toast.success("The team has been removed.");
 			fetchTeams();
+		} catch (error) {
+			console.error("Error deleting team:", error);
+			toast.error("Failed to delete team");
+		}
+	};
+
+	// New delete modal functions
+	const openDeleteModal = (team: Team) => {
+		setTeamToDelete({
+			id: team.id,
+			type: 'team',
+			data: team
+		});
+		setIsDeleteModalOpen(true);
+	};
+
+	const handleDeleteConfirm = async () => {
+		if (!teamToDelete) return;
+
+		try {
+			const response = await fetch(`/api/teams/${teamToDelete.id}`, {
+				method: "DELETE",
+			});
+
+			if (response.ok) {
+				setTeams(prev => prev.filter(t => t.id !== teamToDelete.id));
+				toast.success("Team deleted successfully");
+				setIsDeleteModalOpen(false);
+				setTeamToDelete(null);
+			} else {
+				toast.error("Failed to delete team");
+			}
 		} catch (error) {
 			console.error("Error deleting team:", error);
 			toast.error("Failed to delete team");
@@ -365,151 +385,31 @@ export function TeamManagement() {
 								<CardDescription className="text-slate-600">Create and manage teams for better collaboration</CardDescription>
 							</div>
 						</div>
-						<Dialog open={isCreateTeamOpen} onOpenChange={setIsCreateTeamOpen}>
-							<DialogTrigger asChild>
-								<Button className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300">
-									<Plus className="w-4 h-4 mr-2" />
-									Create Team
-								</Button>
-							</DialogTrigger>
-							<DialogContent className='sm:max-w-2xl max-h-[80vh] overflow-y-auto'>
-								<DialogHeader>
-									<DialogTitle>Create New Team</DialogTitle>
-									<DialogDescription>
-										Set up a new team with a leader and
-										members
-									</DialogDescription>
-								</DialogHeader>
-								<form
-									onSubmit={handleCreateTeam}
-									className='space-y-4'>
-									<div className='space-y-2'>
-										<Label htmlFor='team_name'>
-											Team Name
-										</Label>
-										<Input
-											id='team_name'
-											required
-											value={newTeam.name}
-											onChange={(e) =>
-												setNewTeam({
-													...newTeam,
-													name: e.target.value,
-												})
-											}
-											placeholder='Enter team name'
-										/>
-									</div>
-
-									<div className='space-y-2'>
-										<Label htmlFor='team_leader'>
-											Team Leader
-										</Label>
-										<SearchableSelect
-											options={employees.map(
-												(employee) => ({
-													value: employee.id,
-													label:
-														employee.full_name ||
-														employee.email,
-													description:
-														employee.position ||
-														employee.department ||
-														undefined,
-													profile_photo:
-														employee.profile_photo ||
-														undefined,
-													email: employee.email,
-												})
-											)}
-											value={newTeam.leaderId}
-											onValueChange={(value) =>
-												setNewTeam({
-													...newTeam,
-													leaderId: value,
-												})
-											}
-											placeholder='Select team leader'
-											searchPlaceholder='Search employees...'
-											emptyMessage='No employees found.'
-										/>
-									</div>
-
-									<div className='space-y-2'>
-										<Label>Team Members</Label>
-										<div className='max-h-48 overflow-y-auto border border-gray-200 rounded-md p-3 space-y-2'>
-											{employees
-												.filter(
-													(emp) =>
-														emp.id !==
-														newTeam.leaderId
-												)
-												.map((employee) => (
-													<div
-														key={employee.id}
-														className='flex items-center space-x-2'>
-														<Checkbox
-															id={`member-${employee.id}`}
-															checked={newTeam.memberIds.includes(
-																employee.id
-															)}
-															onCheckedChange={() =>
-																toggleMemberSelection(
-																	employee.id
-																)
-															}
-														/>
-														<Avatar className='w-6 h-6'>
-															<AvatarImage
-																src={
-																	employee.profile_photo ||
-																	""
-																}
-															/>
-															<AvatarFallback className='text-xs'>
-																{employee.full_name?.charAt(
-																	0
-																) ||
-																	employee.email.charAt(
-																		0
-																	)}
-															</AvatarFallback>
-														</Avatar>
-														<Label
-															htmlFor={`member-${employee.id}`}
-															className='text-sm cursor-pointer'>
-															{employee.full_name ||
-																employee.email}
-														</Label>
-													</div>
-												))}
-										</div>
-									</div>
-
-									<Button
-										type='submit'
-										className='w-full'
-										disabled={isCreatingTeam}>
-										{isCreatingTeam
-											? "Creating Team..."
-											: "Create Team"}
-									</Button>
-								</form>
-							</DialogContent>
-						</Dialog>
+						<div className="flex-shrink-0">
+							<Button 
+								onClick={() => setIsCreateTeamOpen(true)}
+								className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-2"
+							>
+								<Plus className="w-4 h-4 mr-2" />
+								Create Team
+							</Button>
+						</div>
 					</div>
 				</CardHeader>
 				<CardContent className="p-0">
 					{/* Search Section */}
 					<div className="p-6 border-b border-slate-200 bg-gradient-to-r from-slate-50/50 to-white">
-						<div className="relative">
-							<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
-							<Input
-								placeholder="Search teams by name, leader, or members..."
-								value={searchTerm}
-								onChange={(e) => setSearchTerm(e.target.value)}
-								className="pl-10 bg-white border-slate-200 focus:border-slate-400"
-							/>
+						<div className="flex flex-col sm:flex-row gap-4">
+							<div className="flex-1 relative">
+								<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+								<Input
+									placeholder="Search teams by name, leader, or members..."
+									value={searchTerm}
+									onChange={(e) => setSearchTerm(e.target.value)}
+									className="pl-10 bg-white border-slate-200 focus:border-slate-400"
+								/>
+							</div>
+							
 						</div>
 					</div>
 
@@ -521,7 +421,7 @@ export function TeamManagement() {
 									<div key={team.id} className={`p-6 hover:bg-slate-50/50 transition-colors ${
 										index % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'
 									}`}>
-										<div className="flex items-center justify-between">
+										<div className="flex items-center justify-between md:flex-row flex-col gap-4 items-start">
 											{/* Team Info */}
 											<div className="flex items-center gap-4">
 												<div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -552,7 +452,7 @@ export function TeamManagement() {
 
 											{/* Team Members Preview */}
 											<div className="flex items-center gap-2">
-												<div className="flex items-center gap-1">
+												<div className="flex items-center gap-1 md:flex-row">
 													{team.members.slice(0, 3).map((member) => (
 														<Avatar key={member.id} className="w-8 h-8 border-2 border-white shadow-sm">
 															<AvatarImage src={member.profile_photo || ""} />
@@ -583,7 +483,7 @@ export function TeamManagement() {
 												<Button
 													variant="outline"
 													size="sm"
-													onClick={() => handleDeleteTeam(team.id)}
+													onClick={() => openDeleteModal(team)}
 													className="h-8 px-3 bg-red-50 hover:bg-red-100 border-red-200 text-red-700 hover:text-red-800"
 												>
 													<Trash2 className="w-4 h-4 mr-1" />
@@ -610,6 +510,127 @@ export function TeamManagement() {
 					</div>
 				</CardContent>
 			</Card>
+
+			{/* Create Team Dialog */}
+			<Dialog open={isCreateTeamOpen} onOpenChange={setIsCreateTeamOpen}>
+				<DialogContent className='sm:max-w-2xl max-h-[80vh] overflow-y-auto'>
+					<DialogHeader>
+						<DialogTitle>Create New Team</DialogTitle>
+						<DialogDescription>
+							Set up a new team with a leader and members
+						</DialogDescription>
+					</DialogHeader>
+					<form onSubmit={handleCreateTeam} className='space-y-4'>
+						<div className='space-y-2'>
+							<Label htmlFor='team_name'>Team Name</Label>
+							<Input
+								id='team_name'
+								required
+								value={newTeam.name}
+								onChange={(e) =>
+									setNewTeam({
+										...newTeam,
+										name: e.target.value,
+									})
+								}
+								placeholder='Enter team name'
+							/>
+						</div>
+
+						<div className='space-y-2'>
+							<Label htmlFor='team_leader'>Team Leader</Label>
+							<SearchableSelect
+								options={employees.map(
+									(employee) => ({
+										value: employee.id,
+										label:
+											employee.full_name ||
+											employee.email,
+										description:
+											employee.position ||
+											employee.department ||
+											undefined,
+										profile_photo:
+											employee.profile_photo ||
+											undefined,
+										email: employee.email,
+									})
+								)}
+								value={newTeam.leaderId}
+								onValueChange={(value) =>
+									setNewTeam({
+										...newTeam,
+										leaderId: value,
+									})
+								}
+								placeholder='Select team leader'
+								searchPlaceholder='Search employees...'
+								emptyMessage='No employees found.'
+							/>
+						</div>
+
+						<div className='space-y-2'>
+							<Label>Team Members</Label>
+							<div className='max-h-48 overflow-y-auto border border-gray-200 rounded-md p-3 space-y-2'>
+								{employees
+									.filter(
+										(emp) =>
+											emp.id !==
+											newTeam.leaderId
+									)
+									.map((employee) => (
+										<div
+											key={employee.id}
+											className='flex items-center space-x-2'>
+											<Checkbox
+												id={`member-${employee.id}`}
+												checked={newTeam.memberIds.includes(
+													employee.id
+												)}
+												onCheckedChange={() =>
+													toggleMemberSelection(
+														employee.id
+													)
+												}
+											/>
+											<Avatar className='w-6 h-6'>
+												<AvatarImage
+													src={
+														employee.profile_photo ||
+														""
+													}
+												/>
+												<AvatarFallback className='text-xs'>
+													{employee.full_name?.charAt(
+														0
+													) ||
+														employee.email.charAt(
+															0
+														)}
+												</AvatarFallback>
+											</Avatar>
+											<Label
+												htmlFor={`member-${employee.id}`}
+												className='text-sm cursor-pointer'>
+												{employee.full_name ||
+													employee.email}
+											</Label>
+										</div>
+									))}
+							</div>
+						</div>
+
+						<Button
+							type='submit'
+							className='w-full'
+							disabled={isCreatingTeam}>
+							{isCreatingTeam
+								? "Creating Team..."
+								: "Create Team"}
+						</Button>
+					</form>
+				</DialogContent>
+			</Dialog>
 
 			{/* Edit Team Dialog */}
 			<Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
@@ -737,6 +758,29 @@ export function TeamManagement() {
 					)}
 				</DialogContent>
 			</Dialog>
+
+			{/* Floating Action Button for Mobile */}
+			<div className="fixed bottom-6 right-6 z-50 sm:hidden">
+				<Button 
+					onClick={() => setIsCreateTeamOpen(true)}
+					size="lg" 
+					className="w-14 h-14 rounded-full bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-2xl hover:shadow-3xl transition-all duration-300"
+				>
+					<Plus className="w-6 h-6" />
+				</Button>
+			</div>
+
+			{/* Delete Confirmation Modal */}
+			<DeleteConfirmationModal
+				isOpen={isDeleteModalOpen}
+				onClose={() => {
+					setIsDeleteModalOpen(false);
+					setTeamToDelete(null);
+				}}
+				onConfirm={handleDeleteConfirm}
+				item={teamToDelete}
+				loading={false}
+			/>
 		</div>
 	);
 }

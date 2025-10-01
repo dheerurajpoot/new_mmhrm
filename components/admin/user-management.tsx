@@ -26,6 +26,7 @@ import { UserPlus, Search, Users, Shield, Crown, Briefcase, Mail, Phone, MapPin,
 import { toast } from "sonner"
 import type { Profile, UserRole } from "@/lib/types"
 import { createUser } from "@/app/actions/admin"
+import { DeleteConfirmationModal, type DeleteItem } from "@/components/ui/delete-confirmation-modal"
 
 export function UserManagement() {
   const [users, setUsers] = useState<Profile[]>([])
@@ -41,6 +42,10 @@ export function UserManagement() {
   const [isSavingEdit, setIsSavingEdit] = useState(false)
   const [editingUsers, setEditingUsers] = useState<Record<string, boolean>>({})
   const [deletingUsers, setDeletingUsers] = useState<Record<string, boolean>>({})
+
+  // Delete modal state
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [userToDelete, setUserToDelete] = useState<DeleteItem | null>(null)
 
   // Add user form state
   const [newUser, setNewUser] = useState({
@@ -236,6 +241,42 @@ export function UserManagement() {
     }
   }
 
+  // New delete modal functions
+  const openDeleteModal = (user: Profile) => {
+    setUserToDelete({
+      id: user.id,
+      type: 'user',
+      data: user
+    })
+    setIsDeleteModalOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!userToDelete) return
+
+    setDeletingUsers(prev => ({ ...prev, [userToDelete.id]: true }))
+    try {
+      const response = await fetch(`/api/users/${userToDelete.id}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        setUsers(prev => prev.filter(u => u.id !== userToDelete.id))
+        setFilteredUsers(prev => prev.filter(u => u.id !== userToDelete.id))
+        toast.success('User deleted successfully')
+        setIsDeleteModalOpen(false)
+        setUserToDelete(null)
+      } else {
+        toast.error('Failed to delete user')
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error)
+      toast.error('Failed to delete user')
+    } finally {
+      setDeletingUsers(prev => ({ ...prev, [userToDelete.id]: false }))
+    }
+  }
+
   const getRoleBadgeColor = (role: UserRole) => {
     switch (role) {
       case "admin":
@@ -263,7 +304,7 @@ export function UserManagement() {
   }
 
   const getUniqueDepartments = () => {
-    const departments = users.map(user => user.department).filter(Boolean)
+    const departments = users.map(user => user.department).filter((dept): dept is string => Boolean(dept))
     return Array.from(new Set(departments))
   }
 
@@ -439,7 +480,7 @@ export function UserManagement() {
                         { value: "admin", label: "Admin" },
                       ]}
                       value={newUser.role}
-                      onValueChange={(value: UserRole) => setNewUser({ ...newUser, role: value })}
+                      onValueChange={(value: string) => setNewUser({ ...newUser, role: value as UserRole })}
                       placeholder="Select role"
                     />
                   </div>
@@ -506,7 +547,7 @@ export function UserManagement() {
                       { value: "employee", label: "Employee" },
                     ]}
                     value={roleFilter}
-                    onValueChange={(value: UserRole | "all") => setRoleFilter(value)}
+                    onValueChange={(value: string) => setRoleFilter(value as UserRole | "all")}
                     placeholder="Filter by role"
                   />
                 </div>
@@ -533,7 +574,7 @@ export function UserManagement() {
                   <div key={user.id} className={`p-6 hover:bg-slate-50/50 transition-colors ${
                     index % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'
                   }`}>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between md:flex-row flex-col gap-4 items-start">
                       {/* User Info */}
                       <div className="flex items-center gap-4">
                         <Avatar className="w-12 h-12 border-2 border-slate-200">
@@ -554,7 +595,7 @@ export function UserManagement() {
                             </Badge>
                           </div>
                           
-                          <div className="flex items-center gap-4 text-sm text-slate-600">
+                          <div className="flex items-center gap-4 text-sm text-slate-600 flex-wrap">
                             <div className="flex items-center gap-1">
                               <Mail className="w-3 h-3" />
                               <span>{user.email}</span>
@@ -584,7 +625,7 @@ export function UserManagement() {
                             { value: "admin", label: "Admin" },
                           ]}
                           value={user.role}
-                          onValueChange={(value: UserRole) => handleUpdateUserRole(user.id, value)}
+                          onValueChange={(value: string) => handleUpdateUserRole(user.id, value as UserRole)}
                           className="w-28 h-8"
                         />
                         
@@ -604,21 +645,12 @@ export function UserManagement() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleDeleteUser(user.id)}
+                          onClick={() => openDeleteModal(user)}
                           disabled={editingUsers[user.id] || deletingUsers[user.id]}
                           className="h-8 px-3 bg-red-50 hover:bg-red-100 border-red-200 text-red-700 hover:text-red-800 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {deletingUsers[user.id] ? (
-                            <>
-                              <div className="w-4 h-4 mr-1 animate-spin rounded-full border-2 border-red-300 border-t-red-600"></div>
-                              Deleting...
-                            </>
-                          ) : (
-                            <>
-                              <Trash2 className="w-4 h-4 mr-1" />
-                              Delete
-                            </>
-                          )}
+                          <Trash2 className="w-4 h-4 mr-1" />
+                          Delete
                         </Button>
                       </div>
                     </div>
@@ -683,7 +715,7 @@ export function UserManagement() {
                     { value: "admin", label: "Admin" },
                   ]}
                   value={editingUser.role}
-                  onValueChange={(value: UserRole) => setEditingUser({ ...editingUser, role: value })}
+                  onValueChange={(value: string) => setEditingUser({ ...editingUser, role: value as UserRole })}
                   placeholder="Select role"
                 />
               </div>
@@ -726,6 +758,18 @@ export function UserManagement() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false)
+          setUserToDelete(null)
+        }}
+        onConfirm={handleDeleteConfirm}
+        item={userToDelete}
+        loading={userToDelete ? deletingUsers[userToDelete.id] : false}
+      />
     </div>
   )
 }

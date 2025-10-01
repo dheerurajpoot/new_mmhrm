@@ -337,7 +337,6 @@
  
 /* Handle */
 ::-webkit-scrollbar-thumb {
-  background: red; 
   border-radius: 10px;
 }
 

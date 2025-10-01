@@ -97,7 +97,7 @@ export function DashboardHeader({ title, description, role }: DashboardHeaderPro
 
     const getBackgroundImage = (userRole: string) => {
         // Using a beautiful landscape image as background
-        return "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80";
+        return "https://image.s7.sfmc-content.com/lib/fe2a11717d640474741277/m/1/5971aff4-18c8-4e07-99e2-498a87507b63.png";
     };
 
     if (loading) {
@@ -126,9 +126,9 @@ export function DashboardHeader({ title, description, role }: DashboardHeaderPro
                 }}
             />
 
-            {/* Overlay */}
+            {/* Overlay 
             <div className="absolute inset-0 bg-black/30"></div>
-            <div className="absolute inset-0 bg-gradient-to-br from-transparent via-black/10 to-black/40"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-transparent via-black/10 to-black/40"></div>*/}
 
             {/* Top Navigation Bar */}
             <div className="relative flex items-center justify-between px-2 py-4 text-white">
@@ -192,7 +192,7 @@ export function DashboardHeader({ title, description, role }: DashboardHeaderPro
                     </div>
 
                     {/* Profile Details Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex flex-wrap gap-3">
                         {/* Email */}
                         <div className="flex items-center gap-2 text-sm">
                             <Mail className="h-4 w-4 text-gray-500" />

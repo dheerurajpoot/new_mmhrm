@@ -89,6 +89,7 @@ interface PayrollRecord {
 	overtime_pay: number;
 	bonus: number;
 	status: string;
+	currency: string;
 	employee: Employee;
 }
 
@@ -108,6 +109,12 @@ export function FinancialManagement() {
 		null
 	);
 	const [selectedEmployee, setSelectedEmployee] = useState<string>("");
+
+	// New delete modal state for Employee Finances
+	const [isFinanceDeleteModalOpen, setIsFinanceDeleteModalOpen] = useState(false);
+	const [financeToDelete, setFinanceToDelete] = useState<EmployeeFinance | null>(null);
+	const [isPayrollDeleteModalOpen, setIsPayrollDeleteModalOpen] = useState(false);
+	const [payrollToDelete, setPayrollToDelete] = useState<PayrollRecord | null>(null);
 
 	const [financeFormData, setFinanceFormData] = useState({
 		employee_id: "",
@@ -135,6 +142,22 @@ export function FinancialManagement() {
 	useEffect(() => {
 		fetchData();
 	}, []);
+
+	// Helper function to format currency
+	const formatCurrency = (amount: number, currency: string = "USD") => {
+		const currencySymbols: { [key: string]: string } = {
+			"USD": "$",
+			"INR": "₹",
+			"EUR": "€",
+			"GBP": "£",
+			"JPY": "¥",
+			"CAD": "C$",
+			"AUD": "A$"
+		}
+		
+		const symbol = currencySymbols[currency] || currency
+		return `${symbol} ${amount.toLocaleString()}`
+	}
 
 	const fetchData = async () => {
 		try {
@@ -196,6 +219,7 @@ export function FinancialManagement() {
 						employee_id:
 							p.employee_id?.toString?.() || p.employee_id,
 						employee: p.employee || null,
+						currency: p.currency || "USD",
 					})
 				);
 				setPayrollRecords(mappedPayrollRecords);
@@ -255,6 +279,12 @@ export function FinancialManagement() {
 		setLoading(true);
 
 		try {
+			// Get employee's currency from their finance record
+			const employeeFinance = employeeFinances.find(
+				f => f.employee_id === (editingPayroll ? editingPayroll.employee_id : payrollFormData.employee_id)
+			);
+			const currency = employeeFinance?.currency || "USD";
+
 			const payrollData = {
 				employee_id: editingPayroll
 					? editingPayroll.employee_id
@@ -273,6 +303,7 @@ export function FinancialManagement() {
 					| "pending"
 					| "paid"
 					| "cancelled",
+				currency: currency,
 			};
 
 			const result = editingPayroll
@@ -376,6 +407,69 @@ export function FinancialManagement() {
 		setIsPayrollDialogOpen(true);
 	};
 
+	// New function to open finance delete modal
+	const openFinanceDeleteModal = (finance: EmployeeFinance) => {
+		setFinanceToDelete(finance);
+		setIsFinanceDeleteModalOpen(true);
+	};
+
+	// New function to handle finance deletion
+	const handleFinanceDeleteConfirm = async () => {
+		if (!financeToDelete) return;
+		
+		setLoading(true);
+		try {
+			const response = await fetch(`/api/employee-finances/${financeToDelete.id}`, {
+				method: 'DELETE',
+			});
+
+			if (response.ok) {
+				toast.success("Finance record deleted successfully");
+				fetchData();
+				setIsFinanceDeleteModalOpen(false);
+				setFinanceToDelete(null);
+			} else {
+				toast.error("Failed to delete finance record");
+			}
+		} catch (error) {
+			toast.error("Failed to delete finance record");
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	// New function to open payroll delete modal
+	const openPayrollDeleteModal = (payroll: PayrollRecord) => {
+		setPayrollToDelete(payroll);
+		setIsPayrollDeleteModalOpen(true);
+	};
+
+	// New function to handle payroll deletion
+	const handlePayrollDeleteConfirm = async () => {
+		if (!payrollToDelete) return;
+		
+		setLoading(true);
+		try {
+			const response = await fetch(`/api/payroll/${payrollToDelete.id}`, {
+				method: 'DELETE',
+			});
+
+			if (response.ok) {
+				toast.success("Payroll record deleted successfully");
+				fetchData();
+				setIsPayrollDeleteModalOpen(false);
+				setPayrollToDelete(null);
+			} else {
+				toast.error("Failed to delete payroll record");
+			}
+		} catch (error) {
+			console.error("Error deleting payroll record:", error);
+			toast.error("Failed to delete payroll record");
+		} finally {
+			setLoading(false);
+		}
+	};
+
 	const resetFinanceForm = () => {
 		setFinanceFormData({
 			employee_id: "",
@@ -451,6 +545,9 @@ export function FinancialManagement() {
 		finance.employee?.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
 		finance.employee?.position?.toLowerCase().includes(searchTerm.toLowerCase())
 	);
+
+	// Check if any employee has an hourly rate
+	const hasAnyHourlyRate = employeeFinances.some(finance => finance.hourly_rate && finance.hourly_rate > 0);
 
 	const filteredPayrollRecords = payrollRecords.filter(record =>
 		record.employee?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -567,13 +664,31 @@ export function FinancialManagement() {
 			{/* Main Financial Management Card */}
 			<Card className="border-0 shadow-lg bg-gradient-to-br from-slate-50 via-white to-slate-50/30 border-slate-100">
 				<CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100/50 border-b border-slate-200">
-					<div className="flex items-center gap-3">
-						<div className="w-10 h-10 bg-gradient-to-br from-slate-500 to-slate-600 rounded-lg flex items-center justify-center">
-							<DollarSign className="w-5 h-5 text-white" />
+					<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+						<div className="flex items-center gap-3">
+							<div className="w-10 h-10 bg-gradient-to-br from-slate-500 to-slate-600 rounded-lg flex items-center justify-center">
+								<DollarSign className="w-5 h-5 text-white" />
+							</div>
+							<div>
+								<CardTitle className="text-slate-900">Financial Management</CardTitle>
+								<CardDescription className="text-slate-600">Manage employee finances, payroll, and compensation</CardDescription>
+							</div>
 						</div>
-						<div>
-							<CardTitle className="text-slate-900">Financial Management</CardTitle>
-							<CardDescription className="text-slate-600">Manage employee finances, payroll, and compensation</CardDescription>
+						<div className="flex gap-2 flex-shrink-0">
+							<Button
+								onClick={() => openFinanceDialog()}
+								className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-2"
+							>
+								<Plus className="w-4 h-4 mr-2" />
+								Create Finance
+							</Button>
+							<Button
+								onClick={() => openPayrollDialog()}
+								className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-2"
+							>
+								<Plus className="w-4 h-4 mr-2" />
+								Create Payroll
+							</Button>
 						</div>
 					</div>
 				</CardHeader>
@@ -607,15 +722,7 @@ export function FinancialManagement() {
 									</div>
 								</div>
 								<Dialog open={isFinanceDialogOpen} onOpenChange={setIsFinanceDialogOpen}>
-									<DialogTrigger asChild>
-										<Button
-											onClick={() => openFinanceDialog()}
-											className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
-										>
-											<Plus className="mr-2 h-4 w-4" />
-											Add Finance Record
-										</Button>
-									</DialogTrigger>
+									
 									<DialogContent className='max-w-2xl'>
 										<DialogHeader>
 											<DialogTitle>
@@ -890,15 +997,17 @@ export function FinancialManagement() {
 															<div className="text-center">
 																<p className="text-xs text-slate-500 mb-1">Base Salary</p>
 																<p className="font-semibold text-slate-900">
-																	{finance.base_salary ? `${finance.currency} ${finance.base_salary.toLocaleString()}` : "-"}
+																	{finance.base_salary ? formatCurrency(finance.base_salary, finance.currency) : "-"}
 																</p>
 															</div>
-															<div className="text-center">
-																<p className="text-xs text-slate-500 mb-1">Hourly Rate</p>
-																<p className="font-semibold text-slate-900">
-																	{finance.hourly_rate ? `${finance.currency} ${finance.hourly_rate}` : "-"}
-																</p>
-															</div>
+															{hasAnyHourlyRate && (
+																<div className="text-center">
+																	<p className="text-xs text-slate-500 mb-1">Hourly Rate</p>
+																	<p className="font-semibold text-slate-900">
+																		{finance.hourly_rate && finance.hourly_rate > 0 ? formatCurrency(finance.hourly_rate, finance.currency) : "-"}
+																	</p>
+																</div>
+															)}
 															<div className="text-center">
 																<p className="text-xs text-slate-500 mb-1">Pay Frequency</p>
 																<p className="font-semibold text-slate-900 capitalize">{finance.pay_frequency}</p>
@@ -916,6 +1025,17 @@ export function FinancialManagement() {
 															>
 																<Edit className="w-4 h-4 mr-1" />
 																Edit
+															</Button>
+
+															{/* Delete Button */}
+															<Button
+																variant="outline"
+																size="sm"
+																onClick={() => openFinanceDeleteModal(finance)}
+																className="h-8 px-3 bg-red-50 hover:bg-red-100 border-red-200 text-red-700 hover:text-red-800"
+															>
+																<Trash2 className="w-4 h-4 mr-1" />
+																Delete
 															</Button>
 
 															{/* Delete Button */}
@@ -992,15 +1112,6 @@ export function FinancialManagement() {
 									</div>
 								</div>
 								<Dialog open={isPayrollDialogOpen} onOpenChange={setIsPayrollDialogOpen}>
-									<DialogTrigger asChild>
-										<Button
-											onClick={() => openPayrollDialog()}
-											className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
-										>
-											<Plus className="mr-2 h-4 w-4" />
-											Add Payroll Record
-										</Button>
-									</DialogTrigger>
 									<DialogContent className='max-w-3xl'>
 										<DialogHeader>
 											<DialogTitle>
@@ -1328,15 +1439,15 @@ export function FinancialManagement() {
 														<div className="flex items-center gap-6">
 															<div className="text-center">
 																<p className="text-xs text-slate-500 mb-1">Gross Pay</p>
-																<p className="font-semibold text-slate-900">${record.gross_pay.toLocaleString()}</p>
+																<p className="font-semibold text-slate-900">{formatCurrency(record.gross_pay, record.currency)}</p>
 															</div>
 															<div className="text-center">
 																<p className="text-xs text-slate-500 mb-1">Deductions</p>
-																<p className="font-semibold text-red-600">-${record.deductions.toLocaleString()}</p>
+																<p className="font-semibold text-red-600">-{formatCurrency(record.deductions, record.currency)}</p>
 															</div>
 															<div className="text-center">
 																<p className="text-xs text-slate-500 mb-1">Net Pay</p>
-																<p className="font-semibold text-emerald-600 text-lg">${record.net_pay.toLocaleString()}</p>
+																<p className="font-semibold text-emerald-600 text-lg">{formatCurrency(record.net_pay, record.currency)}</p>
 															</div>
 														</div>
 
@@ -1354,42 +1465,15 @@ export function FinancialManagement() {
 															</Button>
 
 															{/* Delete Button */}
-															<AlertDialog>
-																<AlertDialogTrigger asChild>
-																	<Button
-																		variant="outline"
-																		size="sm"
-																		className="h-8 px-3 bg-red-50 hover:bg-red-100 border-red-200 text-red-700 hover:text-red-800"
-																	>
-																		<Trash2 className="w-4 h-4 mr-1" />
-																		Delete
-																	</Button>
-																</AlertDialogTrigger>
-																<AlertDialogContent>
-																	<AlertDialogHeader>
-																		<AlertDialogTitle>Delete Payroll Record</AlertDialogTitle>
-																		<AlertDialogDescription>
-																			Are you sure you want to delete this payroll record? This action cannot be undone.
-																			<br /><br />
-																			<strong>Employee:</strong> {record.employee?.full_name || "Unknown"}
-																			<br />
-																			<strong>Pay Period:</strong> {new Date(record.pay_period_start).toLocaleDateString()} - {new Date(record.pay_period_end).toLocaleDateString()}
-																			<br />
-																			<strong>Gross Pay:</strong> ${record.gross_pay.toLocaleString()}
-																			<br />
-																			<strong>Net Pay:</strong> ${record.net_pay.toLocaleString()}
-																		</AlertDialogDescription>
-																	</AlertDialogHeader>
-																	<AlertDialogFooter>
-																		<AlertDialogCancel>Cancel</AlertDialogCancel>
-																		<AlertDialogAction
-																			onClick={() => handleDeletePayroll(record.id)}
-																			className="bg-red-600 hover:bg-red-700">
-																			Delete
-																		</AlertDialogAction>
-																	</AlertDialogFooter>
-																</AlertDialogContent>
-															</AlertDialog>
+															<Button
+																variant="outline"
+																size="sm"
+																onClick={() => openPayrollDeleteModal(record)}
+																className="h-8 px-3 bg-red-50 hover:bg-red-100 border-red-200 text-red-700 hover:text-red-800"
+															>
+																<Trash2 className="w-4 h-4 mr-1" />
+																Delete
+															</Button>
 														</div>
 													</div>
 												</div>
@@ -1414,6 +1498,163 @@ export function FinancialManagement() {
 					</Tabs>
 				</CardContent>
 			</Card>
+
+			{/* Floating Action Button for Mobile */}
+			<div className="fixed bottom-6 right-6 z-50 sm:hidden">
+				<Button 
+					onClick={() => openFinanceDialog()}
+					size="lg" 
+					className="w-14 h-14 rounded-full bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-2xl hover:shadow-3xl transition-all duration-300"
+				>
+					<Plus className="w-6 h-6" />
+				</Button>
+			</div>
+
+			{/* New Finance Delete Modal */}
+			<Dialog open={isFinanceDeleteModalOpen} onOpenChange={setIsFinanceDeleteModalOpen}>
+				<DialogContent className="max-w-md">
+					<DialogHeader>
+						<DialogTitle className="flex items-center gap-2 text-red-600">
+							<Trash2 className="w-5 h-5" />
+							Delete Finance Record
+						</DialogTitle>
+						<DialogDescription>
+							Are you sure you want to delete this finance record? This action cannot be undone.
+						</DialogDescription>
+					</DialogHeader>
+					
+					{financeToDelete && (
+						<div className="space-y-4">
+							{/* Employee Info */}
+							<div className="bg-slate-50 p-4 rounded-lg">
+								<h4 className="font-semibold text-slate-900 mb-2">Employee Information</h4>
+								<div className="space-y-1 text-sm">
+									<p><strong>Name:</strong> {financeToDelete.employee?.full_name || "Unknown"}</p>
+									<p><strong>Email:</strong> {financeToDelete.employee?.email || "N/A"}</p>
+									<p><strong>Position:</strong> {financeToDelete.employee?.position || "N/A"}</p>
+									<p><strong>Department:</strong> {financeToDelete.employee?.department || "N/A"}</p>
+								</div>
+							</div>
+
+							{/* Financial Info */}
+							<div className="bg-red-50 p-4 rounded-lg border border-red-200">
+								<h4 className="font-semibold text-red-800 mb-2">Financial Information to be Deleted</h4>
+								<div className="space-y-1 text-sm text-red-700">
+									<p><strong>Currency:</strong> {financeToDelete.currency}</p>
+									<p><strong>Base Salary:</strong> {financeToDelete.base_salary ? `${financeToDelete.currency} ${financeToDelete.base_salary.toLocaleString()}` : "Not set"}</p>
+									<p><strong>Hourly Rate:</strong> {financeToDelete.hourly_rate ? `${financeToDelete.currency} ${financeToDelete.hourly_rate}` : "Not set"}</p>
+									<p><strong>Pay Frequency:</strong> {financeToDelete.pay_frequency}</p>
+									<p><strong>Tax ID:</strong> {financeToDelete.tax_id || "Not set"}</p>
+									<p><strong>Bank Account:</strong> {financeToDelete.bank_account || "Not set"}</p>
+								</div>
+							</div>
+
+							{/* Warning */}
+							<div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
+								<div className="flex items-start gap-2">
+									<div className="w-5 h-5 text-amber-600 mt-0.5">⚠️</div>
+									<div className="text-sm text-amber-800">
+										<p className="font-semibold">Warning:</p>
+										<p>Deleting this finance record will remove all financial information for this employee. This action cannot be undone.</p>
+									</div>
+								</div>
+							</div>
+						</div>
+					)}
+
+					<div className="flex justify-end gap-2 mt-6">
+						<Button
+							variant="outline"
+							onClick={() => {
+								setIsFinanceDeleteModalOpen(false);
+								setFinanceToDelete(null);
+							}}
+						>
+							Cancel
+						</Button>
+						<Button
+							variant="destructive"
+							onClick={handleFinanceDeleteConfirm}
+							className="bg-red-600 hover:bg-red-700"
+						>
+							<Trash2 className="w-4 h-4 mr-2" />
+							Delete Finance Record
+						</Button>
+					</div>
+				</DialogContent>
+			</Dialog>
+
+			{/* Payroll Delete Modal */}
+			<Dialog open={isPayrollDeleteModalOpen} onOpenChange={setIsPayrollDeleteModalOpen}>
+				<DialogContent className="max-w-md">
+					<DialogHeader>
+						<DialogTitle className="flex items-center gap-2 text-red-600">
+							<Trash2 className="w-5 h-5" />
+							Delete Payroll Record
+						</DialogTitle>
+						<DialogDescription>
+							Are you sure you want to delete this payroll record? This action cannot be undone.
+						</DialogDescription>
+					</DialogHeader>
+					{payrollToDelete && (
+						<div className="space-y-4">
+							{/* Employee Info */}
+							<div className="bg-slate-50 p-4 rounded-lg">
+								<h4 className="font-semibold text-slate-900 mb-2">Employee Information</h4>
+								<div className="space-y-1 text-sm">
+									<p><strong>Name:</strong> {payrollToDelete.employee?.full_name || "Unknown"}</p>
+									<p><strong>Email:</strong> {payrollToDelete.employee?.email || "N/A"}</p>
+									<p><strong>Position:</strong> {payrollToDelete.employee?.position || "N/A"}</p>
+									<p><strong>Department:</strong> {payrollToDelete.employee?.department || "N/A"}</p>
+								</div>
+							</div>
+							{/* Payroll Info */}
+							<div className="bg-red-50 p-4 rounded-lg border border-red-200">
+								<h4 className="font-semibold text-red-800 mb-2">Payroll Information to be Deleted</h4>
+								<div className="space-y-1 text-sm text-red-700">
+									<p><strong>Pay Period:</strong> {new Date(payrollToDelete.pay_period_start).toLocaleDateString()} - {new Date(payrollToDelete.pay_period_end).toLocaleDateString()}</p>
+									<p><strong>Gross Pay:</strong> {formatCurrency(payrollToDelete.gross_pay, payrollToDelete.currency)}</p>
+									<p><strong>Deductions:</strong> {formatCurrency(payrollToDelete.deductions, payrollToDelete.currency)}</p>
+									<p><strong>Net Pay:</strong> {formatCurrency(payrollToDelete.net_pay, payrollToDelete.currency)}</p>
+									<p><strong>Overtime Hours:</strong> {payrollToDelete.overtime_hours || 0}</p>
+									<p><strong>Overtime Pay:</strong> {formatCurrency(payrollToDelete.overtime_pay, payrollToDelete.currency)}</p>
+									<p><strong>Bonus:</strong> {formatCurrency(payrollToDelete.bonus, payrollToDelete.currency)}</p>
+									<p><strong>Status:</strong> {payrollToDelete.status}</p>
+								</div>
+							</div>
+							{/* Warning */}
+							<div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
+								<div className="flex items-start gap-2">
+									<div className="w-5 h-5 text-amber-600 mt-0.5">⚠️</div>
+									<div className="text-sm text-amber-800">
+										<p className="font-semibold">Warning:</p>
+										<p>Deleting this payroll record will remove all payroll information for this pay period. This action cannot be undone.</p>
+									</div>
+								</div>
+							</div>
+						</div>
+					)}
+					<div className="flex justify-end gap-2 mt-6">
+						<Button
+							variant="outline"
+							onClick={() => {
+								setIsPayrollDeleteModalOpen(false);
+								setPayrollToDelete(null);
+							}}
+						>
+							Cancel
+						</Button>
+						<Button
+							variant="destructive"
+							onClick={handlePayrollDeleteConfirm}
+							className="bg-red-600 hover:bg-red-700"
+						>
+							<Trash2 className="w-4 h-4 mr-2" />
+							Delete Payroll Record
+						</Button>
+					</div>
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }

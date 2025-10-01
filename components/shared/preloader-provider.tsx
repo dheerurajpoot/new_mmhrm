@@ -9,7 +9,7 @@ interface PreloaderProviderProps {
 }
 
 export function PreloaderProvider({ children }: PreloaderProviderProps) {
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -22,7 +22,7 @@ export function PreloaderProvider({ children }: PreloaderProviderProps) {
       // Add a small delay to ensure smooth transition
       setTimeout(() => {
         setIsLoading(false);
-      }, 1000);
+      }, 800);
     };
 
     // Listen for navigation events
@@ -42,13 +42,7 @@ export function PreloaderProvider({ children }: PreloaderProviderProps) {
       return originalReplace.apply(router, args);
     };
 
-    // Initial load completion
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 2000);
-
     return () => {
-      clearTimeout(timer);
       window.removeEventListener('beforeunload', handleRouteChange);
       router.push = originalPush;
       router.replace = originalReplace;

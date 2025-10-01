@@ -173,7 +173,7 @@ export function TeamMembers() {
                       <div className="flex-1">
                         <h4 className="font-medium text-gray-900">{member.full_name}</h4>
                         <p className="text-sm text-gray-600">{member.position || member.department}</p>
-                        <div className="flex items-center gap-4 mt-1 text-xs text-gray-500">
+                        <div className="flex items-center gap-4 mt-1 text-xs text-gray-500 flex-wrap">
                           <div className="flex items-center gap-1">
                             <Mail className="w-3 h-3" />
                             {member.email}

@@ -110,32 +110,51 @@ export function AttendanceManagement() {
 	const fetchData = async () => {
 		try {
 			setIsLoading(true);
+			console.log("Fetching attendance data...");
 
 			const [timeEntriesRes, employeesRes] = await Promise.all([
 				fetch("/api/time-entries?limit=1000"),
 				fetch("/api/employees"),
 			]);
 
+			console.log("Time entries response:", timeEntriesRes.status);
+			console.log("Employees response:", employeesRes.status);
+
 			if (timeEntriesRes.ok) {
 				const timeEntriesData = await timeEntriesRes.json();
+				console.log("Time entries data:", timeEntriesData);
 				setTimeEntries(timeEntriesData || []);
+			} else {
+				console.error("Failed to fetch time entries:", timeEntriesRes.statusText);
+				toast.error("Failed to load time entries");
 			}
 
 			if (employeesRes.ok) {
 				const employeesData = await employeesRes.json();
+				console.log("Employees data:", employeesData);
 				setEmployees(employeesData || []);
+			} else {
+				console.error("Failed to fetch employees:", employeesRes.statusText);
+				toast.error("Failed to load employees");
 			}
 
 			await calculateStats();
 		} catch (error) {
 			console.error("Error fetching attendance data:", error);
 			toast.error("Failed to load attendance data", {
-				description:
-					"There was an error loading the attendance information.",
+				description: "There was an error loading the attendance information.",
 			});
 		} finally {
 			setIsLoading(false);
 		}
+	};
+
+	// Manual refresh function
+	const handleRefresh = async () => {
+		console.log("Manual refresh triggered");
+		toast.info("Refreshing attendance data...");
+		await fetchData();
+		toast.success("Attendance data refreshed successfully");
 	};
 
 	const calculateStats = async () => {
@@ -257,6 +276,15 @@ export function AttendanceManagement() {
 		}
 
 		setFilteredEntries(filtered);
+	};
+
+	// Clear all filters
+	const clearAllFilters = () => {
+		setSearchTerm("");
+		setDateFilter("today");
+		setStatusFilter("all");
+		setDepartmentFilter("all");
+		toast.success("All filters cleared");
 	};
 
 	const getEmployeeInfo = (employeeId: string) => {
@@ -607,130 +635,115 @@ export function AttendanceManagement() {
 					</CardTitle>
 				</CardHeader>
 				<CardContent className='p-6'>
-					{/* Modern Filter Section */}
-					<div className='bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100'>
-						<div className='flex items-center gap-2 mb-4'>
-							<div className='w-2 h-2 bg-blue-500 rounded-full animate-pulse'></div>
-							<h4 className='font-semibold text-blue-800'>
-								Filter & Search Options
-							</h4>
+					{/* Simple Filter Section */}
+					<div className='bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200'>
+						<div className='flex items-center justify-between mb-4'>
+							<div className='flex items-center gap-2'>
+								<div className='w-2 h-2 bg-blue-500 rounded-full animate-pulse'></div>
+								<h4 className='font-semibold text-blue-800'>Filter & Search Options</h4>
+							</div>
+							{(searchTerm || dateFilter !== 'today' || statusFilter !== 'all' || departmentFilter !== 'all') && (
+								<Button
+									onClick={clearAllFilters}
+									variant='outline'
+									size='sm'
+									className='bg-white hover:bg-gray-50 border-gray-300 text-gray-700 rounded-lg'>
+									<RefreshCw className='w-4 h-4 mr-2' />
+									Clear All
+								</Button>
+							)}
 						</div>
-						<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4'>
+						
+						<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
+							{/* Search */}
 							<div className='space-y-2'>
-								<label className='text-sm font-semibold text-gray-700'>
-									Search Employees
-								</label>
+								<label className='text-sm font-semibold text-gray-700'>Search Employees</label>
 								<div className='relative'>
 									<Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4' />
 									<Input
 										placeholder='Search by name or email...'
 										value={searchTerm}
-										onChange={(e) =>
-											setSearchTerm(e.target.value)
-										}
-										className='pl-10 bg-white border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl'
+										onChange={(e) => setSearchTerm(e.target.value)}
+										className='pl-10 bg-white border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 rounded-lg'
 									/>
 								</div>
 							</div>
 
+							{/* Date Range */}
 							<div className='space-y-2'>
-								<label className='text-sm font-semibold text-gray-700'>
-									Date Range
-								</label>
-								<Select
-									value={dateFilter}
-									onValueChange={setDateFilter}>
-									<SelectTrigger className='bg-white border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl'>
-										<SelectValue placeholder='Select date range' />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value='today'>
-											Today
-										</SelectItem>
-										<SelectItem value='week'>
-											This Week
-										</SelectItem>
-										<SelectItem value='month'>
-											This Month
-										</SelectItem>
-										<SelectItem value='all'>
-											All Time
-										</SelectItem>
-									</SelectContent>
-								</Select>
+								<label className='text-sm font-semibold text-gray-700'>Date Range</label>
+								<select 
+									value={dateFilter} 
+									onChange={(e) => setDateFilter(e.target.value)}
+									className='w-full bg-white border border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 rounded-lg h-10 px-3'
+								>
+									<option value='today'>Today</option>
+									<option value='week'>This Week</option>
+									<option value='month'>This Month</option>
+									<option value='all'>All Time</option>
+								</select>
 							</div>
 
+							{/* Status */}
 							<div className='space-y-2'>
-								<label className='text-sm font-semibold text-gray-700'>
-									Status
-								</label>
-								<Select
-									value={statusFilter}
-									onValueChange={setStatusFilter}>
-									<SelectTrigger className='bg-white border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl'>
-										<SelectValue placeholder='Filter by status' />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value='all'>
-											All Status
-										</SelectItem>
-										<SelectItem value='active'>
-											Active
-										</SelectItem>
-										<SelectItem value='completed'>
-											Completed
-										</SelectItem>
-									</SelectContent>
-								</Select>
+								<label className='text-sm font-semibold text-gray-700'>Status</label>
+								<select 
+									value={statusFilter} 
+									onChange={(e) => setStatusFilter(e.target.value)}
+									className='w-full bg-white border border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 rounded-lg h-10 px-3'
+								>
+									<option value='all'>All Status</option>
+									<option value='active'>Active (Clocked In)</option>
+									<option value='completed'>Completed (Clocked Out)</option>
+								</select>
 							</div>
 
+							{/* Department */}
 							<div className='space-y-2'>
-								<label className='text-sm font-semibold text-gray-700'>
-									Department
-								</label>
-								<Select
-									value={departmentFilter}
-									onValueChange={setDepartmentFilter}>
-									<SelectTrigger className='bg-white border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl'>
-										<SelectValue placeholder='Filter by department' />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value='all'>
-											All Departments
-										</SelectItem>
-										{getDepartments().map((dept) => (
-											<SelectItem
-												key={dept}
-												value={dept || ""}>
-												{dept}
-											</SelectItem>
-										))}
-									</SelectContent>
-								</Select>
+								<label className='text-sm font-semibold text-gray-700'>Department</label>
+								<select 
+									value={departmentFilter} 
+									onChange={(e) => setDepartmentFilter(e.target.value)}
+									className='w-full bg-white border border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 rounded-lg h-10 px-3'
+								>
+									<option value='all'>All Departments</option>
+									{getDepartments().map((dept) => (
+										<option key={dept} value={dept || ""}>
+											{dept}
+										</option>
+									))}
+								</select>
 							</div>
+						</div>
 
-							<div className='space-y-2'>
-								<label className='text-sm font-semibold text-gray-700'>
-									Actions
-								</label>
-								<div className='flex gap-2'>
-									<Button
-										onClick={fetchData}
-										variant='outline'
-										size='sm'
-										className='flex-1 bg-white hover:bg-gray-50 border-gray-200 text-gray-700 rounded-xl'>
-										<RefreshCw className='h-4 w-4 mr-2' />
-										Refresh
-									</Button>
-									<Button
-										onClick={exportData}
-										variant='outline'
-										size='sm'
-										className='flex-1 bg-white hover:bg-gray-50 border-gray-200 text-gray-700 rounded-xl'>
-										<Download className='h-4 w-4 mr-2' />
-										Export
-									</Button>
-								</div>
+						{/* Actions Row */}
+						<div className='mt-4 flex justify-end gap-2'>
+							<Button
+								onClick={handleRefresh}
+								variant='outline'
+								size='sm'
+								disabled={isLoading}
+								className='bg-white hover:bg-gray-50 border-gray-200 text-gray-700 rounded-lg'>
+								<RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+								{isLoading ? 'Refreshing...' : 'Refresh'}
+							</Button>
+							<Button
+								onClick={exportData}
+								variant='outline'
+								size='sm'
+								className='bg-white hover:bg-gray-50 border-gray-200 text-gray-700 rounded-lg'>
+								<Download className='h-4 w-4 mr-2' />
+								Export
+							</Button>
+						</div>
+
+						{/* Filter Summary */}
+						<div className='mt-4 pt-3 border-t border-gray-200'>
+							<div className='flex items-center justify-between text-sm text-gray-600'>
+								<span>Showing <strong className='text-gray-800'>{filteredEntries.length}</strong> of <strong className='text-gray-800'>{timeEntries.length}</strong> records</span>
+								{(searchTerm || dateFilter !== 'today' || statusFilter !== 'all' || departmentFilter !== 'all') && (
+									<span className='text-blue-600 font-medium'>Filters Active</span>
+								)}
 							</div>
 						</div>
 					</div>
@@ -753,6 +766,11 @@ export function AttendanceManagement() {
 									<p className='text-sm text-gray-600 font-medium'>
 										Showing {filteredEntries.length}{" "}
 										attendance records
+										{timeEntries.length > 0 && (
+											<span className='text-blue-600 ml-2'>
+												({timeEntries.length} total)
+											</span>
+										)}
 									</p>
 								</div>
 							</CardTitle>
@@ -805,14 +823,24 @@ export function AttendanceManagement() {
 													<Users className='w-10 h-10 text-gray-500' />
 												</div>
 												<h3 className='text-lg font-semibold text-gray-800 mb-2'>
-													No Attendance Records Found
+													{timeEntries.length === 0 
+														? "No Attendance Data Available" 
+														: "No Attendance Records Found"}
 												</h3>
-												<p className='text-gray-600 max-w-md mx-auto'>
-													No attendance records match
-													your current filters. Try
-													adjusting your search
-													criteria or date range.
+												<p className='text-gray-600 max-w-md mx-auto mb-4'>
+													{timeEntries.length === 0 
+														? "No attendance records have been created yet. Employees need to clock in/out to generate attendance data."
+														: "No attendance records match your current filters. Try adjusting your search criteria or date range."}
 												</p>
+												{timeEntries.length === 0 && (
+													<Button
+														onClick={handleRefresh}
+														variant='outline'
+														className='mt-2'>
+														<RefreshCw className='w-4 h-4 mr-2' />
+														Refresh Data
+													</Button>
+												)}
 											</div>
 										</TableCell>
 									</TableRow>
