@@ -49,18 +49,6 @@ export async function GET(request: NextRequest) {
 			}
 		};
 
-		// Helper function to format time consistently
-		const formatTime = (date: Date | string) => {
-			const d = new Date(date);
-			// Use UTC methods to avoid timezone issues
-			const hours = d.getUTCHours();
-			const minutes = d.getUTCMinutes();
-			const ampm = hours >= 12 ? 'PM' : 'AM';
-			const displayHours = hours % 12 || 12;
-			const displayMinutes = minutes.toString().padStart(2, '0');
-			return `${displayHours}:${displayMinutes} ${ampm}`;
-		};
-
 		try {
 			// Get recent leave requests
 			const leaveRequestsCollection = await getLeaveRequestsCollection();
@@ -262,14 +250,14 @@ export async function GET(request: NextRequest) {
 				const employee = await getEmployeeData(timeEntry.employee_id);
 
 				if (employee) {
-					// Clock In Activity
+					// Clock In Activity - send raw timestamp for client-side formatting
 					activities.push({
 						id: `clock-in-${timeEntry._id}`,
 						type: "clock_in",
 						title: "Clock In",
 						description: `${
 							employee.full_name || employee.email
-						} clocked in at ${formatTime(timeEntry.clock_in)}`,
+						} clocked in`,
 						details: {
 							clockIn: timeEntry.clock_in,
 							clockOut: timeEntry.clock_out,
@@ -277,6 +265,8 @@ export async function GET(request: NextRequest) {
 							totalHours: timeEntry.total_hours,
 							date: timeEntry.date,
 							action: "clock_in",
+							// Include raw timestamp for client-side formatting
+							rawTimestamp: timeEntry.clock_in,
 						},
 						user: {
 							name: employee.full_name || employee.email,
@@ -288,7 +278,7 @@ export async function GET(request: NextRequest) {
 						status: "clocked_in",
 					});
 
-					// Clock Out Activity (if exists)
+					// Clock Out Activity (if exists) - send raw timestamp for client-side formatting
 					if (timeEntry.clock_out) {
 						activities.push({
 							id: `clock-out-${timeEntry._id}`,
@@ -296,7 +286,7 @@ export async function GET(request: NextRequest) {
 							title: "Clock Out",
 							description: `${
 								employee.full_name || employee.email
-							} clocked out at ${formatTime(timeEntry.clock_out)}`,
+							} clocked out`,
 							details: {
 								clockIn: timeEntry.clock_in,
 								clockOut: timeEntry.clock_out,
@@ -304,6 +294,8 @@ export async function GET(request: NextRequest) {
 								totalHours: timeEntry.total_hours,
 								date: timeEntry.date,
 								action: "clock_out",
+								// Include raw timestamp for client-side formatting
+								rawTimestamp: timeEntry.clock_out,
 							},
 							user: {
 								name: employee.full_name || employee.email,
