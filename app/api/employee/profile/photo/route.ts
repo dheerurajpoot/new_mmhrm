@@ -2,9 +2,6 @@ import { type NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { getServerUser } from "@/lib/auth/server";
 import { getUsersCollection } from "@/lib/mongodb/collections";
-import { writeFile, mkdir, access } from "fs/promises";
-import { join } from "path";
-import { constants } from "fs";
 
 export async function POST(request: NextRequest) {
   try {
@@ -47,69 +44,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "File must be an image" }, { status: 400 });
     }
 
-    // Step 4: Convert file to buffer
-    let bytes, buffer;
+    // Step 4: Convert file to base64
+    let base64String;
     try {
-      bytes = await file.arrayBuffer();
-      buffer = Buffer.from(bytes);
-      console.log(`[Photo Upload] File converted to buffer: ${buffer.length} bytes`);
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      base64String = `data:${file.type};base64,${buffer.toString('base64')}`;
+      console.log(`[Photo Upload] File converted to base64: ${buffer.length} bytes`);
     } catch (err) {
-      console.error("[Photo Upload] Failed to convert file to buffer:", err);
+      console.error("[Photo Upload] Failed to convert file to base64:", err);
       return NextResponse.json({ error: "Failed to process file" }, { status: 500 });
     }
 
-    // Step 5: Prepare file system
-    const uploadsDir = join(process.cwd(), "public", "uploads", "profiles");
-    console.log(`[Photo Upload] Upload directory: ${uploadsDir}`);
-
-    try {
-      // Check if directory exists and is writable
-      try {
-        await access(uploadsDir, constants.W_OK);
-        console.log("[Photo Upload] Directory exists and is writable");
-      } catch {
-        console.log("[Photo Upload] Creating directory...");
-        await mkdir(uploadsDir, { recursive: true });
-        console.log("[Photo Upload] Directory created successfully");
-      }
-    } catch (err) {
-      console.error("[Photo Upload] Failed to create/access directory:", err);
-      return NextResponse.json({ 
-        error: "File system error - unable to create upload directory" 
-      }, { status: 500 });
-    }
-
-    // Step 6: Generate filename
-    const timestamp = Date.now();
-    const extension = file.name.split(".").pop() || "jpg";
-    const filename = `profile_${user._id}_${timestamp}.${extension}`;
-    const filepath = join(uploadsDir, filename);
-    console.log(`[Photo Upload] Target file: ${filepath}`);
-
-    // Step 7: Save file
-    try {
-      await writeFile(filepath, buffer);
-      console.log("[Photo Upload] File saved successfully");
-      
-      // Verify file was written
-      await access(filepath, constants.R_OK);
-      console.log("[Photo Upload] File verified");
-    } catch (err) {
-      console.error("[Photo Upload] Failed to save file:", err);
-      return NextResponse.json({ 
-        error: "Failed to save file to server" 
-      }, { status: 500 });
-    }
-
-    // Step 8: Update database
-    const photoUrl = `/uploads/profiles/${filename}`;
+    // Step 5: Update database with base64 string
     try {
       const collection = await getUsersCollection();
       const result = await collection.updateOne(
         { _id: new ObjectId(user._id!.toString()) },
         {
           $set: {
-            profile_photo: photoUrl,
+            profile_photo: base64String,
             updated_at: new Date(),
           },
         }
@@ -120,7 +74,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "User not found" }, { status: 404 });
       }
 
-      console.log(`[Photo Upload] Database updated successfully: ${photoUrl}`);
+      console.log(`[Photo Upload] Database updated successfully with base64 image`);
     } catch (err) {
       console.error("[Photo Upload] Database update failed:", err);
       return NextResponse.json({ 
@@ -129,7 +83,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.log("[Photo Upload] Upload completed successfully");
-    return NextResponse.json({ success: true, photoUrl });
+    return NextResponse.json({ success: true, photoUrl: base64String });
   } catch (error) {
     console.error("[Photo Upload] Unexpected error:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
