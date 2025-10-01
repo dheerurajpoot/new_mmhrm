@@ -19,8 +19,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Calendar, Plus, Clock, Plane, Heart, Stethoscope, Laptop, HeartHandshake, Timer, Zap, Flower, Loader2 } from "lucide-react"
+import { Calendar, Plus, Clock, Plane, Heart, Stethoscope, Laptop, HeartHandshake, Timer, Zap, Flower, Loader2, Sparkles } from "lucide-react"
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts"
 import type { LeaveRequest } from "@/lib/types"
 
@@ -90,6 +89,12 @@ export function EmployeeLeaveBalance() {
     try {
       const daysRequested = calculateDays(leaveRequest.start_date, leaveRequest.end_date)
       const selectedLeaveType = grantedLeaveTypes.find(lt => lt.leave_type === leaveRequest.leave_type)
+      
+      // Validate required fields
+      if (!leaveRequest.leave_type || !leaveRequest.start_date || !leaveRequest.end_date || !leaveRequest.reason.trim()) {
+        toast.error("Please fill in all required fields")
+        return
+      }
       
       // Validate that requested days don't exceed available balance
       if (selectedLeaveType && daysRequested > selectedLeaveType.remaining_days) {
@@ -185,7 +190,7 @@ export function EmployeeLeaveBalance() {
   }
 
   return (
-    <div className="space-responsive">
+    <div className="space-responsive relative">
       {/* Leave Balances */}
       <Card>
         <CardHeader>
@@ -194,95 +199,13 @@ export function EmployeeLeaveBalance() {
               <CardTitle>Leave Balances</CardTitle>
               <CardDescription>Your available leave days for {new Date().getFullYear()}</CardDescription>
             </div>
-            <Dialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-gradient-to-r from-red-600 to-blue-600 hover:from-red-700 hover:to-blue-700">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Request Leave
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Request Leave</DialogTitle>
-                  <DialogDescription>Submit a new leave request for approval</DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleSubmitRequest} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="leave_type">Leave Type</Label>
-                    <Select
-                      value={leaveRequest.leave_type}
-                      onValueChange={(value) => setLeaveRequest({ ...leaveRequest, leave_type: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select leave type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {grantedLeaveTypes.map((leaveType) => (
-                          <SelectItem key={leaveType.id} value={leaveType.leave_type}>
-                            {leaveType.leave_type} ({leaveType.remaining_days} days left)
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="start_date">Start Date</Label>
-                      <Input
-                        id="start_date"
-                        type="date"
-                        required
-                        value={leaveRequest.start_date}
-                        onChange={(e) => setLeaveRequest({ ...leaveRequest, start_date: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="end_date">End Date</Label>
-                      <Input
-                        id="end_date"
-                        type="date"
-                        required
-                        value={leaveRequest.end_date}
-                        onChange={(e) => setLeaveRequest({ ...leaveRequest, end_date: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                  {leaveRequest.start_date && leaveRequest.end_date && (
-                    <div className="p-3 bg-blue-50 rounded-lg">
-                      <p className="text-sm text-blue-800">
-                        Total days: {calculateDays(leaveRequest.start_date, leaveRequest.end_date)}
-                      </p>
-                      {leaveRequest.leave_type && (
-                        (() => {
-                          const selectedLeaveType = grantedLeaveTypes.find(lt => lt.leave_type === leaveRequest.leave_type)
-                          const requestedDays = calculateDays(leaveRequest.start_date, leaveRequest.end_date)
-                          if (selectedLeaveType && requestedDays > selectedLeaveType.remaining_days) {
-                            return (
-                              <p className="text-sm text-red-600 mt-1">
-                                ⚠️ You only have {selectedLeaveType.remaining_days} days left for {leaveRequest.leave_type}
-                              </p>
-                            )
-                          }
-                          return null
-                        })()
-                      )}
-                    </div>
-                  )}
-                  <div className="space-y-2">
-                    <Label htmlFor="reason">Reason (Optional)</Label>
-                    <Textarea
-                      id="reason"
-                      placeholder="Provide a reason for your leave request..."
-                      value={leaveRequest.reason}
-                      onChange={(e) => setLeaveRequest({ ...leaveRequest, reason: e.target.value })}
-                    />
-                  </div>
-                  <Button type="submit" className="w-full">
-                    {isLeavePosting ? 'Submitting...' : "Submit Request"}
-                  </Button>
-                </form>
-              </DialogContent>
-            </Dialog>
+            <Button 
+              onClick={() => setIsRequestDialogOpen(true)}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 w-full sm:w-auto"
+            >
+              <Plus className="w-4 h-4" />
+              Request Leave
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -394,7 +317,7 @@ export function EmployeeLeaveBalance() {
                       </div>
                       <div className="text-right">
                         <div className={`text-2xl font-bold ${config.textColor}`}>
-                          {balance.remaining_days}
+                          {balance.remaining_days}  
                         </div>
                         <div className="text-xs text-gray-500">days left</div>
                       </div>
@@ -505,14 +428,7 @@ export function EmployeeLeaveBalance() {
                 <Calendar className="w-10 h-10 text-green-600" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">No Leave Requests Yet</h3>
-              <p className="text-gray-500 mb-4">You haven't submitted any leave requests.</p>
-              <Button 
-                onClick={() => setIsRequestDialogOpen(true)}
-                className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Submit Your First Request
-              </Button>
+              <p className="text-gray-500 mb-4">You haven't submitted any leave requests. Use the "Request Leave" button above to submit your first request.</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -716,6 +632,171 @@ export function EmployeeLeaveBalance() {
           )}
         </CardContent>
       </Card>
+
+      {/* Leave Request Dialog */}
+      <Dialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen}>
+        <DialogContent className="w-[95vw] max-w-md mx-auto max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="pb-2">
+            <DialogTitle className="text-lg sm:text-xl">Request Leave</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm">Submit a new leave request for approval</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmitRequest} className="space-y-3 sm:space-y-4">
+            <div className="space-y-2 sm:space-y-3">
+              <Label className="text-sm sm:text-base">Select Leave Type</Label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 sm:gap-2">
+                {grantedLeaveTypes.map((leaveType) => {
+                  const getLeaveIcon = (type: string) => {
+                    switch (type.toLowerCase()) {
+                      case 'casual leave': return '✈️'
+                      case 'sick leave': return '❤️'
+                      case 'medical leave': return '🏥'
+                      case 'work from home': return '💻'
+                      case 'maternity leave': return '🤱'
+                      case 'paternity leave': return '👨‍👶'
+                      case 'emergency leave': return '⚡'
+                      case 'personal leave': return '🌸'
+                      default: return '📅'
+                    }
+                  }
+
+                  const getLeaveColor = (type: string) => {
+                    switch (type.toLowerCase()) {
+                      case 'casual leave': return 'border-blue-300 bg-blue-50'
+                      case 'sick leave': return 'border-red-300 bg-red-50'
+                      case 'medical leave': return 'border-green-300 bg-green-50'
+                      case 'work from home': return 'border-purple-300 bg-purple-50'
+                      case 'maternity leave': return 'border-pink-300 bg-pink-50'
+                      case 'paternity leave': return 'border-indigo-300 bg-indigo-50'
+                      case 'emergency leave': return 'border-orange-300 bg-orange-50'
+                      case 'personal leave': return 'border-teal-300 bg-teal-50'
+                      default: return 'border-gray-300 bg-gray-50'
+                    }
+                  }
+
+                  return (
+                    <div
+                      key={leaveType.id}
+                      className={`p-1.5 sm:p-2 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-md ${
+                        leaveRequest.leave_type === leaveType.leave_type
+                          ? `${getLeaveColor(leaveType.leave_type)} border-opacity-100 shadow-md`
+                          : `${getLeaveColor(leaveType.leave_type)} border-opacity-50 hover:border-opacity-75`
+                      }`}
+                      onClick={() => setLeaveRequest({ ...leaveRequest, leave_type: leaveType.leave_type })}
+                    >
+                      <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2">
+                        <span className="text-sm sm:text-base">{getLeaveIcon(leaveType.leave_type)}</span>
+                        <span className="text-xs sm:text-sm font-medium text-gray-800 text-center truncate">{leaveType.leave_type}</span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Leave Balance Display */}
+            {leaveRequest.leave_type && (
+              <div className="p-3 sm:p-4 bg-gray-50 rounded-lg border">
+                <h4 className="text-xs sm:text-sm font-semibold text-gray-800 mb-2 sm:mb-3">{leaveRequest.leave_type} Leave Balance</h4>
+                {(() => {
+                  const selectedLeaveType = grantedLeaveTypes.find(lt => lt.leave_type === leaveRequest.leave_type)
+                  if (selectedLeaveType) {
+                    return (
+                      <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
+                        <div>
+                          <div className="text-sm sm:text-lg font-bold text-blue-600">{selectedLeaveType.total_days}</div>
+                          <div className="text-xs text-gray-600">Total</div>
+                        </div>
+                        <div>
+                          <div className="text-sm sm:text-lg font-bold text-orange-600">{selectedLeaveType.total_days - selectedLeaveType.remaining_days}</div>
+                          <div className="text-xs text-gray-600">Used</div>
+                        </div>
+                        <div>
+                          <div className="text-sm sm:text-lg font-bold text-green-600">{selectedLeaveType.remaining_days}</div>
+                          <div className="text-xs text-gray-600">Left</div>
+                        </div>
+                      </div>
+                    )
+                  }
+                  return null
+                })()}
+              </div>
+            )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="space-y-1 sm:space-y-2">
+                <Label htmlFor="start_date" className="text-sm sm:text-base">Start Date</Label>
+                <Input
+                  id="start_date"
+                  type="date"
+                  required
+                  min={new Date().toISOString().split('T')[0]}
+                  value={leaveRequest.start_date}
+                  onChange={(e) => setLeaveRequest({ ...leaveRequest, start_date: e.target.value })}
+                  className="text-sm sm:text-base"
+                />
+              </div>
+              <div className="space-y-1 sm:space-y-2">
+                <Label htmlFor="end_date" className="text-sm sm:text-base">End Date</Label>
+                <Input
+                  id="end_date"
+                  type="date"
+                  required
+                  min={leaveRequest.start_date || new Date().toISOString().split('T')[0]}
+                  value={leaveRequest.end_date}
+                  onChange={(e) => setLeaveRequest({ ...leaveRequest, end_date: e.target.value })}
+                  className="text-sm sm:text-base"
+                />
+              </div>
+            </div>
+
+            {/* Simple validation message */}
+            {leaveRequest.start_date && leaveRequest.end_date && leaveRequest.leave_type && (
+              <div className="p-2 sm:p-3 bg-blue-50 rounded-lg">
+                <p className="text-xs sm:text-sm text-blue-800">
+                  Total days: {calculateDays(leaveRequest.start_date, leaveRequest.end_date)}
+                </p>
+                {(() => {
+                  const selectedLeaveType = grantedLeaveTypes.find(lt => lt.leave_type === leaveRequest.leave_type)
+                  const requestedDays = calculateDays(leaveRequest.start_date, leaveRequest.end_date)
+                  if (selectedLeaveType && requestedDays > selectedLeaveType.remaining_days) {
+                    return (
+                      <p className="text-xs sm:text-sm text-red-600 mt-1">
+                        ⚠️ You only have {selectedLeaveType.remaining_days} days left for {leaveRequest.leave_type}
+                      </p>
+                    )
+                  }
+                  return null
+                })()}
+              </div>
+            )}
+            <div className="space-y-1 sm:space-y-2">
+              <Label htmlFor="reason" className="text-sm sm:text-base">Reason <span className="text-red-500">*</span></Label>
+              <Textarea
+                id="reason"
+                placeholder="Provide a reason for your leave request..."
+                value={leaveRequest.reason}
+                onChange={(e) => setLeaveRequest({ ...leaveRequest, reason: e.target.value })}
+                required
+                className="text-sm sm:text-base min-h-[80px] sm:min-h-[100px]"
+              />
+            </div>
+            <Button 
+              type="submit" 
+              className="w-full text-sm sm:text-base py-2 sm:py-3"
+              disabled={isLeavePosting || !leaveRequest.leave_type || !leaveRequest.start_date || !leaveRequest.end_date || !leaveRequest.reason.trim()}
+            >
+              {isLeavePosting ? 'Submitting...' : 'Submit Request'}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Floating Action Button for Mobile */}
+      <Button 
+        onClick={() => setIsRequestDialogOpen(true)}
+        className="fixed bottom-18 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-2xl hover:shadow-3xl transition-all duration-300 flex items-center justify-center sm:hidden"
+      >
+        <Plus className="w-6 h-6" />
+      </Button>
     </div>
   )
 }
