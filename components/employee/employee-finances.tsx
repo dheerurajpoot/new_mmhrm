@@ -22,7 +22,11 @@ interface PayrollRecord {
   created_at: string
 }
 
-export function EmployeeFinancesComponent() {
+interface EmployeeFinancesComponentProps {
+  sectionData?: any;
+}
+
+export function EmployeeFinancesComponent({ sectionData }: EmployeeFinancesComponentProps) {
   const [finances, setFinances] = useState<EmployeeFinancesType | null>(null)
   const [payrollRecords, setPayrollRecords] = useState<PayrollRecord[]>([])
   const [isLoading, setIsLoading] = useState(true)

@@ -51,11 +51,13 @@ export function UpcomingBirthdays({
 	maxEmployees = 4,
 	title = "Upcoming Birthdays",
 	description = "Celebrate your colleagues!",
+	sectionData,
 }: {
 	showAllMonths?: boolean;
 	maxEmployees?: number;
 	title?: string;
 	description?: string;
+	sectionData?: any;
 }) {
 	const [upcomingBirthdays, setUpcomingBirthdays] = useState<
 		BirthdayEmployee[]
@@ -67,8 +69,41 @@ export function UpcomingBirthdays({
 	);
 
 	useEffect(() => {
-		fetchUpcomingBirthdays();
-	}, []);
+		if (sectionData?.upcomingBirthdays) {
+			// Use section data if available, but ensure proper birthday calculation
+			const processedBirthdays = sectionData.upcomingBirthdays.map((emp: any) => {
+				// Ensure daysUntilBirthday is properly calculated
+				if (emp.birth_date && (!emp.daysUntilBirthday || emp.daysUntilBirthday === undefined)) {
+					const birthDate = new Date(emp.birth_date);
+					const today = new Date();
+					const currentYear = today.getFullYear();
+					
+					let thisYearBirthday = new Date(currentYear, birthDate.getMonth(), birthDate.getDate());
+					if (thisYearBirthday < today) {
+						thisYearBirthday = new Date(currentYear + 1, birthDate.getMonth(), birthDate.getDate());
+					}
+					
+					const daysUntilBirthday = Math.ceil((thisYearBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+					
+					return {
+						...emp,
+						daysUntilBirthday,
+						birthdayMonth: birthDate.toLocaleString('default', { month: 'long' }),
+						birthdayDay: birthDate.getDate(),
+						age: currentYear - birthDate.getFullYear()
+					};
+				}
+				return emp;
+			})
+			.sort((a: any, b: any) => a.daysUntilBirthday - b.daysUntilBirthday); // Sort by closest birthday
+			
+			setUpcomingBirthdays(processedBirthdays);
+			setIsLoading(false);
+		} else {
+			// Fallback to original data fetching
+			fetchUpcomingBirthdays();
+		}
+	}, [sectionData]);
 
 	const fetchUpcomingBirthdays = async () => {
 		try {
@@ -214,6 +249,10 @@ export function UpcomingBirthdays({
 	};
 
 	const getBirthdayText = (daysUntil: number) => {
+		if (daysUntil === undefined || daysUntil === null || isNaN(daysUntil)) {
+			return "Unknown";
+		}
+		
 		if (daysUntil === 0) return "Today!";
 		if (daysUntil === 1) return "Tomorrow";
 		if (daysUntil <= 7) return `${daysUntil} days`;

@@ -71,6 +71,10 @@ interface EmployeeStats {
 	}>;
 }
 
+interface EmployeeStatsProps {
+	sectionData?: any;
+}
+
 interface Employee {
 	id: string;
 	email: string;
@@ -86,7 +90,7 @@ interface Employee {
 	last_sign_in_at?: string;
 }
 
-export function EmployeeStats() {
+export function EmployeeStats({ sectionData }: EmployeeStatsProps) {
 	const [stats, setStats] = useState<EmployeeStats>({
 		remainingLeaves: 0,
 		hoursThisWeek: 0,
@@ -179,22 +183,67 @@ export function EmployeeStats() {
 	];
 
 	useEffect(() => {
-		fetchStats();
-		fetchEmployees();
-		fetchLeaveData();
-	}, []);
+		console.log("[Employee Stats] Section data received:", {
+			hasSectionData: !!sectionData,
+			sectionDataKeys: sectionData ? Object.keys(sectionData) : [],
+			leaveBalances: sectionData?.leaveBalances?.length || 0,
+			leaveTypes: sectionData?.leaveTypes?.length || 0,
+		});
+
+		if (sectionData) {
+			// Use section data if available
+			setStats(sectionData.stats || {
+				remainingLeaves: 0,
+				hoursThisWeek: 0,
+				pendingRequests: 0,
+				currentSalary: 0,
+				isCurrentlyClockedIn: false,
+				todayHours: 0,
+				leaveGrowth: 0,
+				hoursGrowth: 0,
+				salaryGrowth: 0,
+				requestGrowth: 0,
+				leaveBalances: [],
+			});
+			setLeaveBalances(sectionData.leaveBalances || []);
+			setLeaveTypes(sectionData.leaveTypes || []);
+			setIsLoading(false);
+			
+			// Always fetch employees for search functionality
+			fetchEmployees();
+			
+			// Always fetch leave data to ensure it's up-to-date
+			fetchLeaveData();
+		} else {
+			// Fallback to original data fetching
+			fetchStats();
+			fetchEmployees();
+			fetchLeaveData();
+		}
+	}, [sectionData]);
 
 	const fetchLeaveData = async () => {
 		try {
+			console.log("[Employee Stats] Fetching leave data...");
 			setIsLeaveDataLoading(true);
 			const [leaveBalancesRes, leaveTypesRes] = await Promise.all([
 				fetch("/api/employee/leave-balances"), // Use employee-specific API
 				fetch("/api/leave-types"),
 			]);
 
+			console.log("[Employee Stats] Leave API responses:", {
+				balancesStatus: leaveBalancesRes.status,
+				typesStatus: leaveTypesRes.status,
+			});
+
 			if (leaveBalancesRes.ok && leaveTypesRes.ok) {
 				const balancesData = await leaveBalancesRes.json();
 				const typesData = await leaveTypesRes.json();
+
+				console.log("[Employee Stats] Fetched leave data:", {
+					balances: balancesData.length,
+					types: typesData.length,
+				});
 
 				setLeaveBalances(balancesData);
 				setLeaveTypes(typesData);
@@ -382,19 +431,33 @@ export function EmployeeStats() {
 	useEffect(() => {
 		setSelectedIndex(-1); // Reset selected index when search term changes
 
+		console.log("[Employee Stats] Search effect triggered:", {
+			searchTerm,
+			employeesCount: employees.length,
+			employees: employees.slice(0, 3) // Log first 3 employees for debugging
+		});
+
 		if (searchTerm.trim() === "") {
 			setFilteredEmployees([]);
 			setShowSearchResults(false);
 		} else {
 			const filtered = employees.filter((employee) => {
 				const searchLower = searchTerm.toLowerCase();
-				return (
+				const matches = (
 					employee.full_name?.toLowerCase().includes(searchLower) ||
 					employee.email?.toLowerCase().includes(searchLower) ||
 					employee.department?.toLowerCase().includes(searchLower) ||
 					employee.position?.toLowerCase().includes(searchLower)
 				);
+				
+				if (matches) {
+					console.log("[Employee Stats] Match found:", employee.full_name);
+				}
+				
+				return matches;
 			});
+			
+			console.log("[Employee Stats] Filtered results:", filtered.length);
 			setFilteredEmployees(filtered);
 			setShowSearchResults(filtered.length > 0);
 		}
@@ -424,9 +487,13 @@ export function EmployeeStats() {
 
 	const fetchEmployees = async () => {
 		try {
+			console.log("[Employee Stats] Fetching employees for search...");
 			const response = await fetch("/api/employee/search");
+			console.log("[Employee Stats] API response status:", response.status);
+			
 			if (response.ok) {
 				const data = await response.json();
+				console.log("[Employee Stats] Fetched employees:", data.length);
 				setEmployees(data);
 				setFilteredEmployees(data);
 			} else {
@@ -435,9 +502,15 @@ export function EmployeeStats() {
 					response.status,
 					response.statusText
 				);
+				// Set empty arrays to prevent search from breaking
+				setEmployees([]);
+				setFilteredEmployees([]);
 			}
 		} catch (error) {
 			console.error("Error fetching employees:", error);
+			// Set empty arrays to prevent search from breaking
+			setEmployees([]);
+			setFilteredEmployees([]);
 		}
 	};
 

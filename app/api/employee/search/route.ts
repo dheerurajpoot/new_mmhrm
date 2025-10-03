@@ -4,8 +4,12 @@ import { getUsersCollection } from "@/lib/mongodb/collections";
 
 export async function GET(request: NextRequest) {
 	try {
+		console.log("[Employee Search API] Starting request...");
 		const user = await getServerUser();
+		console.log("[Employee Search API] User:", user ? `${user.full_name} (${user.role})` : "Not authenticated");
+		
 		if (!user) {
+			console.log("[Employee Search API] Unauthorized access");
 			return NextResponse.json(
 				{ error: "Unauthorized" },
 				{ status: 401 }
@@ -16,9 +20,11 @@ export async function GET(request: NextRequest) {
 		let employees: any[] = [];
 
 		try {
+			console.log("[Employee Search API] Fetching from database...");
 			// Fetch directly from users collection
 			const usersCollection = await getUsersCollection();
 			employees = await usersCollection.find({}).toArray();
+			console.log("[Employee Search API] Found employees:", employees.length);
 
 			// Convert User[] to Profile-like format
 			employees = employees.map((user: any) => ({
@@ -26,7 +32,7 @@ export async function GET(request: NextRequest) {
 				user_id: user._id, // Add user_id field for compatibility
 			}));
 		} catch (dbError) {
-			console.error("Database error:", dbError);
+			console.error("[Employee Search API] Database error:", dbError);
 			// Return empty array instead of mock data
 			employees = [];
 		}
@@ -48,9 +54,10 @@ export async function GET(request: NextRequest) {
 			updated_at: emp.updated_at || new Date(),
 		}));
 
+		console.log("[Employee Search API] Returning transformed employees:", transformedEmployees.length);
 		return NextResponse.json(transformedEmployees);
 	} catch (error) {
-		console.error("API error:", error);
+		console.error("[Employee Search API] Error:", error);
 		return NextResponse.json(
 			{ error: "Internal server error" },
 			{ status: 500 }

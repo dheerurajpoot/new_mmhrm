@@ -43,7 +43,11 @@ import type { Profile } from "@/lib/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 
-export function EmployeeProfile() {
+interface EmployeeProfileProps {
+	sectionData?: any;
+}
+
+export function EmployeeProfile({ sectionData }: EmployeeProfileProps) {
 	const [profile, setProfile] = useState<Profile | null>(null);
 	const [isEditing, setIsEditing] = useState(false);
 	const [isLoading, setIsLoading] = useState(true);

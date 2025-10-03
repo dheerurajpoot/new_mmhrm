@@ -20,7 +20,11 @@ interface TimeEntry {
   updated_at: string
 }
 
-export function TimeTrackingSimple() {
+interface TimeTrackingSimpleProps {
+  sectionData?: any;
+}
+
+export function TimeTrackingSimple({ sectionData }: TimeTrackingSimpleProps) {
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isClocking, setIsClocking] = useState(false)
@@ -28,7 +32,7 @@ export function TimeTrackingSimple() {
   const [isCurrentlyClockedIn, setIsCurrentlyClockedIn] = useState(false)
   const [todayHours, setTodayHours] = useState(0)
   const [weeklyHours, setWeeklyHours] = useState(0)
-  
+
   // Animation states
   const [isAnimatingIn, setIsAnimatingIn] = useState(false)
   const [isAnimatingOut, setIsAnimatingOut] = useState(false)
@@ -85,7 +89,7 @@ export function TimeTrackingSimple() {
       const entryDate = new Date(entry.date)
       return entryDate >= today && entryDate <= endOfToday
     })
-    
+
     const activeEntry = todayEntries.find((entry: TimeEntry) => !entry.clock_out)
     setIsCurrentlyClockedIn(!!activeEntry)
 
@@ -97,7 +101,7 @@ export function TimeTrackingSimple() {
     const startOfWeek = new Date()
     startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay())
     startOfWeek.setHours(0, 0, 0, 0)
-    
+
     const weeklyEntries = entries?.filter((entry: TimeEntry) => {
       const entryDate = new Date(entry.date)
       return entryDate >= startOfWeek && (entry.total_hours || 0) > 0
@@ -154,11 +158,11 @@ export function TimeTrackingSimple() {
 
       if (response.ok) {
         toast.success(`${actionText} successful! 🎉`, {
-          description: isCurrentlyClockedIn 
-            ? "Great work today! You have been clocked out successfully." 
+          description: isCurrentlyClockedIn
+            ? "Great work today! You have been clocked out successfully."
             : "Welcome back! You have been clocked in successfully.",
         });
-        
+
         // Refresh data
         await fetchTimeEntries()
       } else {
@@ -218,15 +222,12 @@ export function TimeTrackingSimple() {
             onClick={handleClockInOut}
             disabled={isClocking}
             size="lg"
-            className={`relative overflow-hidden transition-all duration-300 ${
-              isCurrentlyClockedIn 
-                ? "bg-red-500 hover:bg-red-600" 
+            className={`relative overflow-hidden transition-all duration-300 ${isCurrentlyClockedIn
+                ? "bg-red-500 hover:bg-red-600"
                 : "bg-white text-red-600 hover:bg-gray-100"
-            } ${
-              isAnimatingIn ? "animate-pulse scale-110 shadow-2xl shadow-yellow-400/50" : ""
-            } ${
-              isAnimatingOut ? "animate-bounce scale-95 shadow-2xl shadow-blue-400/50" : ""
-            }`}
+              } ${isAnimatingIn ? "animate-pulse scale-110 shadow-2xl shadow-yellow-400/50" : ""
+              } ${isAnimatingOut ? "animate-bounce scale-95 shadow-2xl shadow-blue-400/50" : ""
+              }`}
           >
             {/* Animation overlay */}
             {isAnimatingIn && (
@@ -235,7 +236,7 @@ export function TimeTrackingSimple() {
             {isAnimatingOut && (
               <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 animate-pulse" />
             )}
-            
+
             {isCurrentlyClockedIn ? (
               <>
                 <Moon className={`w-5 h-5 mr-2 ${isAnimatingOut ? "animate-spin" : ""}`} />

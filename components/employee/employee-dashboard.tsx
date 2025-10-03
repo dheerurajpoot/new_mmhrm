@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense, lazy } from "react";
 import { getCurrentUser } from "@/lib/auth/client";
 import {
 	SidebarProvider,
@@ -9,23 +9,82 @@ import {
 import { AppSidebar } from "@/components/shared/app-sidebar";
 import { MobileBottomNav } from "@/components/shared/mobile-bottom-nav";
 import { DashboardHeader } from "@/components/shared/dashboard-header";
-import { EmployeeProfile } from "./employee-profile";
-import { LeaveBalance } from "./leave-balance";
-import { TimeTracking } from "./time-tracking";
-import { TimeTrackingSimple } from "./time-tracking-simple";
-import { EmployeeFinances } from "./employee-finances";
-import { EmployeeStats } from "./employee-stats";
-import { TeamMembers } from "./team-members";
-import { UpcomingBirthdays } from "@/components/shared/upcoming-birthdays";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Cake } from "lucide-react";
-import { useWebsiteSettings } from "@/hooks/use-website-settings";
+import { useSectionData } from "@/hooks/use-section-data";
 import type { Profile } from "@/lib/types";
-import { TimeTrackingWidget } from "./time-tracking-widget";
+
+// Lazy load components for better performance
+const EmployeeProfile = lazy(() => import("./employee-profile").then(module => ({ default: module.EmployeeProfile })))
+const LeaveBalance = lazy(() => import("./leave-balance").then(module => ({ default: module.LeaveBalance })))
+const TimeTracking = lazy(() => import("./time-tracking").then(module => ({ default: module.TimeTracking })))
+const TimeTrackingSimple = lazy(() => import("./time-tracking-simple").then(module => ({ default: module.TimeTrackingSimple })))
+const EmployeeFinances = lazy(() => import("./employee-finances").then(module => ({ default: module.EmployeeFinances })))
+const EmployeeStats = lazy(() => import("./employee-stats").then(module => ({ default: module.EmployeeStats })))
+const TeamMembers = lazy(() => import("./team-members").then(module => ({ default: module.TeamMembers })))
+const TimeTrackingWidget = lazy(() => import("./time-tracking-widget").then(module => ({ default: module.TimeTrackingWidget })))
+const UpcomingBirthdays = lazy(() => import("@/components/shared/upcoming-birthdays").then(module => ({ default: module.UpcomingBirthdays })))
+
+// Loading skeleton component
+const EmployeeSectionSkeleton = () => (
+	<div className="space-y-6">
+		<Card>
+			<CardHeader>
+				<Skeleton className="h-6 w-32" />
+			</CardHeader>
+			<CardContent>
+				<Skeleton className="h-20 w-full" />
+			</CardContent>
+		</Card>
+		<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+			{[...Array(3)].map((_, i) => (
+				<Card key={i}>
+					<CardHeader>
+						<Skeleton className="h-4 w-24" />
+					</CardHeader>
+					<CardContent>
+						<Skeleton className="h-8 w-16 mb-2" />
+						<Skeleton className="h-3 w-32" />
+					</CardContent>
+				</Card>
+			))}
+		</div>
+		<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+			<Card>
+				<CardHeader>
+					<Skeleton className="h-6 w-32" />
+				</CardHeader>
+				<CardContent>
+					<div className="space-y-3">
+						{[...Array(3)].map((_, i) => (
+							<Skeleton key={i} className="h-16 w-full" />
+						))}
+					</div>
+				</CardContent>
+			</Card>
+			<Card>
+				<CardHeader>
+					<Skeleton className="h-6 w-32" />
+				</CardHeader>
+				<CardContent>
+					<Skeleton className="h-64 w-full" />
+				</CardContent>
+			</Card>
+		</div>
+	</div>
+)
 
 export function EmployeeDashboard() {
 	const [activeSection, setActiveSection] = useState("overview");
 	const [currentUser, setCurrentUser] = useState<Profile | null>(null);
-	const { settings } = useWebsiteSettings();
+
+	// Use section-based data loading
+	const { data: sectionData, loading: sectionLoading, error: sectionError } = useSectionData(activeSection, {
+		enabled: true,
+		refetchOnMount: true
+	})
 
 	useEffect(() => {
 		const fetchCurrentUser = async () => {
@@ -56,92 +115,149 @@ export function EmployeeDashboard() {
 	}, []);
 
 	const renderContent = () => {
+		if (sectionLoading) {
+			return <EmployeeSectionSkeleton />
+		}
+
+		if (sectionError) {
+			return (
+				<div className="flex items-center justify-center h-64">
+					<div className="text-center">
+						<h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Data</h3>
+						<p className="text-gray-600 mb-4">{sectionError.message}</p>
+						<button
+							onClick={() => window.location.reload()}
+							className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+						>
+							Retry
+						</button>
+					</div>
+				</div>
+			)
+		}
+
 		switch (activeSection) {
 			case "overview":
 				return (
 					<div className='space-y-6'>
-						<TimeTrackingWidget />
-						<EmployeeStats />
+						<Suspense fallback={<Skeleton className="h-20 w-full" />}>
+							<TimeTrackingWidget sectionData={sectionData} />
+						</Suspense>
+						<Suspense fallback={<EmployeeSectionSkeleton />}>
+							<EmployeeStats sectionData={sectionData} />
+						</Suspense>
 						<div className='grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6'>
-							<TeamMembers />
-							{/* New Upcoming Birthdays Section - Same as Admin */}
-							<div className='bg-gradient-to-br from-white via-pink-50/30 to-rose-50/30 rounded-2xl border border-pink-100 p-4 shadow-lg'>
-								<div className='flex items-center justify-between mb-6'>
-									<div className='flex items-center gap-3'>
-										<div className='w-10 h-10 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl flex items-center justify-center shadow-md'>
-											<Cake className='w-5 h-5 text-white' />
+							<Suspense fallback={<Skeleton className="h-64 w-full" />}>
+								<TeamMembers sectionData={sectionData} />
+							</Suspense>
+							<Suspense fallback={<Skeleton className="h-64 w-full" />}>
+								<div className='bg-gradient-to-br from-white via-pink-50/30 to-rose-50/30 rounded-2xl border border-pink-100 p-4 shadow-lg'>
+									<div className='flex items-center justify-between mb-6'>
+										<div className='flex items-center gap-3'>
+											<div className='w-10 h-10 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl flex items-center justify-center shadow-md'>
+												<Cake className='w-5 h-5 text-white' />
+											</div>
+											<div>
+												<h3 className='text-lg font-bold text-gray-900'>
+													Upcoming Birthdays
+												</h3>
+												<p className='text-sm text-gray-600'>
+													Celebrate your colleagues!
+												</p>
+											</div>
 										</div>
-										<div>
-											<h3 className='text-lg font-bold text-gray-900'>
-												Upcoming Birthdays
-											</h3>
-											<p className='text-sm text-gray-600'>
-												Celebrate your colleagues!
-											</p>
+										<div className='flex items-center gap-2'>
+											<div className='w-2 h-2 bg-pink-500 rounded-full animate-pulse'></div>
+											<Badge
+												variant='outline'
+												className='text-xs bg-pink-50 text-pink-700 border-pink-200'>
+												Next 10 birthdays
+											</Badge>
 										</div>
 									</div>
-									<div className='flex items-center gap-2'>
-										<div className='w-2 h-2 bg-pink-500 rounded-full animate-pulse'></div>
-										<span className='text-xs bg-pink-50 text-pink-700 border border-pink-200 px-2 py-1 rounded-full'>
-											Next 10 birthdays
-										</span>
+									<div className='h-96 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-pink-200 scrollbar-track-transparent hover:scrollbar-thumb-pink-300'>
+										<UpcomingBirthdays
+											maxEmployees={10}
+											showAllMonths={false}
+											sectionData={sectionData}
+										/>
 									</div>
 								</div>
-								<div className='h-96 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-pink-200 scrollbar-track-transparent hover:scrollbar-thumb-pink-300'>
-									<UpcomingBirthdays
-										maxEmployees={10}
-										showAllMonths={false}
-									/>
-								</div>
-							</div>
+							</Suspense>
 						</div>
 					</div>
 				);
 			case "profile":
-				return <EmployeeProfile />;
+				return (
+					<Suspense fallback={<EmployeeSectionSkeleton />}>
+						<EmployeeProfile sectionData={sectionData} />
+					</Suspense>
+				);
 			case "leaves":
-				return <LeaveBalance />;
+				return (
+					<Suspense fallback={<EmployeeSectionSkeleton />}>
+						<LeaveBalance sectionData={sectionData} />
+					</Suspense>
+				);
 			case "time":
-				return <TimeTracking />;
+				return (
+					<Suspense fallback={<EmployeeSectionSkeleton />}>
+						<TimeTracking sectionData={sectionData} />
+					</Suspense>
+				);
 			case "finances":
-				return <EmployeeFinances />;
+				return (
+					<Suspense fallback={<EmployeeSectionSkeleton />}>
+						<EmployeeFinances sectionData={sectionData} />
+					</Suspense>
+				);
 			default:
 				return (
 					<div className='space-y-6'>
-						<EmployeeStats />
-						<TimeTrackingSimple />
+						<Suspense fallback={<EmployeeSectionSkeleton />}>
+							<EmployeeStats sectionData={sectionData} />
+						</Suspense>
+						<Suspense fallback={<Skeleton className="h-20 w-full" />}>
+							<TimeTrackingSimple sectionData={sectionData} />
+						</Suspense>
 						<div className='grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6'>
-							<TeamMembers />
-							{/* New Upcoming Birthdays Section - Same as Admin */}
-							<div className='bg-gradient-to-br from-white via-pink-50/30 to-rose-50/30 rounded-2xl border border-pink-100 p-4 shadow-lg'>
-								<div className='flex items-center justify-between mb-6'>
-									<div className='flex items-center gap-3'>
-										<div className='w-10 h-10 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl flex items-center justify-center shadow-md'>
-											<Cake className='w-5 h-5 text-white' />
+							<Suspense fallback={<Skeleton className="h-64 w-full" />}>
+								<TeamMembers sectionData={sectionData} />
+							</Suspense>
+							<Suspense fallback={<Skeleton className="h-64 w-full" />}>
+								<div className='bg-gradient-to-br from-white via-pink-50/30 to-rose-50/30 rounded-2xl border border-pink-100 p-4 shadow-lg'>
+									<div className='flex items-center justify-between mb-6'>
+										<div className='flex items-center gap-3'>
+											<div className='w-10 h-10 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl flex items-center justify-center shadow-md'>
+												<Cake className='w-5 h-5 text-white' />
+											</div>
+											<div>
+												<h3 className='text-lg font-bold text-gray-900'>
+													Upcoming Birthdays
+												</h3>
+												<p className='text-sm text-gray-600'>
+													Celebrate your colleagues!
+												</p>
+											</div>
 										</div>
-										<div>
-											<h3 className='text-lg font-bold text-gray-900'>
-												Upcoming Birthdays
-											</h3>
-											<p className='text-sm text-gray-600'>
-												Celebrate your colleagues!
-											</p>
+										<div className='flex items-center gap-2'>
+											<div className='w-2 h-2 bg-pink-500 rounded-full animate-pulse'></div>
+											<Badge
+												variant='outline'
+												className='text-xs bg-pink-50 text-pink-700 border-pink-200'>
+												Next 10 birthdays
+											</Badge>
 										</div>
 									</div>
-									<div className='flex items-center gap-2'>
-										<div className='w-2 h-2 bg-pink-500 rounded-full animate-pulse'></div>
-										<span className='text-xs bg-pink-50 text-pink-700 border border-pink-200 px-2 py-1 rounded-full'>
-											Next 10 birthdays
-										</span>
+									<div className='h-96 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-pink-200 scrollbar-track-transparent hover:scrollbar-thumb-pink-300'>
+										<UpcomingBirthdays
+											maxEmployees={10}
+											showAllMonths={false}
+											sectionData={sectionData}
+										/>
 									</div>
 								</div>
-								<div className='h-96 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-pink-200 scrollbar-track-transparent hover:scrollbar-thumb-pink-300'>
-									<UpcomingBirthdays
-										maxEmployees={10}
-										showAllMonths={false}
-									/>
-								</div>
-							</div>
+							</Suspense>
 						</div>
 					</div>
 				);
@@ -193,10 +309,10 @@ export function EmployeeDashboard() {
 		<SidebarProvider>
 			<AppSidebar role='employee' />
 			<SidebarInset>
-				<DashboardHeader 
-					title={title} 
-					description={description} 
-					role="employee" 
+				<DashboardHeader
+					title={title}
+					description={description}
+					role="employee"
 				/>
 				<div className='flex-1 p-3 md:p-4 pb-20 md:pb-4 bg-gray-50/50 min-h-screen'>
 					<div className='max-w-7xl mx-auto'>{renderContent()}</div>

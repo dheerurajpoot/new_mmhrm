@@ -23,7 +23,11 @@ import { Calendar, Plus, Clock, Plane, Heart, Stethoscope, Laptop, HeartHandshak
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts"
 import type { LeaveRequest } from "@/lib/types"
 
-export function EmployeeLeaveBalance() {
+interface EmployeeLeaveBalanceProps {
+  sectionData?: any;
+}
+
+export function EmployeeLeaveBalance({ sectionData }: EmployeeLeaveBalanceProps) {
   const [leaveBalances, setLeaveBalances] = useState<any[]>([])
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([])
   const [grantedLeaveTypes, setGrantedLeaveTypes] = useState<any[]>([])

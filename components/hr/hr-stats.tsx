@@ -31,7 +31,11 @@ interface HRStats {
 	approvalGrowth: number;
 }
 
-export function HRStats() {
+interface HRStatsProps {
+	sectionData?: any;
+}
+
+export function HRStats({ sectionData }: HRStatsProps) {
 	const [stats, setStats] = useState<HRStats>({
 		totalEmployees: 0,
 		pendingLeaves: 0,
@@ -44,6 +48,27 @@ export function HRStats() {
 	});
 	const [recentActivity, setRecentActivity] = useState<any[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
+
+	useEffect(() => {
+		if (sectionData) {
+			// Use section data if available
+			setStats(sectionData.stats || {
+				totalEmployees: 0,
+				pendingLeaves: 0,
+				todayAttendance: 0,
+				overdueApprovals: 0,
+				employeeGrowth: 0,
+				leaveGrowth: 0,
+				attendanceGrowth: 0,
+				approvalGrowth: 0,
+			});
+			setRecentActivity(sectionData.recentActivity || []);
+			setIsLoading(false);
+		} else {
+			// Fallback to original data fetching
+			fetchStats();
+		}
+	}, [sectionData]);
 
 	useEffect(() => {
 		const fetchStats = async () => {
@@ -119,8 +144,10 @@ export function HRStats() {
 			}
 		};
 
-		fetchStats();
-	}, []);
+		if (!sectionData) {
+			fetchStats();
+		}
+	}, [sectionData]);
 
 	const statCards = [
 		{

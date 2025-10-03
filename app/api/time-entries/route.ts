@@ -23,7 +23,26 @@ export async function GET(request: NextRequest) {
     
     // Filter by employee if provided
     if (employeeId) {
-      query.employee_id = new ObjectId(employeeId);
+      try {
+        console.log("[Time Entries API] Converting employee_id to ObjectId:", {
+          employeeId,
+          employeeIdType: typeof employeeId,
+          employeeIdLength: employeeId.length
+        });
+        query.employee_id = new ObjectId(employeeId);
+        console.log("[Time Entries API] Successfully converted employee_id to ObjectId");
+      } catch (error) {
+        console.error("[Time Entries API] Invalid employee_id format:", {
+          employeeId,
+          employeeIdType: typeof employeeId,
+          employeeIdLength: employeeId.length,
+          error: error instanceof Error ? error.message : String(error)
+        });
+        return NextResponse.json({ 
+          error: "Invalid employee_id format",
+          details: `Employee ID '${employeeId}' is not a valid MongoDB ObjectId format. Expected a 24-character hexadecimal string.`
+        }, { status: 400 });
+      }
     }
     
     // Filter by date range if provided
@@ -45,34 +64,24 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(entries);
   } catch (error) {
-    console.error("Error fetching time entries:", error);
+    console.error("[Time Entries API] Error fetching time entries:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    console.log("[Time Entries API] POST request received");
-    
     const user = await getServerUser();
-    console.log("[Time Entries API] User:", user ? "authenticated" : "not authenticated");
-    
     if (!user) {
-      console.log("[Time Entries API] Unauthorized access attempt");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const requestBody = await request.json();
-    console.log("[Time Entries API] Request body:", requestBody);
-    
     const { action, employee_id, break_duration, notes } = requestBody;
     
     if (!action || !employee_id) {
-      console.log("[Time Entries API] Missing required fields:", { action, employee_id });
       return NextResponse.json({ error: "Action and employee_id are required" }, { status: 400 });
     }
-
-    console.log("[Time Entries API] Processing request:", { action, employee_id, type: typeof employee_id });
 
     const timeEntriesCollection = await getTimeEntriesCollection();
     
@@ -80,7 +89,6 @@ export async function POST(request: NextRequest) {
     let employeeObjectId;
     try {
       employeeObjectId = new ObjectId(employee_id);
-      console.log("[Time Entries API] Converted employee_id to ObjectId:", employeeObjectId);
     } catch (error) {
       console.error("[Time Entries API] Invalid employee_id format:", employee_id, error);
       return NextResponse.json({ 
@@ -93,8 +101,6 @@ export async function POST(request: NextRequest) {
     endOfDay.setHours(23, 59, 59, 999);
 
     if (action === "clock_in") {
-      console.log("[Time Entries API] Processing clock_in action for employee:", employee_id);
-      
       // Check if already clocked in today
       const existingEntry = await timeEntriesCollection.findOne({
         employee_id: employeeObjectId,
@@ -103,7 +109,6 @@ export async function POST(request: NextRequest) {
       });
 
       if (existingEntry) {
-        console.log("[Time Entries API] Employee already clocked in today");
         return NextResponse.json({ 
           error: "You are already clocked in today" 
         }, { status: 400 });
@@ -120,9 +125,7 @@ export async function POST(request: NextRequest) {
         updated_at: new Date()
       };
 
-      console.log("[Time Entries API] Creating time entry:", timeEntry);
       const result = await timeEntriesCollection.insertOne(timeEntry);
-      console.log("[Time Entries API] Insert result:", result);
       
       return NextResponse.json({
         success: true,
@@ -183,12 +186,6 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error("[Time Entries API] Error processing time entry:", error);
-    console.error("[Time Entries API] Error details:", {
-      message: error instanceof Error ? error.message : "Unknown error",
-      stack: error instanceof Error ? error.stack : undefined,
-      name: error instanceof Error ? error.name : undefined
-    });
-    
     return NextResponse.json({ 
       error: "Internal server error",
       details: error instanceof Error ? error.message : "Unknown error occurred"

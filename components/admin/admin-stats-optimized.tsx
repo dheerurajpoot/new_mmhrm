@@ -36,59 +36,47 @@ import {
 import { UpcomingBirthdays } from "@/components/shared/upcoming-birthdays";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-
-interface Stats {
-	totalUsers: number;
-	activeUsers: number;
-	pendingLeaves: number;
-	todayAttendance: number;
-	totalLeaveTypes: number;
-	totalTeams: number;
-	userGrowth: number;
-	attendanceGrowth: number;
-	leaveGrowth: number;
-	teamGrowth: number;
-}
-
-interface RecentActivity {
-	id: string;
-	type:
-		| "leave_request"
-		| "leave_approval"
-		| "employee_registered"
-		| "team_created"
-		| "time_entry";
-	title: string;
-	description: string;
-	details?: any;
-	user?: {
-		name: string;
-		email: string;
-		profile_photo?: string;
-		role: string;
-	};
-	targetUser?: {
-		name: string;
-		email: string;
-		profile_photo?: string;
-		role: string;
-	};
-	approver?: {
-		name: string;
-		email: string;
-		profile_photo?: string;
-		role: string;
-	};
-	timestamp: string;
-	status: string;
-}
+import { useSectionDataQuery } from "@/hooks/use-enhanced-data";
+import { OptimizedAvatar } from "@/components/ui/optimized-image";
 
 interface AdminStatsProps {
 	sectionData?: any;
 }
 
 export function AdminStats({ sectionData }: AdminStatsProps) {
-	const [stats, setStats] = useState<Stats>({
+	const [currentTime, setCurrentTime] = useState(new Date());
+	const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+	// Use React Query for better data management
+	const { 
+		data: queryData, 
+		loading: queryLoading, 
+		error: queryError,
+		isStale,
+		refetch 
+	} = useSectionDataQuery("overview", { enabled: !sectionData });
+
+	// Use section data if provided, otherwise use query data
+	const data = sectionData || queryData;
+	const isLoading = sectionData ? false : queryLoading;
+	const error = sectionData ? null : queryError;
+
+	useEffect(() => {
+		if (data) {
+			setLastUpdated(new Date());
+		}
+	}, [data]);
+
+	// Update current time every second for real-time display
+	useEffect(() => {
+		const timeInterval = setInterval(() => {
+			setCurrentTime(new Date());
+		}, 1000);
+
+		return () => clearInterval(timeInterval);
+	}, []);
+
+	const stats = data?.stats || {
 		totalUsers: 0,
 		activeUsers: 0,
 		pendingLeaves: 0,
@@ -99,157 +87,10 @@ export function AdminStats({ sectionData }: AdminStatsProps) {
 		attendanceGrowth: 0,
 		leaveGrowth: 0,
 		teamGrowth: 0,
-	});
-	const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
-	const [recentTeams, setRecentTeams] = useState<any[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
-	const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-	const [currentTime, setCurrentTime] = useState(new Date());
+	};
 
-	useEffect(() => {
-		if (sectionData) {
-			// Use section data if available
-			setStats(sectionData.stats || {
-				totalUsers: 0,
-				activeUsers: 0,
-				pendingLeaves: 0,
-				todayAttendance: 0,
-				totalLeaveTypes: 0,
-				totalTeams: 0,
-				userGrowth: 0,
-				attendanceGrowth: 0,
-				leaveGrowth: 0,
-				teamGrowth: 0,
-			});
-			setRecentActivity(sectionData.recentActivity || []);
-			setRecentTeams(sectionData.recentTeams || []);
-			setIsLoading(false);
-			setLastUpdated(new Date());
-		} else {
-			// Fallback to original data fetching
-			fetchStats();
-		}
-	}, [sectionData]);
-
-	useEffect(() => {
-		const fetchStats = async () => {
-			try {
-				const [
-					usersRes,
-					leavesRes,
-					attendanceRes,
-					leaveTypesRes,
-					teamsRes,
-					activitiesRes,
-					employeesRes,
-				] = await Promise.all([
-					fetch("/api/employees"),
-					fetch("/api/leave-requests"),
-					fetch("/api/time-entries"),
-					fetch("/api/leave-types"),
-					fetch("/api/teams"),
-					fetch("/api/admin/recent-activities"),
-					fetch("/api/employee/search"),
-				]);
-
-				if (!usersRes.ok) {
-					console.error(
-						"Failed to fetch users:",
-						usersRes.status,
-						usersRes.statusText
-					);
-				}
-				if (!teamsRes.ok) {
-					console.error(
-						"Failed to fetch teams:",
-						teamsRes.status,
-						teamsRes.statusText
-					);
-				}
-				if (!activitiesRes.ok) {
-					console.error(
-						"Failed to fetch activities:",
-						activitiesRes.status,
-						activitiesRes.statusText
-					);
-				}
-				if (!employeesRes.ok) {
-					console.error(
-						"Failed to fetch employees:",
-						employeesRes.status,
-						employeesRes.statusText
-					);
-				}
-
-				const users = await usersRes.json();
-				const leaves = await leavesRes.json();
-				const attendance = await attendanceRes.json();
-				const leaveTypes = await leaveTypesRes.json();
-				const teams = await teamsRes.json();
-				const activities = await activitiesRes.json();
-				const employees = await employeesRes.json();
-
-				// Store recent teams separately (10 most recent)
-				const sortedTeams = teams.sort(
-					(a: any, b: any) =>
-						new Date(b.created_at).getTime() -
-						new Date(a.created_at).getTime()
-				);
-				setRecentTeams(sortedTeams.slice(0, 10));
-
-				setStats({
-					totalUsers: users.length || 0,
-					activeUsers:
-						users.filter((u: any) => u.last_sign_in_at).length || 0,
-					pendingLeaves:
-						leaves.filter((l: any) => l.status === "pending")
-							.length || 0,
-					todayAttendance:
-						attendance.filter((a: any) => {
-							const today = new Date()
-								.toISOString()
-								.split("T")[0];
-							return a.date === today;
-						}).length || 0,
-					totalLeaveTypes: Array.isArray(leaveTypes)
-						? leaveTypes.length
-						: 0,
-					totalTeams: Array.isArray(teams) ? teams.length : 0,
-					userGrowth: 20, // Mock growth data
-					attendanceGrowth: 15,
-					leaveGrowth: -5,
-					teamGrowth: 25,
-				});
-
-				setRecentActivity(activities || []);
-
-				// Update last updated timestamp
-				setLastUpdated(new Date());
-			} catch (error) {
-				console.error("Error fetching stats:", error);
-			} finally {
-				setIsLoading(false);
-			}
-		};
-
-		if (!sectionData) {
-			fetchStats();
-
-			// Set up real-time updates every 30 seconds instead of 1 second
-			const interval = setInterval(fetchStats, 30000);
-
-			return () => clearInterval(interval);
-		}
-	}, [sectionData]);
-
-	// Update current time every second for real-time display
-	useEffect(() => {
-		const timeInterval = setInterval(() => {
-			setCurrentTime(new Date());
-		}, 1000);
-
-		return () => clearInterval(timeInterval);
-	}, []);
+	const recentActivity = data?.recentActivity || [];
+	const recentTeams = data?.recentTeams || [];
 
 	const statCards = [
 		{
@@ -342,6 +183,23 @@ export function AdminStats({ sectionData }: AdminStatsProps) {
 		);
 	}
 
+	if (error) {
+		return (
+			<div className="flex items-center justify-center h-64">
+				<div className="text-center">
+					<h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Data</h3>
+					<p className="text-gray-600 mb-4">{error.message}</p>
+					<button 
+						onClick={() => refetch()} 
+						className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+					>
+						Retry
+					</button>
+				</div>
+			</div>
+		);
+	}
+
 	const getActivityIcon = (type: string) => {
 		switch (type) {
 			case "leave_request":
@@ -427,7 +285,6 @@ export function AdminStats({ sectionData }: AdminStatsProps) {
 
 		// Show exact time for recent activities (less than 1 hour)
 		if (diffInMinutes < 60) {
-			// Use local time formatting to show user's timezone
 			return time.toLocaleTimeString([], {
 				hour: "2-digit",
 				minute: "2-digit",
@@ -443,58 +300,24 @@ export function AdminStats({ sectionData }: AdminStatsProps) {
 		return `${Math.floor(diffInMinutes / 1440)}d ago`;
 	};
 
-	const refreshDashboard = () => {
-		setIsLoading(true);
-		// Trigger the useEffect to refetch data
-		window.location.reload();
-	};
-
-	const deleteActivity = async (activityId: string) => {
-		try {
-			// Extract the actual ID from the activity ID (remove prefix)
-			const actualId = activityId.replace(
-				/^(leave-request-|leave-approved-|leave-rejected-|team-|employee-|time-)/,
-				""
-			);
-
-			// Determine the collection based on activity type
-			let endpoint = "";
-			if (
-				activityId.startsWith("leave-request-") ||
-				activityId.startsWith("leave-approved-") ||
-				activityId.startsWith("leave-rejected-")
-			) {
-				endpoint = `/api/leave-requests/${actualId}`;
-			} else if (activityId.startsWith("team-")) {
-				endpoint = `/api/teams/${actualId}`;
-			} else if (activityId.startsWith("employee-")) {
-				endpoint = `/api/users/${actualId}`;
-			} else if (activityId.startsWith("time-")) {
-				endpoint = `/api/time-entries/${actualId}`;
-			}
-
-			if (endpoint) {
-				const response = await fetch(endpoint, {
-					method: "DELETE",
-				});
-
-				if (response.ok) {
-					// Remove from local state
-					setRecentActivity((prev) =>
-						prev.filter((activity) => activity.id !== activityId)
-					);
-					console.log("Activity deleted successfully");
-				} else {
-					console.error("Failed to delete activity");
-				}
-			}
-		} catch (error) {
-			console.error("Error deleting activity:", error);
-		}
-	};
-
 	return (
 		<div className='space-y-8'>
+			{/* Data freshness indicator */}
+			{isStale && (
+				<div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-center justify-between">
+					<div className="flex items-center gap-2">
+						<div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+						<span className="text-sm text-yellow-800">Data may be outdated</span>
+					</div>
+					<button 
+						onClick={() => refetch()}
+						className="text-sm text-yellow-700 hover:text-yellow-900 underline"
+					>
+						Refresh
+					</button>
+				</div>
+			)}
+
 			{/* Statistics Cards */}
 			<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
 				{statCards.map((stat, index) => (
@@ -606,23 +429,12 @@ export function AdminStats({ sectionData }: AdminStatsProps) {
 										<div className='flex items-center justify-between'>
 											<div className='flex items-center space-x-2'>
 												{activity.user && (
-													<Avatar className='w-6 h-6 ring-1 ring-blue-100'>
-														<AvatarImage
-															src={
-																activity.user
-																	.profile_photo
-															}
-															alt={
-																activity.user
-																	.name
-															}
-														/>
-														<AvatarFallback className='text-xs bg-gradient-to-br from-blue-400 to-indigo-400 text-white'>
-															{activity.user.name?.charAt(
-																0
-															) || "U"}
-														</AvatarFallback>
-													</Avatar>
+													<OptimizedAvatar
+														src={activity.user.profile_photo}
+														alt={activity.user.name}
+														size={24}
+														className="ring-1 ring-blue-100"
+													/>
 												)}
 												<span className='text-xs text-gray-500 font-medium'>
 													{activity.user?.name ||
@@ -714,19 +526,12 @@ export function AdminStats({ sectionData }: AdminStatsProps) {
 								key={team.id}
 								className='group flex items-center space-x-4 p-4 rounded-xl hover:bg-white/70 transition-all duration-200 border border-purple-100 hover:border-purple-200 hover:shadow-md'>
 								<div className='relative'>
-									<Avatar className='w-12 h-12 ring-2 ring-purple-100 group-hover:ring-purple-200 transition-all duration-200'>
-										<AvatarImage
-											src={team.leader?.profile_photo}
-											alt={team.leader?.full_name}
-										/>
-										<AvatarFallback className='bg-gradient-to-br from-purple-400 to-indigo-400 text-white font-semibold'>
-											{team.leader?.full_name?.charAt(
-												0
-											) ||
-												team.name?.charAt(0) ||
-												"T"}
-										</AvatarFallback>
-									</Avatar>
+									<OptimizedAvatar
+										src={team.leader?.profile_photo}
+										alt={team.leader?.full_name}
+										size={48}
+										className="ring-2 ring-purple-100 group-hover:ring-purple-200 transition-all duration-200"
+									/>
 									<div className='absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full'></div>
 								</div>
 								<div className='flex-1 min-w-0'>
@@ -825,6 +630,7 @@ export function AdminStats({ sectionData }: AdminStatsProps) {
 						<UpcomingBirthdays
 							maxEmployees={10}
 							showAllMonths={false}
+							sectionData={data}
 						/>
 					</div>
 				</div>

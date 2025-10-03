@@ -13,17 +13,16 @@ import {
   Smartphone,
   ArrowRight,
   CheckCircle,
-  Star,
-  BarChart3,
-  UserCheck,
-  Calendar,
-  FileText,
-  PieChart,
-  Settings,
+  Sparkles,
   Zap,
   Target,
   Globe,
-  Award
+  Award,
+  Star,
+  Heart,
+  Rocket,
+  Crown,
+  Gem
 } from "lucide-react";
 
 export default function HomePage() {
@@ -33,160 +32,86 @@ export default function HomePage() {
     {
       icon: Users,
       title: "Employee Management",
-      description: "Centralized employee records with easy onboarding & offboarding"
+      description: "Centralized employee records with easy onboarding & offboarding",
+      gradient: "from-emerald-500 to-teal-600",
+      bgColor: "bg-emerald-50"
     },
     {
       icon: Clock,
       title: "Smart Attendance", 
-      description: "Biometric & online attendance tracking with leave approvals"
+      description: "Biometric & online attendance tracking with leave approvals",
+      gradient: "from-purple-500 to-pink-600",
+      bgColor: "bg-purple-50"
     },
     {
       icon: DollarSign,
       title: "Payroll Automation",
-      description: "Salary, tax, and deductions processed in one click"
+      description: "Salary, tax, and deductions processed in one click",
+      gradient: "from-amber-500 to-orange-600",
+      bgColor: "bg-amber-50"
     },
     {
       icon: TrendingUp,
       title: "Performance Reviews",
-      description: "Track goals, feedback, and employee growth"
+      description: "Track goals, feedback, and employee growth",
+      gradient: "from-indigo-500 to-blue-600",
+      bgColor: "bg-indigo-50"
     },
     {
       icon: Smartphone,
       title: "Self-Service Portal",
-      description: "Empower employees with leave requests, payslips & updates"
+      description: "Empower employees with leave requests, payslips & updates",
+      gradient: "from-rose-500 to-red-600",
+      bgColor: "bg-rose-50"
     },
     {
       icon: Shield,
       title: "Secure & Cloud-Based",
-      description: "Access anytime, anywhere with enterprise-grade security"
-    }
-  ];
-
-  const benefits = [
-    {
-      icon: Clock,
-      title: "Save 70% of HR admin time",
-      description: "Automate repetitive tasks and focus on strategic HR initiatives"
-    },
-    {
-      icon: Users,
-      title: "Improve employee satisfaction",
-      description: "Transparent processes and self-service capabilities"
-    },
-    {
-      icon: Shield,
-      title: "Stay compliant",
-      description: "With labor laws & regulations automatically"
-    },
-    {
-      icon: BarChart3,
-      title: "Data-driven decisions",
-      description: "Advanced analytics and reporting for better insights"
-    }
-  ];
-
-  const testimonials = [
-    {
-      name: "Sarah Johnson",
-      role: "HR Manager",
-      company: "TechCorp",
-      content: "MM HRM transformed our HR operations. Payroll and attendance tracking went from hours to minutes!",
-      rating: 5
-    },
-    {
-      name: "Michael Chen",
-      role: "CEO", 
-      company: "RetailMart",
-      content: "The employee self-service portal is a game-changer. Our staff loves the transparency.",
-      rating: 5
-    }
-  ];
-
-  const pricingPlans = [
-    {
-      name: "Starter",
-      description: "For small teams",
-      price: "Free",
-      period: "14 days",
-      features: [
-        "Up to 10 employees",
-        "Basic attendance tracking",
-        "Simple payroll processing",
-        "Email support"
-      ],
-      cta: "Start Free Trial",
-      popular: false
-    },
-    {
-      name: "Professional", 
-      description: "For growing companies",
-      price: "$29",
-      period: "per month",
-      features: [
-        "Up to 100 employees",
-        "Advanced analytics",
-        "Automated payroll",
-        "Priority support",
-        "Custom reports"
-      ],
-      cta: "Get Started",
-      popular: true
-    },
-    {
-      name: "Enterprise",
-      description: "Custom solutions for large businesses", 
-      price: "Custom",
-      period: "",
-      features: [
-        "Unlimited employees",
-        "White-label solution",
-        "Dedicated support",
-        "Custom integrations",
-        "Advanced security"
-      ],
-      cta: "Contact Sales",
-      popular: false
+      description: "Access anytime, anywhere with enterprise-grade security",
+      gradient: "from-violet-500 to-purple-600",
+      bgColor: "bg-violet-50"
     }
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      {/* Animated Background Elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-cyan-400/20 to-blue-600/20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-purple-400/20 to-pink-600/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-br from-emerald-400/10 to-teal-600/10 rounded-full blur-3xl animate-pulse delay-500"></div>
+      </div>
+
       {/* Header */}
-      <header className="border-b border-gray-100 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+      <header className="relative z-50 border-b border-white/10 bg-white/5 backdrop-blur-xl sticky top-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-2">
+          <div className="flex justify-between items-center py-6">
+            <div className="flex items-center space-x-3">
               {settings?.site_logo ? (
                 <img 
                   src={settings.site_logo} 
                   alt="Logo" 
-                  className="w-8 h-8 object-contain"
+                  className="w-10 h-10 object-contain rounded-lg"
                 />
               ) : (
-                <div className="w-8 h-8 bg-gradient-to-r from-red-600 to-blue-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">MM</span>
+                <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <span className="text-white font-bold text-lg">MM</span>
                 </div>
               )}
-              <span className="text-xl font-bold text-gray-900">
+              <span className="text-2xl font-bold text-white">
                 {settings?.site_name || "MM HRM"}
               </span>
             </div>
-            
-            <nav className="hidden md:flex space-x-8">
-              <a href="#features" className="text-gray-600 hover:text-gray-900 transition-colors">Features</a>
-              <a href="#benefits" className="text-gray-600 hover:text-gray-900 transition-colors">Benefits</a>
-              <a href="#testimonials" className="text-gray-600 hover:text-gray-900 transition-colors">Testimonials</a>
-              <a href="#pricing" className="text-gray-600 hover:text-gray-900 transition-colors">Pricing</a>
-            </nav>
 
             <div className="flex items-center space-x-4">
               <Link href="/auth/login">
-                <Button variant="ghost" className="text-gray-600 hover:text-gray-900">
+                <Button variant="ghost" className="text-white/80 hover:text-white hover:bg-white/10 border border-white/20">
                   Sign In
                 </Button>
               </Link>
               <Link href="/auth/signup">
-                <Button className="bg-gradient-to-r from-red-600 to-blue-600 hover:from-red-700 hover:to-blue-700 text-white">
+                <Button className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white shadow-lg hover:shadow-cyan-500/25 transition-all duration-300">
+                  <Rocket className="w-4 h-4 mr-2" />
                   Get Started
                 </Button>
               </Link>
@@ -196,72 +121,136 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative py-20 lg:py-32 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-red-50 via-blue-50 to-purple-50"></div>
+      <section className="relative py-24 lg:py-32 overflow-hidden">
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div className="text-center lg:text-left">
-              <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 mb-6 font-secondary">
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-blue-600">
+              <div className="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-cyan-500/20 to-blue-600/20 border border-cyan-400/30 text-cyan-300 text-sm font-medium mb-8">
+                <Sparkles className="w-4 h-4 mr-2" />
+                Next-Gen HR Management Platform
+              </div>
+              
+              <h1 className="text-5xl lg:text-7xl font-bold text-white mb-8 leading-tight">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600">
                   MM HRM
                 </span>
                 <br />
-                <span className="text-gray-800 text-[40px]">Smart <br /> HR Management</span>
+                <span className="text-white text-5xl lg:text-6xl">Revolutionary</span>
+                <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-500">
+                  HR Experience
+                </span>
               </h1>
-              <h2 className="text-xl lg:text-2xl text-gray-600 mb-8 font-secondary">
-                Manage Your People. Grow Your Business.
-              </h2>
-              <p className="text-lg text-gray-600 mb-10 max-w-2xl mx-auto lg:mx-0">
-                All-in-one HRM software to streamline employee management, payroll, attendance, and performance — so you can focus on what really matters: your people.
+              
+              <p className="text-xl text-white/80 mb-12 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+                Transform your workforce management with AI-powered insights, seamless automation, and beautiful user experiences that your team will love.
               </p>
               
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+              <div className="flex flex-col sm:flex-row gap-6 justify-center lg:justify-start">
                 <Link href="/auth/signup">
-                  <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-red-600 to-blue-600 hover:from-red-700 hover:to-blue-700 text-white px-8 py-4 text-lg">
-                    Get Started Free
-                    <ArrowRight className="ml-2 w-5 h-5" />
+                  <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white px-8 py-6 text-lg font-semibold shadow-xl hover:shadow-cyan-500/25 transition-all duration-300 group">
+                    <Crown className="mr-3 w-6 h-6 group-hover:rotate-12 transition-transform" />
+                    Start Your Journey
+                    <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </Link>
+                <Button size="lg" variant="outline" className="w-full sm:w-auto border-2 border-white/30 text-white hover:bg-white/10 px-8 py-6 text-lg font-semibold backdrop-blur-sm">
+                  <Gem className="mr-3 w-6 h-6" />
+                  Watch Demo
+                </Button>
+              </div>
+
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-8 mt-16">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-cyan-400 mb-2">10K+</div>
+                  <div className="text-white/60 text-sm">Happy Companies</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-emerald-400 mb-2">99.9%</div>
+                  <div className="text-white/60 text-sm">Uptime</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-purple-400 mb-2">24/7</div>
+                  <div className="text-white/60 text-sm">Support</div>
+                </div>
               </div>
             </div>
 
-            {/* Dashboard Preview */}
+            {/* Interactive Dashboard Preview */}
             <div className="relative">
-              <div className="bg-white rounded-2xl shadow-2xl p-6 transform rotate-3 hover:rotate-0 transition-transform duration-300">
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-gray-800">Total Employees</h3>
-                      <Users className="w-5 h-5 text-red-600" />
+              <div className="relative">
+                {/* Floating Cards */}
+                <div className="absolute -top-8 -right-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 shadow-2xl transform rotate-12 hover:rotate-6 transition-transform duration-500">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                      <Users className="w-6 h-6 text-white" />
                     </div>
-                    <div className="text-2xl font-bold text-red-600">40+</div>
-                    <div className="text-sm text-gray-600">+12% this month</div>
-                  </div>
-                  
-                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-gray-800">Payroll Processed</h3>
-                      <DollarSign className="w-5 h-5 text-blue-600" />
+                    <div>
+                      <div className="text-white font-bold text-lg">2,847</div>
+                      <div className="text-white/80 text-sm">Active Users</div>
                     </div>
-                    <div className="text-2xl font-bold text-blue-600">$45K</div>
-                    <div className="text-sm text-gray-600">This month</div>
                   </div>
                 </div>
-                
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <h4 className="font-semibold text-gray-800 mb-3">Recent Activities</h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="text-sm text-gray-600">5 new employees onboarded</span>
+
+                <div className="absolute -bottom-8 -left-8 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl p-6 shadow-2xl transform -rotate-12 hover:-rotate-6 transition-transform duration-500">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                      <TrendingUp className="w-6 h-6 text-white" />
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <span className="text-sm text-gray-600">Payroll processed for 40+ employees</span>
+                    <div>
+                      <div className="text-white font-bold text-lg">+47%</div>
+                      <div className="text-white/80 text-sm">Productivity</div>
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                      <span className="text-sm text-gray-600">3 performance reviews completed</span>
+                  </div>
+                </div>
+
+                {/* Main Dashboard */}
+                <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/20">
+                  <div className="flex items-center justify-between mb-8">
+                    <h3 className="text-white text-xl font-semibold">Dashboard Overview</h3>
+                    <div className="flex space-x-2">
+                      <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                      <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-6 mb-8">
+                    <div className="bg-gradient-to-br from-cyan-500/20 to-blue-600/20 rounded-2xl p-6 border border-cyan-400/30">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="text-white font-semibold">Team Members</h4>
+                        <Users className="w-6 h-6 text-cyan-400" />
+                      </div>
+                      <div className="text-3xl font-bold text-white mb-2">156</div>
+                      <div className="text-cyan-300 text-sm">+12 this week</div>
+                    </div>
+                    
+                    <div className="bg-gradient-to-br from-emerald-500/20 to-teal-600/20 rounded-2xl p-6 border border-emerald-400/30">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="text-white font-semibold">Revenue</h4>
+                        <DollarSign className="w-6 h-6 text-emerald-400" />
+                      </div>
+                      <div className="text-3xl font-bold text-white mb-2">$89K</div>
+                      <div className="text-emerald-300 text-sm">+23% growth</div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gradient-to-r from-purple-500/10 to-pink-600/10 rounded-2xl p-6 border border-purple-400/30">
+                    <h4 className="text-white font-semibold mb-4">Recent Activity</h4>
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-2 h-2 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full"></div>
+                        <span className="text-white/80 text-sm">New employee onboarded</span>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <div className="w-2 h-2 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full"></div>
+                        <span className="text-white/80 text-sm">Payroll processed successfully</span>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <div className="w-2 h-2 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full"></div>
+                        <span className="text-white/80 text-sm">Performance review completed</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -271,32 +260,37 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Key Features Section */}
-      <section id="features" className="py-20 bg-gray-50">
+      {/* Features Section */}
+      <section className="relative py-24 bg-gradient-to-b from-transparent to-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4 font-secondary">
-              Why MM HRM?
+          <div className="text-center mb-20">
+            <div className="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-600/20 border border-purple-400/30 text-purple-300 text-sm font-medium mb-6">
+              <Zap className="w-4 h-4 mr-2" />
+              Powerful Features
+            </div>
+            <h2 className="text-4xl lg:text-5xl font-bold text-white mb-6">
+              Everything You Need to
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500"> Succeed</span>
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Everything you need to manage your workforce efficiently and effectively
+            <p className="text-xl text-white/70 max-w-3xl mx-auto">
+              Discover the comprehensive suite of tools designed to revolutionize your HR operations
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300 bg-white">
-                <CardHeader>
-                  <div className="w-12 h-12 bg-gradient-to-r from-red-600 to-blue-600 rounded-lg flex items-center justify-center mb-4">
-                    <feature.icon className="w-6 h-6 text-white" />
+              <Card key={index} className="group border-0 bg-white/5 backdrop-blur-xl hover:bg-white/10 transition-all duration-500 hover:scale-105 hover:shadow-2xl">
+                <CardHeader className="pb-4">
+                  <div className={`w-16 h-16 bg-gradient-to-br ${feature.gradient} rounded-2xl flex items-center justify-center mb-6 group-hover:rotate-12 transition-transform duration-300 shadow-lg`}>
+                    <feature.icon className="w-8 h-8 text-white" />
                   </div>
-                  <CardTitle className="text-xl text-gray-900 flex items-center">
-                    <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
+                  <CardTitle className="text-xl text-white flex items-center group-hover:text-cyan-300 transition-colors">
+                    <CheckCircle className="w-5 h-5 text-emerald-400 mr-3" />
                     {feature.title}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription className="text-gray-600 text-base">
+                  <CardDescription className="text-white/70 text-base leading-relaxed group-hover:text-white/90 transition-colors">
                     {feature.description}
                   </CardDescription>
                 </CardContent>
@@ -306,199 +300,33 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Benefits Section */}
-      <section id="benefits" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4 font-secondary">
-              MM HRM helps you:
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {benefits.map((benefit, index) => (
-              <div key={index} className="text-center">
-                <div className="w-16 h-16 bg-gradient-to-r from-red-600 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <benefit.icon className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">{benefit.title}</h3>
-                <p className="text-gray-600">{benefit.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <section id="testimonials" className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4 font-secondary">
-              What Our Customers Say
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <Card key={index} className="border-0 shadow-lg bg-white">
-                <CardContent className="p-8">
-                  <div className="flex mb-4">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
-                    ))}
-                  </div>
-                  <p className="text-gray-700 text-lg mb-6 italic">
-                    "{testimonial.content}"
-                  </p>
-                  <div className="flex items-center">
-                    <div className="w-12 h-12 bg-gradient-to-r from-red-600 to-blue-600 rounded-full flex items-center justify-center mr-4">
-                      <span className="text-white font-semibold">
-                        {testimonial.name.split(' ').map(n => n[0]).join('')}
-                      </span>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">{testimonial.name}</h4>
-                      <p className="text-gray-600">{testimonial.role}, {testimonial.company}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section id="pricing" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4 font-secondary">
-              Simple & Transparent Pricing
-            </h2>
-            <p className="text-xl text-gray-600">
-              👉 First 14 days free. No credit card required.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {pricingPlans.map((plan, index) => (
-              <Card key={index} className={`border-2 ${plan.popular ? 'border-red-500 shadow-xl scale-105' : 'border-gray-200'} relative bg-white`}>
-                {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <span className="bg-gradient-to-r from-red-600 to-blue-600 text-white px-4 py-1 rounded-full text-sm font-medium">
-                      Most Popular
-                    </span>
-                  </div>
-                )}
-                <CardHeader className="text-center pb-8">
-                  <CardTitle className="text-2xl text-gray-900">{plan.name}</CardTitle>
-                  <CardDescription className="text-gray-600">{plan.description}</CardDescription>
-                  <div className="mt-4">
-                    <span className="text-4xl font-bold text-gray-900">{plan.price}</span>
-                    {plan.period && <span className="text-gray-600"> {plan.period}</span>}
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <ul className="space-y-3 mb-8">
-                    {plan.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-center">
-                        <CheckCircle className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                        <span className="text-gray-600">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button 
-                    className={`w-full ${plan.popular ? 'bg-gradient-to-r from-red-600 to-blue-600 hover:from-red-700 hover:to-blue-700 text-white' : 'border-2 hover:bg-gray-50'}`}
-                    variant={plan.popular ? 'default' : 'outline'}
-                  >
-                    {plan.cta}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Final CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-red-600 to-blue-600">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6 font-secondary">
-            Ready to simplify HR?
-          </h2>
-          <p className="text-xl text-red-100 mb-10">
-            Start managing your team smarter with MM HRM.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/auth/signup">
-              <Button size="lg" className="w-full sm:w-auto bg-white text-red-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold">
-                Start Free Trial
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
+      <footer className="relative bg-gradient-to-b from-white/5 to-transparent py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                {settings?.site_logo ? (
-                  <img 
-                    src={settings.site_logo} 
-                    alt="Logo" 
-                    className="w-8 h-8 object-contain"
-                  />
-                ) : (
-                  <div className="w-8 h-8 bg-gradient-to-r from-red-600 to-blue-600 rounded-lg flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">MM</span>
-                  </div>
-                )}
-                <span className="text-xl font-bold">
-                  {settings?.site_name || "MM HRM"}
-                </span>
-              </div>
-              <p className="text-gray-400">
-                Smart HR Management Simplified. Manage your people, grow your business.
+          <div className="text-center">
+            <div className="flex items-center justify-center space-x-3 mb-8">
+              {settings?.site_logo ? (
+                <img 
+                  src={settings.site_logo} 
+                  alt="Logo" 
+                  className="w-12 h-12 object-contain rounded-xl"
+                />
+              ) : (
+                <div className="w-12 h-12 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <span className="text-white font-bold text-xl">MM</span>
+                </div>
+              )}
+              <span className="text-2xl font-bold text-white">
+                {settings?.site_name || "MM HRM"}
+              </span>
+            </div>
+            
+            <div className="border-t border-white/20 pt-8 text-white/60">
+              <p className="flex items-center justify-center text-sm">
+                <Heart className="w-4 h-4 mr-2 text-red-400" />
+                Made with love © 2025 {settings?.site_name || "MM HRM"}. All rights reserved.
               </p>
             </div>
-            
-            <div>
-              <h3 className="font-semibold mb-4">Product</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Features</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Integrations</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">API</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold mb-4">Company</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">About</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold mb-4">Support</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Documentation</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Community</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Status</a></li>
-              </ul>
-            </div>
-          </div>
-          
-          <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
-            <p>Made with ❤️ by Chandu © 2025 {settings?.site_name || "MM HRM"}. All rights reserved.</p>
           </div>
         </div>
       </footer>

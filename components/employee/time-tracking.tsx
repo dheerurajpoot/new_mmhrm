@@ -26,7 +26,11 @@ interface TimeEntry {
   updated_at: string
 }
 
-export function TimeTracking() {
+interface TimeTrackingProps {
+  sectionData?: any;
+}
+
+export function TimeTracking({ sectionData }: TimeTrackingProps) {
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([])
   const [filteredEntries, setFilteredEntries] = useState<TimeEntry[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -35,12 +39,12 @@ export function TimeTracking() {
   const [isCurrentlyClockedIn, setIsCurrentlyClockedIn] = useState(false)
   const [todayHours, setTodayHours] = useState(0)
   const [weeklyHours, setWeeklyHours] = useState(0)
-  
+
   // Filter states
   const [dateFrom, setDateFrom] = useState("")
   const [dateTo, setDateTo] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
-  
+
   // Animation states
   const [isAnimatingIn, setIsAnimatingIn] = useState(false)
   const [isAnimatingOut, setIsAnimatingOut] = useState(false)
@@ -62,39 +66,49 @@ export function TimeTracking() {
 
 
   const loadCurrentUser = async () => {
-    const user = await getCurrentUser()
-    setCurrentUser(user)
+    try {
+      const user = await getCurrentUser();
+      setCurrentUser(user);
+    } catch (error) {
+      console.error("[Time Tracking] Error loading current user:", error);
+      setCurrentUser(null);
+    }
   }
 
   const fetchTimeEntries = async () => {
-    if (!currentUser) return
+    if (!currentUser) {
+      return;
+    }
 
     try {
-      setIsLoading(true)
-      const response = await fetch(`/api/time-entries?employee_id=${currentUser.id}&limit=100`)
-      const data = await response.json()
+      setIsLoading(true);
+      const response = await fetch(`/api/time-entries?employee_id=${currentUser.id}&limit=100`);
 
       if (response.ok) {
-        setTimeEntries(data || [])
-        updateStats(data || [])
+        const data = await response.json();
+        setTimeEntries(data || []);
+        updateStats(data || []);
       } else {
+        console.error("[Time Tracking] Failed to fetch time entries:", response.status, response.statusText);
+        const errorData = await response.json().catch(() => ({}));
+        console.error("[Time Tracking] Error details:", errorData);
         toast.error("Failed to fetch time entries", {
-          description: "Please try refreshing the page.",
-        })
+          description: errorData.error || "Please try refreshing the page.",
+        });
       }
     } catch (error) {
-      console.error("Error fetching time entries:", error)
+      console.error("[Time Tracking] Error fetching time entries:", error);
       toast.error("Error loading time entries", {
         description: "Please check your connection and try again.",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
   const updateStats = (entries: TimeEntry[]) => {
     const today = new Date().toISOString().split("T")[0]
-    
+
     // Check if currently clocked in
     const activeEntry = entries?.find((entry: TimeEntry) => {
       const entryDate = new Date(entry.date).toISOString().split("T")[0]
@@ -203,13 +217,6 @@ export function TimeTracking() {
     setIsClocking(true)
 
     try {
-      console.log("[Time Tracking] Clock in/out request:", {
-        action,
-        employee_id: currentUser.id,
-        currentUser: currentUser,
-        userType: typeof currentUser.id
-      });
-
       const loadingToastId = toast.loading(`${actionText}...`, {
         description: `Processing your ${actionText.toLowerCase()} request.`,
       });
@@ -226,18 +233,17 @@ export function TimeTracking() {
       })
 
       const data = await response.json()
-      console.log("[Time Tracking] API response:", { status: response.status, data });
 
       // Dismiss loading toast
       toast.dismiss(loadingToastId);
 
       if (response.ok) {
         toast.success(`${actionText} successful! 🎉`, {
-          description: isCurrentlyClockedIn 
-            ? "Great work today! You have been clocked out successfully." 
+          description: isCurrentlyClockedIn
+            ? "Great work today! You have been clocked out successfully."
             : "Welcome back! You have been clocked in successfully.",
         });
-        
+
         // Refresh data
         await fetchTimeEntries()
       } else {
@@ -306,8 +312,8 @@ export function TimeTracking() {
                 isAnimatingOut ? "animate-bounce scale-95 shadow-2xl shadow-blue-400/50" : ""
               }`}
             > */}
-              {/* Animation overlay */}
-              {/* {isAnimatingIn && (
+      {/* Animation overlay */}
+      {/* {isAnimatingIn && (
                 <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 to-orange-400/20 animate-ping" />
               )}
               {isAnimatingOut && (
@@ -330,7 +336,7 @@ export function TimeTracking() {
         </CardContent>
       </Card> */}
 
-      <TimeTrackingWidget />
+      <TimeTrackingWidget sectionData={sectionData} />
 
       {/* Time Summary - Beautiful Modern Design */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -356,8 +362,8 @@ export function TimeTracking() {
                 <span className="font-semibold">{Math.round((todayHours / 8) * 100)}% complete</span>
               </div>
               <div className="mt-2 w-full bg-red-200 rounded-full h-2">
-                <div 
-                  className="bg-gradient-to-r from-red-500 to-orange-500 h-2 rounded-full transition-all duration-500" 
+                <div
+                  className="bg-gradient-to-r from-red-500 to-orange-500 h-2 rounded-full transition-all duration-500"
                   style={{ width: `${Math.min((todayHours / 8) * 100, 100)}%` }}
                 ></div>
               </div>
@@ -387,8 +393,8 @@ export function TimeTracking() {
                 <span className="font-semibold">{Math.round((weeklyHours / 40) * 100)}% complete</span>
               </div>
               <div className="mt-2 w-full bg-blue-200 rounded-full h-2">
-                <div 
-                  className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-500" 
+                <div
+                  className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-500"
                   style={{ width: `${Math.min((weeklyHours / 40) * 100, 100)}%` }}
                 ></div>
               </div>
@@ -408,11 +414,10 @@ export function TimeTracking() {
                 <p className="text-3xl font-bold text-gray-900">{isCurrentlyClockedIn ? "Active" : "Offline"}</p>
                 <p className="text-sm text-green-600 font-medium">Current work state</p>
               </div>
-              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 ${
-                isCurrentlyClockedIn 
-                  ? 'bg-gradient-to-br from-green-500 to-emerald-500' 
+              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 ${isCurrentlyClockedIn
+                  ? 'bg-gradient-to-br from-green-500 to-emerald-500'
                   : 'bg-gradient-to-br from-gray-400 to-gray-500'
-              }`}>
+                }`}>
                 <div className={`w-8 h-8 rounded-full ${isCurrentlyClockedIn ? "bg-white" : "bg-white"}`}>
                   <div className={`w-full h-full rounded-full ${isCurrentlyClockedIn ? "bg-green-500" : "bg-gray-400"} animate-pulse`}></div>
                 </div>
@@ -529,11 +534,10 @@ export function TimeTracking() {
               </TableHeader>
               <TableBody>
                 {filteredEntries.slice(0, 50).map((entry, index) => (
-                  <TableRow 
-                    key={entry._id || entry.date} 
-                    className={`border-0 hover:bg-gray-50/50 transition-colors duration-200 ${
-                      index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'
-                    }`}
+                  <TableRow
+                    key={entry._id || entry.date}
+                    className={`border-0 hover:bg-gray-50/50 transition-colors duration-200 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'
+                      }`}
                   >
                     <TableCell className="py-4">
                       <div className="flex items-center space-x-3">
@@ -605,7 +609,7 @@ export function TimeTracking() {
                 {timeEntries.length === 0 ? "No Time Entries Yet" : "No Matching Entries"}
               </h3>
               <p className="text-gray-600 max-w-md mx-auto">
-                {timeEntries.length === 0 
+                {timeEntries.length === 0
                   ? "Start tracking your work time by clicking the clock-in button above."
                   : "No entries match your current filters. Try adjusting your filter criteria to see more results."
                 }

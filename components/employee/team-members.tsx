@@ -27,7 +27,11 @@ interface Team {
   members: TeamMember[]
 }
 
-export function TeamMembers() {
+interface TeamMembersProps {
+  sectionData?: any;
+}
+
+export function TeamMembers({ sectionData }: TeamMembersProps) {
   const [currentUser, setCurrentUser] = useState<Profile | null>(null)
   const [team, setTeam] = useState<Team | null>(null)
   const [isLoading, setIsLoading] = useState(true)

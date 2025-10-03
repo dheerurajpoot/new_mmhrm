@@ -19,7 +19,11 @@ interface TimeEntry {
   break_duration?: number
 }
 
-export function TimeTrackingWidget() {
+interface TimeTrackingWidgetProps {
+  sectionData?: any;
+}
+
+export function TimeTrackingWidget({ sectionData }: TimeTrackingWidgetProps) {
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isClocking, setIsClocking] = useState(false)
@@ -30,7 +34,7 @@ export function TimeTrackingWidget() {
   const [isAnimatingIn, setIsAnimatingIn] = useState(false)
   const [isAnimatingOut, setIsAnimatingOut] = useState(false)
   const [currentTime, setCurrentTime] = useState(new Date())
-  
+
   const router = useRouter()
 
   useEffect(() => {
@@ -38,10 +42,17 @@ export function TimeTrackingWidget() {
   }, [])
 
   useEffect(() => {
-    if (currentUser) {
-      fetchTimeEntries()
+    if (sectionData?.timeEntries) {
+      // Use section data if available
+      console.log("[Time Widget] Using section data for time entries:", sectionData.timeEntries.length);
+      setTimeEntries(sectionData.timeEntries || []);
+      updateStats(sectionData.timeEntries || []);
+      setIsLoading(false);
+    } else if (currentUser) {
+      // Fallback to original data fetching
+      fetchTimeEntries();
     }
-  }, [currentUser])
+  }, [sectionData, currentUser]);
 
   // Update current time every second
   useEffect(() => {
@@ -53,8 +64,15 @@ export function TimeTrackingWidget() {
   }, [])
 
   const loadCurrentUser = async () => {
-    const user = await getCurrentUser()
-    setCurrentUser(user)
+    try {
+      console.log("[Time Widget] Loading current user...");
+      const user = await getCurrentUser();
+      console.log("[Time Widget] Current user:", user ? `${user.full_name} (${user.id})` : "Not authenticated");
+      setCurrentUser(user);
+    } catch (error) {
+      console.error("[Time Widget] Error loading current user:", error);
+      setCurrentUser(null);
+    }
   }
 
   // Helper function to convert hours to minutes and format display
@@ -82,7 +100,7 @@ export function TimeTrackingWidget() {
       second: '2-digit',
       hour12: true
     }
-    
+
     return {
       date: currentTime.toLocaleDateString('en-US', dateOptions),
       time: currentTime.toLocaleTimeString('en-US', timeOptions)
@@ -90,26 +108,58 @@ export function TimeTrackingWidget() {
   }
 
   const fetchTimeEntries = async () => {
-    if (!currentUser) return
+    if (!currentUser) {
+      console.log("[Time Widget] No current user, skipping fetch");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!currentUser.id) {
+      console.error("[Time Widget] Current user has no ID:", currentUser);
+      toast.error("Authentication error", {
+        description: "User ID is missing. Please log in again.",
+      });
+      setIsLoading(false);
+      return;
+    }
 
     try {
-      const response = await fetch(`/api/time-entries?employee_id=${currentUser.id}&limit=30`)
-      const data = await response.json()
+      console.log("[Time Widget] Fetching time entries for user:", {
+        id: currentUser.id,
+        idType: typeof currentUser.id,
+        idLength: currentUser.id.length,
+        userName: currentUser.full_name
+      });
+
+      const response = await fetch(`/api/time-entries?employee_id=${encodeURIComponent(currentUser.id)}&limit=30`);
+      console.log("[Time Widget] API response status:", response.status);
 
       if (response.ok) {
-        setTimeEntries(data || [])
-        updateStats(data || [])
+        const data = await response.json();
+        console.log("[Time Widget] Fetched time entries:", data?.length || 0);
+        setTimeEntries(data || []);
+        updateStats(data || []);
+      } else {
+        console.error("[Time Widget] Failed to fetch time entries:", response.status, response.statusText);
+        const errorData = await response.json().catch(() => ({}));
+        console.error("[Time Widget] Error details:", errorData);
+        toast.error("Failed to load time data", {
+          description: errorData.error || "Bad Request - Please contact support.",
+        });
       }
     } catch (error) {
-      console.error("Error fetching time entries:", error)
+      console.error("[Time Widget] Error fetching time entries:", error);
+      toast.error("Error loading time entries", {
+        description: "Please check your connection and try again.",
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
   const updateStats = (entries: TimeEntry[]) => {
     const today = new Date().toISOString().split("T")[0]
-    
+
     // Check if currently clocked in
     const activeEntry = entries?.find((entry: TimeEntry) => {
       const entryDate = new Date(entry.date).toISOString().split("T")[0]
@@ -157,7 +207,7 @@ export function TimeTrackingWidget() {
 
     try {
       console.log(`[Time Widget] Starting ${actionText} for employee:`, currentUser.id);
-      
+
       const loadingToastId = toast.loading(`${actionText}...`, {
         description: `Processing your ${actionText.toLowerCase()} request.`,
       });
@@ -166,7 +216,7 @@ export function TimeTrackingWidget() {
         action,
         employee_id: currentUser.id,
       };
-      
+
       console.log("[Time Widget] Request body:", requestBody);
 
       const response = await fetch("/api/time-entries", {
@@ -188,11 +238,11 @@ export function TimeTrackingWidget() {
 
       if (response.ok) {
         toast.success(`${actionText} successful! 🎉`, {
-          description: isCurrentlyClockedIn 
-            ? "Great work today! You have been clocked out successfully." 
+          description: isCurrentlyClockedIn
+            ? "Great work today! You have been clocked out successfully."
             : "Welcome back! You have been clocked in successfully.",
         });
-        
+
         // Refresh data
         await fetchTimeEntries()
       } else {
@@ -232,10 +282,33 @@ export function TimeTrackingWidget() {
     )
   }
 
+  // Show error state if user is not authenticated
+  if (!currentUser) {
+    return (
+      <Card className="border-0 shadow-lg bg-gradient-to-br from-red-50 to-orange-50">
+        <CardContent className="p-6 text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Clock className="w-8 h-8 text-red-500" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">Authentication Required</h3>
+          <p className="text-gray-600 mb-4">
+            Please log in to access time tracking features.
+          </p>
+          <Button
+            onClick={() => window.location.href = "/auth/login"}
+            className="bg-red-600 hover:bg-red-700 text-white"
+          >
+            Go to Login
+          </Button>
+        </CardContent>
+      </Card>
+    )
+  }
+
   const { date, time } = formatCurrentDateTime()
 
   return (
-    <Card className="border-0 shadow-lg bg-gradient-to-br from-red-600 to-blue-600 text-white">
+    <Card className="border-0 shadow-lg bg-gradient-to-br from-red-600 to-blue-600 text-white flex">
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2 text-white">
           <Clock className="w-5 h-5" />
@@ -244,7 +317,7 @@ export function TimeTrackingWidget() {
         <CardDescription className="text-red-100">
           {isCurrentlyClockedIn ? "You're currently clocked in" : "Ready to start your day?"}
         </CardDescription>
-        
+
         {/* Current Date and Time */}
         <div className="mt-3 space-y-1">
           <p className="text-sm text-white/90 font-medium">{date}</p>
@@ -269,15 +342,12 @@ export function TimeTrackingWidget() {
           onClick={handleClockInOut}
           disabled={isClocking}
           size="lg"
-          className={`w-full relative overflow-hidden transition-all duration-300 ${
-            isCurrentlyClockedIn 
-              ? "bg-red-500 hover:bg-red-600" 
+          className={`w-full relative overflow-hidden transition-all duration-300 ${isCurrentlyClockedIn
+              ? "bg-red-500 hover:bg-red-600"
               : "bg-white text-red-600 hover:bg-gray-100"
-          } ${
-            isAnimatingIn ? "animate-pulse scale-105 shadow-2xl shadow-yellow-400/50" : ""
-          } ${
-            isAnimatingOut ? "animate-bounce scale-95 shadow-2xl shadow-blue-400/50" : ""
-          }`}
+            } ${isAnimatingIn ? "animate-pulse scale-105 shadow-2xl shadow-yellow-400/50" : ""
+            } ${isAnimatingOut ? "animate-bounce scale-95 shadow-2xl shadow-blue-400/50" : ""
+            }`}
         >
           {/* Animation overlay */}
           {isAnimatingIn && (
@@ -286,7 +356,7 @@ export function TimeTrackingWidget() {
           {isAnimatingOut && (
             <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 animate-pulse" />
           )}
-          
+
           {isCurrentlyClockedIn ? (
             <>
               <Moon className={`w-5 h-5 mr-2 ${isAnimatingOut ? "animate-spin" : ""}`} />
@@ -324,7 +394,7 @@ export function TimeTrackingWidget() {
               {timeEntries.slice(0, 3).map((entry, index) => {
                 const entryDate = new Date(entry.date)
                 const isToday = entryDate.toDateString() === new Date().toDateString()
-                
+
                 return (
                   <div key={entry._id || index} className="flex items-center justify-between text-xs">
                     <span className={isToday ? "font-semibold" : ""}>
