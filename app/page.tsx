@@ -146,18 +146,21 @@ export default function HomePage() {
                 Transform your workforce management with AI-powered insights, seamless automation, and beautiful user experiences that your team will love.
               </p>
               
-              <div className="flex flex-col sm:flex-row gap-6 justify-center lg:justify-start">
+              <div className="flex flex-col sm:flex-row gap-6 justify-start lg:justify-start">
                 <Link href="/auth/signup">
                   <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white px-8 py-6 text-lg font-semibold shadow-xl hover:shadow-cyan-500/25 transition-all duration-300 group">
                     <Crown className="mr-3 w-6 h-6 group-hover:rotate-12 transition-transform" />
-                    Start Your Journey
+                    Sign Up
                     <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </Link>
-                <Button size="lg" variant="outline" className="w-full sm:w-auto border-2 border-white/30 text-white hover:bg-white/10 px-8 py-6 text-lg font-semibold backdrop-blur-sm">
+                <Link href="/auth/login">
+                <Button size="lg" variant="outline" className="w-full sm:w-auto border-2 border-cyan-400 text-cyan-400 bg-transparent hover:bg-gradient-to-r from-cyan-500 to-blue-600 px-8 py-6 text-lg font-semibold">
                   <Gem className="mr-3 w-6 h-6" />
-                  Watch Demo
+                  Login
+                  <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-1 transition-transform" />
                 </Button>
+                </Link>
               </div>
 
               {/* Stats */}
@@ -181,7 +184,7 @@ export default function HomePage() {
             <div className="relative">
               <div className="relative">
                 {/* Floating Cards */}
-                <div className="absolute -top-8 -right-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 shadow-2xl transform rotate-12 hover:rotate-6 transition-transform duration-500">
+                <div className="absolute -top-18 -right-18 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 shadow-2xl transform rotate-12 hover:rotate-6 transition-transform duration-500">
                   <div className="flex items-center space-x-3">
                     <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
                       <Users className="w-6 h-6 text-white" />
@@ -193,7 +196,7 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                <div className="absolute -bottom-8 -left-8 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl p-6 shadow-2xl transform -rotate-12 hover:-rotate-6 transition-transform duration-500">
+                <div className="absolute -bottom-18 -left-18 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl p-6 shadow-2xl transform -rotate-12 hover:-rotate-6 transition-transform duration-500">
                   <div className="flex items-center space-x-3">
                     <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
                       <TrendingUp className="w-6 h-6 text-white" />
@@ -322,9 +325,8 @@ export default function HomePage() {
             </div>
             
             <div className="border-t border-white/20 pt-8 text-white/60">
-              <p className="flex items-center justify-center text-sm">
-                <Heart className="w-4 h-4 mr-2 text-red-400" />
-                Made with love © 2025 {settings?.site_name || "MM HRM"}. All rights reserved.
+              <p className="flex text-center items-center justify-center text-sm">
+                Made with ❤️ by Chandu © 2025 {settings?.site_name || "MM HRM"}. All rights reserved.
               </p>
             </div>
           </div>

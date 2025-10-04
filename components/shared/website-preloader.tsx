@@ -54,9 +54,9 @@ export function WebsitePreloader() {
             <div className="relative p-4 bg-white rounded-xl shadow-sm border border-gray-200">
               {/* Logo */}
               <div className="relative z-10 flex items-center justify-center">
-                {settings?.site_logo && settings.site_logo !== "/placeholder-logo.png" ? (
+                {settings?.site_logo && settings.site_logo !== "https://mmhrm.vercel.app/uploads/logos/logo_1758676233879.PNG" ? (
                   <Image
-                    src="/placeholder-logo.png"
+                    src="https://mmhrm.vercel.app/uploads/logos/logo_1758676233879.PNG"
                     alt={settings?.site_name || "MMHRM"}
                     width={60}
                     height={60}
@@ -64,11 +64,14 @@ export function WebsitePreloader() {
                     priority
                   />
                 ) : (
-                  <div className="w-15 h-15 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                    <span className="text-xl font-bold text-white">
-                      {settings?.site_name?.charAt(0) || "M"}
-                    </span>
-                  </div>
+                  <Image
+                    src={settings?.site_logo || "https://mmhrm.vercel.app/uploads/logos/logo_1758676233879.PNG"}
+                    alt={settings?.site_name || "MMHRM"}
+                    width={60}
+                    height={60}
+                    className="object-contain"
+                    priority
+                  />
                 )}
               </div>
             </div>
