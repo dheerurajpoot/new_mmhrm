@@ -205,13 +205,13 @@ export function EmployeeManagement({
 	const getRoleColor = (role: string) => {
 		switch (role) {
 			case "admin":
-				return "bg-red-100 text-red-800";
+				return "bg-slate-100 text-slate-800";
 			case "hr":
-				return "bg-red-100 text-red-800";
+				return "bg-slate-100 text-slate-800";
 			case "employee":
-				return "bg-blue-100 text-blue-800";
+				return "bg-slate-100 text-slate-800";
 			default:
-				return "bg-gray-100 text-gray-800";
+				return "bg-slate-100 text-slate-800";
 		}
 	};
 
@@ -227,10 +227,10 @@ export function EmployeeManagement({
 		<div className='space-y-6'>
 			<div className='flex items-center justify-between'>
 				<div>
-					<h2 className='text-2xl font-bold tracking-tight'>
+					<h2 className='text-2xl font-bold tracking-tight text-slate-900'>
 						Employee Management
 					</h2>
-					<p className='text-muted-foreground'>
+					<p className='text-slate-600'>
 						Manage employees, roles, and permissions
 					</p>
 				</div>
@@ -238,7 +238,7 @@ export function EmployeeManagement({
 					open={isAddDialogOpen}
 					onOpenChange={setIsAddDialogOpen}>
 					<DialogTrigger asChild>
-						<Button>
+						<Button className="bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 rounded-2xl px-8 py-3">
 							<UserPlus className='mr-2 h-4 w-4' />
 							Add Employee
 						</Button>
@@ -408,10 +408,10 @@ export function EmployeeManagement({
 				</Dialog>
 			</div>
 
-			<Card>
-				<CardHeader>
-					<CardTitle>All Employees</CardTitle>
-					<CardDescription>
+			<Card className="border-0 shadow-xl bg-white/80 backdrop-blur-xl rounded-3xl border border-white/20 hover:shadow-2xl transition-all duration-500">
+				<CardHeader className="bg-gradient-to-r from-slate-50/50 to-slate-100/30 border-b border-slate-200/50 rounded-t-3xl p-8">
+					<CardTitle className="text-slate-900">All Employees</CardTitle>
+					<CardDescription className="text-slate-600">
 						View and manage all employees in the organization
 					</CardDescription>
 				</CardHeader>
@@ -431,7 +431,7 @@ export function EmployeeManagement({
 							</TableHeader>
 							<TableBody>
 								{employees.map((employee) => (
-									<TableRow key={employee.id}>
+									<TableRow key={employee.id} className="hover:bg-white/60 transition-all duration-300 border-b border-slate-200/50">
 										<TableCell className='font-medium'>
 											{employee.full_name}
 										</TableCell>
@@ -463,7 +463,7 @@ export function EmployeeManagement({
 													onClick={() =>
 														openEditDialog(employee)
 													}
-													className="h-8 px-3 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 hover:text-blue-800"
+													className="h-8 px-3 bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700 hover:text-slate-800"
 												>
 													<Edit className='h-4 w-4 mr-1' />
 													Edit
@@ -480,7 +480,7 @@ export function EmployeeManagement({
 																employee.role
 															)
 														}
-														className="h-8 px-3 bg-red-50 hover:bg-red-100 border-red-200 text-red-700 hover:text-red-800"
+														className="h-8 px-3 bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700 hover:text-slate-800"
 													>
 														<Trash2 className='h-4 w-4 mr-1' />
 														Delete

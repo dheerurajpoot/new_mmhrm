@@ -15,48 +15,45 @@ const AdminStats = lazy(() => import("./admin-stats").then(module => ({ default:
 const EmployeeManagement = lazy(() => import("./employee-management").then(module => ({ default: module.EmployeeManagement })))
 const FinancialManagement = lazy(() => import("./financial-management").then(module => ({ default: module.FinancialManagement })))
 const LeaveManagement = lazy(() => import("./leave-management").then(module => ({ default: module.LeaveManagement })))
+const AttendanceManagement = lazy(() => import("./attendance-management").then(module => ({ default: module.AttendanceManagement })))
 const AdminSettings = lazy(() => import("./admin-settings").then(module => ({ default: module.AdminSettings })))
 const TeamManagement = lazy(() => import("./team-management").then(module => ({ default: module.TeamManagement })))
-const AttendanceManagement = lazy(() => import("./attendance-management").then(module => ({ default: module.AttendanceManagement })))
 const AdminProfile = lazy(() => import("./admin-profile").then(module => ({ default: module.AdminProfile })))
 
-// Loading skeleton component
+// Modern Loading skeleton component with glassmorphism
 const SectionSkeleton = () => (
   <div className="space-y-8">
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {[...Array(4)].map((_, i) => (
-        <Card key={i}>
-          <CardHeader>
-            <Skeleton className="h-4 w-24" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-8 w-16 mb-2" />
-            <Skeleton className="h-3 w-32" />
-          </CardContent>
-        </Card>
+        <div key={i} className="group relative overflow-hidden bg-white/80 backdrop-blur-xl rounded-3xl border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-500">
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-50/30 via-white/20 to-slate-100/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl"></div>
+          <div className="relative p-8">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-slate-300 rounded-full animate-pulse"></div>
+                <Skeleton className="h-4 w-24 bg-slate-200/50" />
+              </div>
+              <div className="w-16 h-16 bg-gradient-to-br from-slate-200 to-slate-300 rounded-2xl animate-pulse"></div>
+            </div>
+            <Skeleton className="h-10 w-16 mb-2 bg-slate-200/50" />
+            <Skeleton className="h-4 w-32 bg-slate-200/50" />
+          </div>
+        </div>
       ))}
     </div>
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-32" />
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-64 w-full" />
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-32" />
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-16 w-full" />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-white/20 shadow-xl p-6">
+        <Skeleton className="h-6 w-32 mb-4 bg-slate-200/50" />
+        <Skeleton className="h-64 w-full bg-slate-200/50" />
+      </div>
+      <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-white/20 shadow-xl p-6">
+        <Skeleton className="h-6 w-32 mb-4 bg-slate-200/50" />
+        <div className="space-y-3">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-16 w-full bg-slate-200/50" />
+          ))}
+        </div>
+      </div>
     </div>
   </div>
 )
@@ -111,55 +108,55 @@ export function AdminDashboard() {
       case "users":
         return (
           <Suspense fallback={<SectionSkeleton />}>
-            <UserManagement sectionData={sectionData} />
+            <UserManagement />
           </Suspense>
         )
       case "teams":
         return (
           <Suspense fallback={<SectionSkeleton />}>
-            <TeamManagement sectionData={sectionData} />
+            <TeamManagement />
           </Suspense>
         )
       case "employees":
         return (
           <Suspense fallback={<SectionSkeleton />}>
-            <EmployeeManagement currentUserRole="admin" sectionData={sectionData} />
+            <EmployeeManagement currentUserRole="admin" />
           </Suspense>
         )
       case "finances":
         return (
           <Suspense fallback={<SectionSkeleton />}>
-            <FinancialManagement sectionData={sectionData} />
+            <FinancialManagement />
           </Suspense>
         )
       case "leaves":
         return (
           <Suspense fallback={<SectionSkeleton />}>
-            <LeaveManagement sectionData={sectionData} />
+            <LeaveManagement />
           </Suspense>
         )
       case "attendance":
         return (
           <Suspense fallback={<SectionSkeleton />}>
-            <AttendanceManagement sectionData={sectionData} />
+            <AttendanceManagement />
           </Suspense>
         )
       case "profile":
         return (
           <Suspense fallback={<SectionSkeleton />}>
-            <AdminProfile sectionData={sectionData} />
+            <AdminProfile />
           </Suspense>
         )
       case "settings":
         return (
           <Suspense fallback={<SectionSkeleton />}>
-            <AdminSettings sectionData={sectionData} />
+            <AdminSettings />
           </Suspense>
         )
       default:
         return (
           <Suspense fallback={<SectionSkeleton />}>
-            <AdminStats sectionData={sectionData} />
+            <AdminStats />
           </Suspense>
         )
     }
@@ -181,6 +178,8 @@ export function AdminDashboard() {
         return { title: "Leave Management", description: "Manage leave requests, balances, and types" }
       case "attendance":
         return { title: "Attendance Management", description: "Monitor and manage employee attendance and time tracking" }
+      case "time-cleanup":
+        return { title: "Time Entry Cleanup", description: "Fix and manage time tracking issues" }
       case "profile":
         return { title: "My Profile", description: "View and update your personal information" }
       case "settings":
@@ -201,7 +200,13 @@ export function AdminDashboard() {
           description={description} 
           role="admin" 
         />
-        <div className="flex-1 p-4 pb-20 md:pb-4">{renderContent()}</div>
+        <div className="flex-1 p-4 pb-20 md:pb-4 bg-gradient-to-br from-slate-50/50 via-white/30 to-slate-100/30 min-h-screen">
+          <div className="max-w-full mx-auto">
+            <div className="bg-white/60 backdrop-blur-xl rounded-3xl border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-500 p-6">
+              {renderContent()}
+            </div>
+          </div>
+        </div>
       </SidebarInset>
       <MobileBottomNav role="admin" activeSection={activeSection} onNavigate={setActiveSection} />
     </SidebarProvider>

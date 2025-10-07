@@ -48,13 +48,20 @@ export type TimeEntry = {
   employee_id: string
   clock_in: string
   clock_out: string | null
-  break_duration: number
+  break_start: string | null
+  break_end: string | null
   total_hours: number
+  break_duration: number
   notes: string | null
   date: string
+  status: 'active' | 'completed' | 'break'
+  location?: string
+  ip_address?: string
+  device_info?: string
   created_at: string
   updated_at: string
 }
+
 
 export type WFHRequest = {
   id: string

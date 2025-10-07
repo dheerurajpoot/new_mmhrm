@@ -76,10 +76,16 @@ export interface TimeEntry {
   employee_id: ObjectId
   clock_in: Date
   clock_out?: Date
-  break_duration: number
+  break_start?: Date
+  break_end?: Date
   total_hours?: number
+  break_duration: number
   notes?: string
   date: Date
+  status: 'active' | 'completed' | 'break'
+  location?: string
+  ip_address?: string
+  device_info?: string
   created_at: Date
   updated_at: Date
 }

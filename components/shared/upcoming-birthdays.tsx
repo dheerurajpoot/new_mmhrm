@@ -19,6 +19,11 @@ import {
 	ChevronDown,
 	ChevronRight,
 	Users,
+	Heart,
+	PartyPopper,
+	Clock,
+	Zap,
+	TrendingUp,
 } from "lucide-react";
 
 interface Employee {
@@ -48,9 +53,9 @@ interface MonthGroup {
 
 export function UpcomingBirthdays({
 	showAllMonths = false,
-	maxEmployees = 4,
-	title = "Upcoming Birthdays",
-	description = "Celebrate your colleagues!",
+	maxEmployees = 10,
+	title = "Birthday Celebrations",
+	description = "Celebrate your amazing colleagues",
 	sectionData,
 }: {
 	showAllMonths?: boolean;
@@ -67,6 +72,7 @@ export function UpcomingBirthdays({
 	const [expandedMonths, setExpandedMonths] = useState<Set<number>>(
 		new Set()
 	);
+	const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
 
 	useEffect(() => {
 		if (sectionData?.upcomingBirthdays) {
@@ -77,14 +83,14 @@ export function UpcomingBirthdays({
 					const birthDate = new Date(emp.birth_date);
 					const today = new Date();
 					const currentYear = today.getFullYear();
-					
+
 					let thisYearBirthday = new Date(currentYear, birthDate.getMonth(), birthDate.getDate());
 					if (thisYearBirthday < today) {
 						thisYearBirthday = new Date(currentYear + 1, birthDate.getMonth(), birthDate.getDate());
 					}
-					
+
 					const daysUntilBirthday = Math.ceil((thisYearBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-					
+
 					return {
 						...emp,
 						daysUntilBirthday,
@@ -95,8 +101,8 @@ export function UpcomingBirthdays({
 				}
 				return emp;
 			})
-			.sort((a: any, b: any) => a.daysUntilBirthday - b.daysUntilBirthday); // Sort by closest birthday
-			
+				.sort((a: any, b: any) => a.daysUntilBirthday - b.daysUntilBirthday); // Sort by closest birthday
+
 			setUpcomingBirthdays(processedBirthdays);
 			setIsLoading(false);
 		} else {
@@ -148,7 +154,7 @@ export function UpcomingBirthdays({
 
 						const daysUntilBirthday = Math.ceil(
 							(thisYearBirthday.getTime() - today.getTime()) /
-								(1000 * 60 * 60 * 24)
+							(1000 * 60 * 60 * 24)
 						);
 
 						const age = currentYear - birthDate.getFullYear();
@@ -242,21 +248,32 @@ export function UpcomingBirthdays({
 	};
 
 	const getBirthdayBadgeColor = (daysUntil: number) => {
-		if (daysUntil <= 7) return "bg-red-100 text-red-800";
-		if (daysUntil <= 14) return "bg-orange-100 text-orange-800";
-		if (daysUntil <= 30) return "bg-blue-100 text-blue-800";
-		return "bg-gray-100 text-gray-800";
+		if (daysUntil === 0) return "bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg animate-pulse";
+		if (daysUntil === 1) return "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md";
+		if (daysUntil <= 7) return "bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-sm";
+		if (daysUntil <= 14) return "bg-gradient-to-r from-blue-400 to-indigo-500 text-white";
+		if (daysUntil <= 30) return "bg-gradient-to-r from-purple-400 to-pink-400 text-white";
+		return "bg-gradient-to-r from-slate-400 to-slate-500 text-white";
 	};
 
 	const getBirthdayText = (daysUntil: number) => {
 		if (daysUntil === undefined || daysUntil === null || isNaN(daysUntil)) {
 			return "Unknown";
 		}
-		
-		if (daysUntil === 0) return "Today!";
-		if (daysUntil === 1) return "Tomorrow";
+
+		if (daysUntil === 0) return "🎉 Today!";
+		if (daysUntil === 1) return "🎂 Tomorrow";
 		if (daysUntil <= 7) return `${daysUntil} days`;
+		if (daysUntil <= 30) return `${daysUntil} days`;
 		return `${daysUntil} days`;
+	};
+
+	const getPriorityLevel = (daysUntil: number) => {
+		if (daysUntil === 0) return "urgent";
+		if (daysUntil <= 3) return "high";
+		if (daysUntil <= 7) return "medium";
+		if (daysUntil <= 30) return "low";
+		return "future";
 	};
 
 	const toggleMonth = (monthNumber: number) => {
@@ -271,255 +288,351 @@ export function UpcomingBirthdays({
 
 	const renderEmployeeCard = (
 		employee: BirthdayEmployee,
-		isNext: boolean = false
-	) => (
-		<div
-			key={employee.id}
-			className={`relative flex items-center space-x-3 p-3 rounded-xl transition-all duration-300 ${
-				isNext
-					? "bg-gradient-to-r from-pink-100 via-purple-50 to-blue-50 border-2 border-pink-200 shadow-md hover:shadow-lg"
-					: "hover:bg-gray-50 border border-transparent hover:border-gray-200"
-			}`}>
-			{/* Special decoration for next birthday */}
-			{isNext && (
-				<div className='absolute -top-1 -right-1 z-10'>
-					<div className='relative'>
-						<Star className='w-6 h-6 text-yellow-400 fill-current animate-pulse' />
-						<Sparkles className='w-3 h-3 text-yellow-500 absolute -top-1 -right-1 animate-bounce' />
+		isNext: boolean = false,
+		viewMode: 'grid' | 'list' = 'list'
+	) => {
+		const priority = getPriorityLevel(employee.daysUntilBirthday);
+		const isToday = employee.daysUntilBirthday === 0;
+		const isTomorrow = employee.daysUntilBirthday === 1;
+
+		if (viewMode === 'grid') {
+			return (
+				<div
+					key={employee.id}
+					className={`group relative bg-gradient-to-br from-white via-rose-50/30 to-pink-50/30 backdrop-blur-sm rounded-2xl p-4 transition-all duration-300 border hover:shadow-xl hover:scale-105 ${isToday ? 'border-red-300 shadow-lg ring-2 ring-red-100' :
+							isTomorrow ? 'border-orange-300 shadow-md ring-1 ring-orange-100' :
+								'border-pink-200/50 hover:border-pink-300'
+						}`}>
+					{/* Special decorations */}
+					{isToday && (
+						<div className='absolute -top-2 -right-2 z-10'>
+							<div className='relative'>
+								<PartyPopper className='w-6 h-6 text-red-500 fill-current animate-bounce' />
+								<Sparkles className='w-3 h-3 text-yellow-400 absolute -top-1 -right-1 animate-pulse' />
+							</div>
+						</div>
+					)}
+					{isTomorrow && (
+						<div className='absolute -top-1 -right-1 z-10'>
+							<Star className='w-5 h-5 text-orange-500 fill-current animate-pulse' />
+						</div>
+					)}
+
+					{/* Avatar with special effects */}
+					<div className='flex flex-col items-center space-y-3'>
+						<div className='relative'>
+							<Avatar className={`w-16 h-16 ring-4 ${isToday ? 'ring-red-200 animate-pulse' :
+									isTomorrow ? 'ring-orange-200' :
+										'ring-pink-100 group-hover:ring-pink-200'
+								} transition-all duration-300`}>
+								<AvatarImage
+									src={employee.profile_photo}
+									alt={employee.full_name}
+									className="object-cover"
+								/>
+								<AvatarFallback className={`text-lg font-bold ${isToday ? 'bg-gradient-to-br from-red-500 to-pink-500' :
+										isTomorrow ? 'bg-gradient-to-br from-orange-500 to-red-500' :
+											'bg-gradient-to-br from-pink-400 to-purple-400'
+									} text-white`}>
+									{employee.full_name?.charAt(0) || "E"}
+								</AvatarFallback>
+							</Avatar>
+							{(isToday || isTomorrow) && (
+								<div className='absolute -bottom-1 -right-1'>
+									<div className={`w-6 h-6 rounded-full flex items-center justify-center ${isToday ? 'bg-red-500 animate-pulse' : 'bg-orange-500'
+										}`}>
+										<Cake className='w-3 h-3 text-white' />
+									</div>
+								</div>
+							)}
+						</div>
+
+						{/* Employee info */}
+						<div className='text-center space-y-2'>
+							<h4 className={`font-bold text-gray-900 truncate ${isToday ? 'text-lg' : 'text-sm'
+								}`}>
+								{employee.full_name}
+							</h4>
+
+							<div className='flex items-center justify-center space-x-1 text-xs text-gray-600'>
+								<Calendar className='w-3 h-3' />
+								<span className={`${isToday ? 'font-bold text-red-700' :
+										isTomorrow ? 'font-semibold text-orange-700' :
+											''
+									}`}>
+									{employee.birthdayMonth} {employee.birthdayDay}
+								</span>
+							</div>
+
+							<div className='flex items-center justify-center space-x-1 text-xs text-gray-500'>
+								<Heart className='w-3 h-3' />
+								<span>Age {employee.age}</span>
+							</div>
+						</div>
+
+						{/* Badge */}
+						<Badge className={`text-xs font-semibold ${getBirthdayBadgeColor(employee.daysUntilBirthday)}`}>
+							{getBirthdayText(employee.daysUntilBirthday)}
+						</Badge>
 					</div>
 				</div>
-			)}
+			);
+		}
 
-			<div className='relative'>
-				<Avatar
-					className={`${isNext ? "w-12 h-12" : "w-10 h-10"} ${
-						isNext ? "ring-2 ring-pink-300 ring-offset-2" : ""
+		// List view
+		return (
+			<div
+				key={employee.id}
+				className={`group relative flex items-center space-x-4 p-4 rounded-2xl transition-all duration-300 border hover:shadow-lg ${isToday ? 'bg-gradient-to-r from-red-50 to-pink-50 border-red-200 shadow-md' :
+						isTomorrow ? 'bg-gradient-to-r from-orange-50 to-red-50 border-orange-200 shadow-sm' :
+							'bg-gradient-to-r from-white to-rose-50/30 border-pink-200/50 hover:border-pink-300'
 					}`}>
-					<AvatarImage
-						src={employee.profile_photo}
-						alt={employee.full_name}
-					/>
-					<AvatarFallback
-						className={`${
-							isNext
-								? "bg-gradient-to-br from-pink-500 to-purple-500"
-								: "bg-gradient-to-br from-pink-400 to-purple-400"
-						} text-white font-semibold ${
-							isNext ? "text-base" : "text-sm"
-						}`}>
-						{employee.full_name?.charAt(0) || "E"}
-					</AvatarFallback>
-				</Avatar>
-				{isNext && employee.daysUntilBirthday <= 1 && (
-					<div className='absolute -bottom-1 -right-1'>
-						<div className='w-6 h-6 bg-red-500 rounded-full flex items-center justify-center animate-pulse'>
-							<Cake className='w-3 h-3 text-white' />
+				{/* Special decorations */}
+				{isToday && (
+					<div className='absolute -top-2 -right-2 z-10'>
+						<div className='relative'>
+							<PartyPopper className='w-6 h-6 text-red-500 fill-current animate-bounce' />
+							<Sparkles className='w-3 h-3 text-yellow-400 absolute -top-1 -right-1 animate-pulse' />
 						</div>
 					</div>
 				)}
-			</div>
+				{isTomorrow && (
+					<div className='absolute -top-1 -right-1 z-10'>
+						<Star className='w-5 h-5 text-orange-500 fill-current animate-pulse' />
+					</div>
+				)}
 
-			<div className='flex-1 min-w-0'>
-				<div className='flex flex-col space-y-1'>
-					<h4
-						className={`${
-							isNext
-								? "text-sm font-bold"
-								: "text-xs font-semibold"
-						} text-gray-900 truncate`}>
-						{employee.full_name}
-					</h4>
-					<div className='flex items-center space-x-1 text-xs text-gray-600'>
-						<Calendar className='w-3 h-3' />
-						<span
-							className={
-								isNext ? "font-semibold text-pink-700" : ""
-							}>
-							{employee.birthdayMonth} {employee.birthdayDay}
-						</span>
+				{/* Avatar */}
+				<div className='relative flex-shrink-0'>
+					<Avatar className={`w-14 h-14 ring-3 ${isToday ? 'ring-red-200 animate-pulse' :
+							isTomorrow ? 'ring-orange-200' :
+								'ring-pink-100 group-hover:ring-pink-200'
+						} transition-all duration-300`}>
+						<AvatarImage
+							src={employee.profile_photo}
+							alt={employee.full_name}
+							className="object-cover"
+						/>
+						<AvatarFallback className={`text-base font-bold ${isToday ? 'bg-gradient-to-br from-red-500 to-pink-500' :
+								isTomorrow ? 'bg-gradient-to-br from-orange-500 to-red-500' :
+									'bg-gradient-to-br from-pink-400 to-purple-400'
+							} text-white`}>
+							{employee.full_name?.charAt(0) || "E"}
+						</AvatarFallback>
+					</Avatar>
+					{(isToday || isTomorrow) && (
+						<div className='absolute -bottom-1 -right-1'>
+							<div className={`w-6 h-6 rounded-full flex items-center justify-center ${isToday ? 'bg-red-500 animate-pulse' : 'bg-orange-500'
+								}`}>
+								<Cake className='w-3 h-3 text-white' />
+							</div>
+						</div>
+					)}
+				</div>
+
+				{/* Employee info */}
+				<div className='flex-1 min-w-0 space-y-2'>
+					<div className='flex items-center justify-between'>
+						<h4 className={`font-bold text-gray-900 truncate ${isToday ? 'text-lg' : 'text-base'
+							}`}>
+							{employee.full_name}
+						</h4>
+						<Badge className={`text-xs font-semibold ${getBirthdayBadgeColor(employee.daysUntilBirthday)}`}>
+							{getBirthdayText(employee.daysUntilBirthday)}
+						</Badge>
+					</div>
+
+					<div className='flex items-center space-x-4 text-sm text-gray-600'>
+						<div className='flex items-center space-x-1'>
+							<Calendar className='w-4 h-4' />
+							<span className={`${isToday ? 'font-bold text-red-700' :
+									isTomorrow ? 'font-semibold text-orange-700' :
+										''
+								}`}>
+								{employee.birthdayMonth} {employee.birthdayDay}
+							</span>
+						</div>
+						<div className='flex items-center space-x-1'>
+							<Heart className='w-4 h-4' />
+							<span>Age {employee.age}</span>
+						</div>
 					</div>
 				</div>
 			</div>
-
-			<div className='text-right flex-shrink-0'>
-				<Badge
-					className={`text-xs ${
-						isNext
-							? "bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg"
-							: getBirthdayBadgeColor(employee.daysUntilBirthday)
-					} ${isNext ? "animate-pulse" : ""}`}>
-					{getBirthdayText(employee.daysUntilBirthday)}
-				</Badge>
-				<div
-					className={`text-xs mt-1 ${
-						isNext ? "text-pink-700 font-medium" : "text-gray-500"
-					}`}>
-					Age {employee.age}
-				</div>
-			</div>
-		</div>
-	);
+		);
+	};
 
 	if (isLoading) {
 		return (
-			<Card className='overflow-hidden'>
-				<CardHeader className='bg-gradient-to-r from-pink-50 to-purple-50 border-b border-pink-100'>
-					<div className='flex items-center space-x-2'>
-						<div className='p-2 bg-white rounded-full shadow-sm'>
-							<Cake className='w-5 h-5 text-pink-500' />
+			<div className='bg-gradient-to-br from-rose-50 via-white to-pink-50/30 backdrop-blur-xl rounded-3xl border border-rose-200/50 p-6 shadow-xl'>
+				<div className='flex items-center justify-between mb-6'>
+					<div className='flex items-center gap-4'>
+						<div className='w-12 h-12 bg-gradient-to-br from-rose-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg'>
+							<Cake className='w-6 h-6 text-white' />
 						</div>
 						<div>
-							<CardTitle className='text-lg font-semibold text-gray-900'>
+							<h3 className='text-xl font-bold text-rose-900'>
 								{title}
-							</CardTitle>
-							<p className='text-sm text-gray-600'>
+							</h3>
+							<p className='text-sm text-rose-600 font-medium'>
 								{description}
 							</p>
 						</div>
 					</div>
-				</CardHeader>
-				<CardContent className='p-6'>
-					<div className='space-y-4'>
-						{Array.from({ length: 4 }).map((_, index) => (
-							<div
-								key={index}
-								className='flex items-center space-x-3 animate-pulse p-3'>
-								<div className='w-10 h-10 bg-gray-200 rounded-full'></div>
-								<div className='flex-1'>
-									<div className='w-24 h-3 bg-gray-200 rounded mb-1'></div>
-									<div className='w-16 h-2 bg-gray-200 rounded'></div>
-								</div>
-								<div className='w-12 h-5 bg-gray-200 rounded'></div>
+				</div>
+				<div className='space-y-4'>
+					{Array.from({ length: 4 }).map((_, index) => (
+						<div
+							key={index}
+							className='flex items-center space-x-4 p-4 rounded-2xl bg-white/50 animate-pulse'>
+							<div className='w-14 h-14 bg-rose-200 rounded-full'></div>
+							<div className='flex-1 space-y-2'>
+								<div className='w-32 h-4 bg-rose-200 rounded'></div>
+								<div className='w-24 h-3 bg-rose-200 rounded'></div>
 							</div>
-						))}
-					</div>
-				</CardContent>
-			</Card>
+							<div className='w-16 h-6 bg-rose-200 rounded-full'></div>
+						</div>
+					))}
+				</div>
+			</div>
 		);
 	}
 
 	if (upcomingBirthdays.length === 0) {
 		return (
-			<Card className='overflow-hidden'>
-				<CardHeader className='bg-gradient-to-r from-pink-50 to-purple-50 border-b border-pink-100'>
-					<div className='flex items-center space-x-2'>
-						<div className='p-2 bg-white rounded-full shadow-sm'>
-							<Cake className='w-5 h-5 text-pink-500' />
+			<div className='bg-gradient-to-br from-rose-50 via-white to-pink-50/30 backdrop-blur-xl rounded-3xl border border-rose-200/50 p-6 shadow-xl'>
+				<div className='flex items-center justify-between mb-6'>
+					<div className='flex items-center gap-4'>
+						<div className='w-12 h-12 bg-gradient-to-br from-rose-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg'>
+							<Cake className='w-6 h-6 text-white' />
 						</div>
 						<div>
-							<CardTitle className='text-lg font-semibold text-gray-900'>
+							<h3 className='text-xl font-bold text-rose-900'>
 								{title}
-							</CardTitle>
-							<p className='text-sm text-gray-600'>
+							</h3>
+							<p className='text-sm text-rose-600 font-medium'>
 								{description}
 							</p>
 						</div>
 					</div>
-				</CardHeader>
-				<CardContent className='p-6'>
-					<div className='text-center py-8 text-gray-500'>
-						<Gift className='w-10 h-10 mx-auto mb-4 opacity-50' />
-						<p className='text-sm'>No upcoming birthdays</p>
-						<p className='text-xs'>Check back later!</p>
+				</div>
+				<div className='text-center py-12 bg-gradient-to-br from-rose-50 to-pink-50 rounded-2xl border-2 border-dashed border-rose-200'>
+					<div className='w-16 h-16 bg-gradient-to-br from-rose-100 to-pink-100 rounded-2xl flex items-center justify-center mx-auto mb-4'>
+						<Gift className='w-8 h-8 text-rose-500' />
 					</div>
-				</CardContent>
-			</Card>
+					<h3 className='text-lg font-semibold text-rose-800 mb-2'>
+						No Upcoming Birthdays
+					</h3>
+					<p className='text-rose-600 max-w-sm mx-auto'>
+						Birthday celebrations will appear here as they approach. Check back soon!
+					</p>
+				</div>
+			</div>
 		);
 	}
 
 	return (
-		<Card className='overflow-hidden'>
-			{/* <CardHeader className="bg-gradient-to-r from-pink-50 to-purple-50 border-b border-pink-100">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="p-2 bg-white rounded-full shadow-sm">
-              <Cake className="w-5 h-5 text-pink-500" />
-            </div>
-            <div>
-              <CardTitle className="text-lg font-semibold text-gray-900">{title}</CardTitle>
-              <p className="text-sm text-gray-600">{description}</p>
-            </div>
-          </div>
-          {showAllMonths && (
-            <div className="flex items-center space-x-1 text-xs text-gray-500">
-              <Users className="w-4 h-4" />
-              <span>{upcomingBirthdays.length} birthdays</span>
-            </div>
-          )}
-        </div>
-      </CardHeader> */}
-			<CardContent className='p-6'>
-				{showAllMonths ? (
-					<div className='space-y-4'>
-						{monthGroups.map((group) => (
-							<Collapsible
-								key={group.monthNumber}
-								open={expandedMonths.has(group.monthNumber)}
-								onOpenChange={() =>
-									toggleMonth(group.monthNumber)
-								}>
-								<CollapsibleTrigger asChild>
-									<Button
-										variant='ghost'
-										className='w-full justify-between p-3 h-auto hover:bg-gray-50'>
-										<div className='flex items-center space-x-3'>
-											<div
-												className={`w-8 h-8 rounded-full flex items-center justify-center ${
-													group.isCurrentMonth
-														? "bg-pink-100 text-pink-600"
-														: "bg-gray-100 text-gray-600"
-												}`}>
-												<Cake className='w-4 h-4' />
-											</div>
-											<div className='text-left'>
-												<h3
-													className={`font-semibold ${
-														group.isCurrentMonth
-															? "text-pink-700"
-															: "text-gray-900"
-													}`}>
-													{group.month}
-												</h3>
-												<p className='text-xs text-gray-500'>
-													{group.employees.length}{" "}
-													birthday
-													{group.employees.length !==
-													1
-														? "s"
-														: ""}
-												</p>
-											</div>
+		<div className='bg-gradient-to-br from-rose-50 via-white to-pink-50/30 backdrop-blur-xl rounded-3xl   hover:transition-all duration-500'>
+			{/* Content */}
+			{showAllMonths ? (
+				<div className='space-y-4'>
+					{monthGroups.map((group) => (
+						<Collapsible
+							key={group.monthNumber}
+							open={expandedMonths.has(group.monthNumber)}
+							onOpenChange={() => toggleMonth(group.monthNumber)}>
+							<CollapsibleTrigger asChild>
+								<Button
+									variant='ghost'
+									className='w-full justify-between p-4 h-auto hover:bg-rose-50/50 rounded-2xl border border-rose-200/30'>
+									<div className='flex items-center space-x-4'>
+										<div className={`w-10 h-10 rounded-full flex items-center justify-center ${group.isCurrentMonth
+												? "bg-gradient-to-br from-rose-500 to-pink-500 text-white shadow-lg"
+												: "bg-rose-100 text-rose-600"
+											}`}>
+											<Cake className='w-5 h-5' />
 										</div>
-										{expandedMonths.has(
-											group.monthNumber
-										) ? (
-											<ChevronDown className='w-4 h-4' />
-										) : (
-											<ChevronRight className='w-4 h-4' />
-										)}
-									</Button>
-								</CollapsibleTrigger>
-								<CollapsibleContent className='space-y-2 mt-2'>
+										<div className='text-left'>
+											<h3 className={`font-bold ${group.isCurrentMonth
+													? "text-rose-700"
+													: "text-gray-900"
+												}`}>
+												{group.month}
+											</h3>
+											<p className='text-sm text-gray-600'>
+												{group.employees.length} birthday{group.employees.length !== 1 ? "s" : ""}
+											</p>
+										</div>
+									</div>
+									{expandedMonths.has(group.monthNumber) ? (
+										<ChevronDown className='w-5 h-5 text-rose-600' />
+									) : (
+										<ChevronRight className='w-5 h-5 text-rose-600' />
+									)}
+								</Button>
+							</CollapsibleTrigger>
+							<CollapsibleContent className='mt-4'>
+								<div className={`${viewMode === 'grid'
+										? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
+										: 'space-y-3'
+									}`}>
 									{group.employees.map((employee, index) =>
 										renderEmployeeCard(
 											employee,
-											index === 0 && group.isCurrentMonth
+											index === 0 && group.isCurrentMonth,
+											viewMode
 										)
 									)}
-								</CollapsibleContent>
-							</Collapsible>
-						))}
+								</div>
+							</CollapsibleContent>
+						</Collapsible>
+					))}
+				</div>
+			) : (
+				<div className={`${viewMode === 'grid'
+						? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
+						: 'space-y-3'
+					} max-h-96 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-rose-200 scrollbar-track-transparent hover:scrollbar-thumb-rose-300`}>
+					{upcomingBirthdays
+						.slice(0, maxEmployees)
+						.map((employee, index) =>
+							renderEmployeeCard(employee, index === 0, viewMode)
+						)}
+				</div>
+			)}
+
+			{/* Footer with quick stats */}
+			<div className='mt-6 pt-4 border-t border-rose-200/50'>
+				<div className='flex items-center justify-between text-xs text-rose-600'>
+					<div className='flex items-center gap-4'>
+						{upcomingBirthdays.filter(emp => emp.daysUntilBirthday === 0).length > 0 && (
+							<div className='flex items-center gap-1'>
+								<PartyPopper className='w-4 h-4 text-red-500' />
+								<span className='font-semibold text-red-600'>
+									{upcomingBirthdays.filter(emp => emp.daysUntilBirthday === 0).length} Today
+								</span>
+							</div>
+						)}
+						{upcomingBirthdays.filter(emp => emp.daysUntilBirthday === 1).length > 0 && (
+							<div className='flex items-center gap-1'>
+								<Clock className='w-4 h-4 text-orange-500' />
+								<span className='font-semibold text-orange-600'>
+									{upcomingBirthdays.filter(emp => emp.daysUntilBirthday === 1).length} Tomorrow
+								</span>
+							</div>
+						)}
+						<div className='flex items-center gap-1'>
+							<TrendingUp className='w-4 h-4' />
+							<span className='font-medium'>
+								{upcomingBirthdays.filter(emp => emp.daysUntilBirthday <= 7).length} This Week
+							</span>
+						</div>
 					</div>
-				) : (
-					<div className='space-y-3'>
-						{upcomingBirthdays
-							.slice(0, maxEmployees)
-							.map((employee, index) =>
-								renderEmployeeCard(employee, index === 0)
-							)}
-					</div>
-				)}
-			</CardContent>
-		</Card>
+					<span className='text-rose-500'>
+						{new Date().toLocaleDateString()}
+					</span>
+				</div>
+			</div>
+		</div>
 	);
 }

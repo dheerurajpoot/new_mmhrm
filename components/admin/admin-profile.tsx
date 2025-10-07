@@ -257,7 +257,7 @@ export function AdminProfile() {
 	return (
 		<div className="space-y-6">
 			{/* Profile Header Card */}
-			<Card className="bg-gradient-to-br from-red-50 via-white to-red-50/30 border-red-100">
+			<Card className="bg-gradient-to-br from-slate-50 via-white to-slate-50/30 border-slate-200">
 				<CardHeader>
 					<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 						<div className="flex items-center gap-4">
@@ -267,7 +267,7 @@ export function AdminProfile() {
 										src={profile.profile_photo || ""}
 										alt={profile.full_name || "Admin"}
 									/>
-									<AvatarFallback className="text-2xl bg-gradient-to-r from-red-500 to-red-600 text-white">
+									<AvatarFallback className="text-2xl bg-gradient-to-r from-slate-500 to-slate-600 text-white">
 										{profile.full_name?.charAt(0) || profile.email?.charAt(0) || "A"}
 									</AvatarFallback>
 								</Avatar>
@@ -307,7 +307,7 @@ export function AdminProfile() {
 						{!isEditing && (
 							<Button
 								onClick={() => setIsEditing(true)}
-								className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg">
+								className="bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white shadow-lg">
 								<Edit className="w-4 h-4 mr-2" />
 								Edit Profile
 							</Button>
@@ -513,7 +513,7 @@ export function AdminProfile() {
 								<Button
 									type="submit"
 									disabled={isSaving}
-									className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg flex-1">
+									className="bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white shadow-lg flex-1">
 									{isSaving ? (
 										<>
 											<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>

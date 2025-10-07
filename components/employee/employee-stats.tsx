@@ -53,13 +53,9 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 
 interface EmployeeStats {
 	remainingLeaves: number;
-	hoursThisWeek: number;
 	pendingRequests: number;
 	currentSalary: number;
-	isCurrentlyClockedIn: boolean;
-	todayHours: number;
 	leaveGrowth: number;
-	hoursGrowth: number;
 	salaryGrowth: number;
 	requestGrowth: number;
 	currentUser?: any;
@@ -93,13 +89,9 @@ interface Employee {
 export function EmployeeStats({ sectionData }: EmployeeStatsProps) {
 	const [stats, setStats] = useState<EmployeeStats>({
 		remainingLeaves: 0,
-		hoursThisWeek: 0,
 		pendingRequests: 0,
 		currentSalary: 0,
-		isCurrentlyClockedIn: false,
-		todayHours: 0,
 		leaveGrowth: 0,
-		hoursGrowth: 0,
 		salaryGrowth: 0,
 		requestGrowth: 0,
 		leaveBalances: [],
@@ -194,13 +186,9 @@ export function EmployeeStats({ sectionData }: EmployeeStatsProps) {
 			// Use section data if available
 			setStats(sectionData.stats || {
 				remainingLeaves: 0,
-				hoursThisWeek: 0,
 				pendingRequests: 0,
 				currentSalary: 0,
-				isCurrentlyClockedIn: false,
-				todayHours: 0,
 				leaveGrowth: 0,
-				hoursGrowth: 0,
 				salaryGrowth: 0,
 				requestGrowth: 0,
 				leaveBalances: [],
@@ -519,82 +507,6 @@ export function EmployeeStats({ sectionData }: EmployeeStatsProps) {
 		setIsModalOpen(true);
 	};
 
-	const handleClockInOut = async () => {
-		try {
-			// Get current user directly
-			const currentUser = await getCurrentUser();
-			if (!currentUser) {
-				toast.error("Authentication error", {
-					description: "Please log in again to clock in/out.",
-				});
-				return;
-			}
-
-			console.log("[Employee Stats] Clock in/out request:", {
-				action: stats.isCurrentlyClockedIn ? "clock_out" : "clock_in",
-				employee_id: currentUser.id,
-				currentUser: currentUser,
-			});
-
-			const loadingToastId = toast.loading(
-				stats.isCurrentlyClockedIn
-					? "Clocking out..."
-					: "Clocking in...",
-				{
-					description: stats.isCurrentlyClockedIn
-						? "Processing your clock out request."
-						: "Processing your clock in request.",
-				}
-			);
-
-			const response = await fetch("/api/time-entries", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					action: stats.isCurrentlyClockedIn
-						? "clock_out"
-						: "clock_in",
-					employee_id: currentUser.id,
-				}),
-			});
-
-			const data = await response.json();
-			console.log("[Employee Stats] API response:", {
-				status: response.status,
-				data,
-			});
-
-			// Dismiss loading toast
-			toast.dismiss(loadingToastId);
-
-			if (response.ok) {
-				toast.success(
-					stats.isCurrentlyClockedIn
-						? "Clocked out successfully!"
-						: "Clocked in successfully!",
-					{
-						description: stats.isCurrentlyClockedIn
-							? "Great work today! You have been clocked out."
-							: "Welcome back! You have been clocked in.",
-					}
-				);
-				fetchStats();
-			} else {
-				console.error("[Employee Stats] Clock in/out failed:", data);
-				toast.error("Failed to clock in/out", {
-					description:
-						data.error ||
-						data.details ||
-						"There was an error processing your request. Please try again.",
-				});
-			}
-		} catch (error) {
-			console.error("[Employee Stats] Error clocking in/out:", error);
-			toast.error("Failed to clock in/out", {
-				description: "An unexpected error occurred. Please try again.",
-			});
-		}
-	};
 
 	if (isLoading) {
 		return (
@@ -647,16 +559,6 @@ export function EmployeeStats({ sectionData }: EmployeeStatsProps) {
 	}
 
 	const statCards = [
-		{
-			title: "Weekly Hours",
-			value: `${stats.hoursThisWeek}h`,
-			description: "Hours worked",
-			icon: Clock,
-			growth: stats.hoursGrowth,
-			trend: "up",
-			color: "text-emerald-600",
-			bgColor: "bg-emerald-50",
-		},
 		{
 			title: "Pending Requests",
 			value: stats.pendingRequests.toString(),
@@ -880,45 +782,6 @@ export function EmployeeStats({ sectionData }: EmployeeStatsProps) {
 				</div>
 			</div>
 
-			{/* Time Tracking Card */}
-			{/* <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl border border-gray-100 p-4 md:p-6 text-white">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-4 md:space-y-0">
-          <div className="flex-1">
-            <h3 className="text-lg md:text-xl font-semibold mb-2">Time Tracking</h3>
-            <p className="text-blue-100 mb-4 text-sm md:text-base">
-              {stats.isCurrentlyClockedIn ? "You're currently clocked in" : "Ready to start your day?"}
-            </p>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 text-sm">
-              <span className="flex items-center">
-                <Clock className="w-4 h-4 mr-1" />
-                Today: {stats.todayHours}h
-              </span>
-              <span className="flex items-center">
-                <Calendar className="w-4 h-4 mr-1" />
-                This week: {stats.hoursThisWeek}h
-              </span>
-            </div>
-          </div>
-          <Button
-            onClick={handleClockInOut}
-            size="lg"
-            className={`w-full md:w-auto ${stats.isCurrentlyClockedIn ? "bg-red-500 hover:bg-red-600" : "bg-white text-blue-600 hover:bg-gray-100"
-              }`}
-          >
-            {stats.isCurrentlyClockedIn ? (
-              <>
-                <Pause className="w-4 h-4 md:w-5 md:h-5 mr-2" />
-                Clock Out
-              </>
-            ) : (
-              <>
-                <Play className="w-4 h-4 md:w-5 md:h-5 mr-2" />
-                Clock In
-              </>
-            )}
-          </Button>
-        </div>
-      </div> */}
 
 			{/* Statistics Cards */}
 			{/* <div className="grid-responsive-4 gap-responsive">

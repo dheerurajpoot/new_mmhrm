@@ -37,7 +37,15 @@ export async function GET(request: NextRequest) {
 			days_requested: r.days_requested,
 			status: r.status,
 			reason: r.reason,
-			approved_by: r.approved_by?.toString?.() || r.approved_by || null,
+			approved_by: r.approved_by
+				? {
+						id: r.approved_by.id,
+						full_name: r.approved_by.full_name,
+						email: r.approved_by.email,
+						role: r.approved_by.role,
+						profile_photo: r.approved_by.profile_photo,
+				  }
+				: null,
 			approved_at:
 				r.approved_at instanceof Date
 					? r.approved_at.toISOString()

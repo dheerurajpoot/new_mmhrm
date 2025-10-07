@@ -11,6 +11,7 @@ import {
 	Clock,
 	DollarSign,
 	User,
+	PartyPopper,
 } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/client";
 import { toast } from "sonner";
@@ -73,6 +74,7 @@ export function MobileBottomNav({
 					{ id: "profile", label: "Profile", icon: User },
 					{ id: "leaves", label: "Leaves", icon: Calendar },
 					{ id: "time", label: "Time", icon: Clock },
+					{ id: "festivals", label: "Festivals", icon: PartyPopper },
 					{ id: "finances", label: "Pay", icon: DollarSign },
 				];
 			default:
@@ -98,10 +100,10 @@ export function MobileBottomNav({
 								employees: "Employee Management",
 								finances: "Financial Management",
 								leaves: "Leave Management",
-								settings: "Settings",
-								profile: "Profile",
 								time: "Time Tracking",
 								attendance: "Attendance",
+								settings: "Settings",
+								profile: "Profile",
 								recruitment: "Recruitment",
 								performance: "Performance",
 								compliance: "Compliance",

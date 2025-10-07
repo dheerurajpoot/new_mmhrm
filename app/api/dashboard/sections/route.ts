@@ -92,9 +92,65 @@ async function getOverviewData(role: string, userId: ObjectId) {
     leaveTypesCollection.find({}).toArray()
   ]);
 
+  // Populate team data with leader and member information
+  const populatedTeams = await Promise.all(
+    teams.map(async (team: any) => {
+      // Debug logging
+      console.log(`[Dashboard API] Processing team: ${team.name}, leader_id: ${team.leader_id}, member_ids: ${team.member_ids?.length || 0}`);
+      
+      const leader = team.leader_id ? await usersCollection.findOne({
+        _id: new ObjectId(team.leader_id),
+      }) : null;
+      
+      console.log(`[Dashboard API] Found leader for team ${team.name}:`, leader ? `${leader.full_name || leader.email}` : 'None');
+      
+      const members = team.member_ids && team.member_ids.length > 0
+        ? await usersCollection.find({ _id: { $in: team.member_ids.map((id: any) => new ObjectId(id)) } }).toArray()
+        : [];
+
+      console.log(`[Dashboard API] Found ${members.length} members for team ${team.name}`);
+
+      return {
+        id: team._id.toString(),
+        name: team.name,
+        leader: leader
+          ? {
+              id: leader._id.toString(),
+              email: leader.email,
+              full_name: leader.full_name,
+              name: leader.full_name || leader.email,
+              profile_photo: leader.profile_photo,
+              role: leader.role,
+              department: leader.department,
+              position: leader.position,
+            }
+          : {
+              id: '',
+              email: '',
+              full_name: 'Unknown Leader',
+              name: 'Unknown Leader',
+              profile_photo: null,
+              role: 'unknown',
+              department: '',
+              position: '',
+            },
+        members: members.map((member: any) => ({
+          id: member._id.toString(),
+          email: member.email,
+          full_name: member.full_name,
+          name: member.full_name || member.email,
+          profile_photo: member.profile_photo,
+          role: member.role,
+          department: member.department,
+          position: member.position,
+        })),
+        created_at: team.created_at,
+      };
+    })
+  );
+
   // Calculate stats based on role
   let stats = {};
-  let recentActivity = [];
   let upcomingBirthdays = [];
 
   if (role === 'admin') {
@@ -107,34 +163,16 @@ async function getOverviewData(role: string, userId: ObjectId) {
         return entryDate >= today && entryDate <= endOfToday;
       }).length,
       totalLeaveTypes: leaveTypes.length,
-      totalTeams: teams.length,
+      totalTeams: populatedTeams.length,
       userGrowth: 20,
       attendanceGrowth: 15,
       leaveGrowth: -5,
       teamGrowth: 25,
     };
 
-    // Recent activity for admin
-    recentActivity = leaveRequests
-      .filter((l: any) => l.status === "pending")
-      .slice(0, 10)
-      .map((leave: any) => ({
-        id: `leave-request-${leave._id}`,
-        type: "leave_request",
-        title: `${leave.employee?.full_name || "Employee"} submitted leave request`,
-        description: `${leave.leave_type} leave from ${new Date(leave.start_date).toLocaleDateString()} to ${new Date(leave.end_date).toLocaleDateString()}`,
-        timestamp: leave.created_at,
-        status: leave.status,
-        user: {
-          name: leave.employee?.full_name || "Employee",
-          email: leave.employee?.email || "",
-          profile_photo: leave.employee?.profile_photo,
-          role: "employee"
-        }
-      }));
 
     // Recent teams
-    const recentTeams = teams
+    const recentTeams = populatedTeams
       .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       .slice(0, 10);
 
@@ -171,7 +209,6 @@ async function getOverviewData(role: string, userId: ObjectId) {
 
     return {
       stats,
-      recentActivity,
       recentTeams,
       upcomingBirthdays
     };
@@ -194,21 +231,8 @@ async function getOverviewData(role: string, userId: ObjectId) {
       approvalGrowth: -12,
     };
 
-    recentActivity = leaveRequests
-      .filter((l: any) => l.status === "pending")
-      .slice(0, 4)
-      .map((leave: any) => ({
-        id: `leave-${leave._id}`,
-        type: "leave",
-        message: `${leave.employee?.full_name || "Employee"} submitted leave request`,
-        timestamp: leave.created_at,
-        user: leave.employee?.full_name || "Employee",
-        status: "pending"
-      }));
-
     return {
       stats,
-      recentActivity,
       upcomingBirthdays: users
         .filter((emp: any) => emp.birth_date)
         .slice(0, 10)
@@ -266,6 +290,16 @@ async function getOverviewData(role: string, userId: ObjectId) {
 
     return {
       stats,
+      timeEntries: timeEntries.map((entry: any) => ({
+        id: entry._id.toString(),
+        employee_id: entry.employee_id.toString(),
+        date: entry.date,
+        clock_in: entry.clock_in,
+        clock_out: entry.clock_out,
+        total_hours: entry.total_hours,
+        action: entry.action,
+        created_at: entry.created_at
+      })),
       upcomingBirthdays: users
         .filter((emp: any) => emp.birth_date)
         .slice(0, 10),
@@ -286,7 +320,7 @@ async function getOverviewData(role: string, userId: ObjectId) {
     };
   }
 
-  return { stats: {}, recentActivity: [], upcomingBirthdays: [] };
+  return { stats: {}, upcomingBirthdays: [] };
 }
 
 // Users section data

@@ -44,6 +44,7 @@ export async function getTimeEntriesCollection() {
   return db.collection<TimeEntry>("time_entries")
 }
 
+
 export async function getWFHRequestsCollection() {
   const db = await getDatabase()
   return db.collection<WFHRequest>("wfh_requests")
@@ -98,6 +99,7 @@ export async function initializeIndexes() {
     await leaveBalancesCollection.createIndex({ employee_id: 1, leave_type: 1, year: 1 }, { unique: true })
     await timeEntriesCollection.createIndex({ employee_id: 1 })
     await timeEntriesCollection.createIndex({ date: 1 })
+    await timeEntriesCollection.createIndex({ status: 1 })
     await sessionsCollection.createIndex({ token: 1 }, { unique: true })
     await sessionsCollection.createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 })
 

@@ -522,7 +522,7 @@ export function AdminSettings() {
 							<Button
 								type='submit'
 								disabled={saving}
-								className='bg-gradient-to-r from-red-600 to-blue-600'>
+								className='bg-gradient-to-r from-slate-600 to-slate-700'>
 								{saving ? "Saving..." : "Save Settings"}
 							</Button>
 						</div>

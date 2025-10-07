@@ -122,7 +122,7 @@ export function HRDashboard() {
       case "attendance":
         return (
           <Suspense fallback={<HRSectionSkeleton />}>
-            <AttendanceOverview sectionData={sectionData} />
+            <AttendanceOverview />
           </Suspense>
         )
       case "recruitment":

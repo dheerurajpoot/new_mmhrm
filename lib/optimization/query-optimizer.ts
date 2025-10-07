@@ -32,7 +32,7 @@ export class QueryOptimizer {
               }
             },
             { $count: "todayAttendance" }
-          ]
+          ],
         }
       },
       {
@@ -41,7 +41,7 @@ export class QueryOptimizer {
           activeUsers: { $arrayElemAt: ["$userStats.activeUsers", 0] },
           pendingLeaves: { $arrayElemAt: ["$leaveStats.pendingLeaves", 0] },
           totalTeams: { $arrayElemAt: ["$teamStats.totalTeams", 0] },
-          todayAttendance: { $arrayElemAt: ["$timeStats.todayAttendance", 0] }
+          todayAttendance: { $arrayElemAt: ["$timeStats.todayAttendance", 0] },
         }
       }
     ];

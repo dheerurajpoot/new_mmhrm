@@ -21,6 +21,7 @@ import {
 	UserPlus,
 	Calendar,
 	Clock,
+	PartyPopper,
 	DollarSign,
 	User,
 	Building,
@@ -91,10 +92,10 @@ export function AppSidebar({ role }: AppSidebarProps) {
 			employees: "Employee Management",
 			finances: "Financial Management",
 			leaves: "Leave Management",
-			settings: "Settings",
-			profile: "Profile",
 			time: "Time Tracking",
 			attendance: "Attendance",
+			settings: "Settings",
+			profile: "Profile",
 			recruitment: "Recruitment",
 			performance: "Performance",
 			compliance: "Compliance"
@@ -281,6 +282,14 @@ export function AppSidebar({ role }: AppSidebarProps) {
 						color: "from-orange-500 to-orange-600",
 						bgColor: "bg-orange-50 hover:bg-orange-100",
 						textColor: "text-orange-700"
+					},
+					{ 
+						id: "festivals", 
+						label: "Festivals", 
+						icon: PartyPopper, 
+						color: "from-purple-500 to-purple-600",
+						bgColor: "bg-purple-50 hover:bg-purple-100",
+						textColor: "text-purple-700"
 					},
 					{ 
 						id: "finances", 

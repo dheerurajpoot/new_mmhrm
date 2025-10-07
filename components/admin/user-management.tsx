@@ -280,13 +280,13 @@ export function UserManagement() {
   const getRoleBadgeColor = (role: UserRole) => {
     switch (role) {
       case "admin":
-        return "bg-gradient-to-r from-red-100 to-red-200 text-red-800 border-red-300"
+        return "bg-gradient-to-r from-slate-100 to-slate-200 text-slate-800 border-slate-300"
       case "hr":
-        return "bg-gradient-to-r from-purple-100 to-purple-200 text-purple-800 border-purple-300"
+        return "bg-gradient-to-r from-slate-100 to-slate-200 text-slate-800 border-slate-300"
       case "employee":
-        return "bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border-blue-300"
+        return "bg-gradient-to-r from-slate-100 to-slate-200 text-slate-800 border-slate-300"
       default:
-        return "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border-gray-300"
+        return "bg-gradient-to-r from-slate-100 to-slate-200 text-slate-800 border-slate-300"
     }
   }
 
@@ -359,86 +359,114 @@ export function UserManagement() {
 
   return (
     <div className="space-y-8">
-      {/* User Statistics */}
+      {/* Modern User Statistics with Glassmorphism */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-blue-50 via-white to-blue-50/30 border-blue-100">
-          <CardContent className="p-6">
+        <Card className="group relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-[1.02] bg-gradient-to-br from-blue-50 via-white to-blue-50/30 backdrop-blur-xl rounded-3xl border border-blue-200">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-white/20 to-blue-100/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl"></div>
+          <CardContent className="relative p-8">
             <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-blue-700 mb-2">Total Users</p>
-                <p className="text-3xl font-bold text-blue-900">{stats.total}</p>
-                <p className="text-xs text-blue-600 mt-1">All registered users</p>
+              <div className="flex-1 space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                  <p className="text-sm font-bold text-blue-700 uppercase tracking-wider">Total Users</p>
+                </div>
+                <p className="text-4xl font-bold text-slate-900 tracking-tight">{stats.total}</p>
+                <p className="text-sm text-blue-600 font-medium">All registered users</p>
               </div>
-              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                <Users className="w-7 h-7 text-white" />
+              <div className="relative">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+                  <Users className="w-8 h-8 text-white" />
+                </div>
+                <div className="absolute inset-0 w-16 h-16 bg-gradient-to-br from-blue-400/20 to-purple-600/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-red-50 via-white to-red-50/30 border-red-100">
-          <CardContent className="p-6">
+        <Card className="group relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-[1.02] bg-gradient-to-br from-emerald-50 via-white to-emerald-50/30 backdrop-blur-xl rounded-3xl border border-emerald-200">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/30 via-white/20 to-emerald-100/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl"></div>
+          <CardContent className="relative p-8">
             <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-red-700 mb-2">Administrators</p>
-                <p className="text-3xl font-bold text-red-900">{stats.admins}</p>
-                <p className="text-xs text-red-600 mt-1">System administrators</p>
+              <div className="flex-1 space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                  <p className="text-sm font-bold text-emerald-700 uppercase tracking-wider">Administrators</p>
+                </div>
+                <p className="text-4xl font-bold text-slate-900 tracking-tight">{stats.admins}</p>
+                <p className="text-sm text-emerald-600 font-medium">System administrators</p>
               </div>
-              <div className="w-14 h-14 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
-                <Crown className="w-7 h-7 text-white" />
+              <div className="relative">
+                <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+                  <Crown className="w-8 h-8 text-white" />
+                </div>
+                <div className="absolute inset-0 w-16 h-16 bg-gradient-to-br from-emerald-400/20 to-teal-600/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-purple-50 via-white to-purple-50/30 border-purple-100">
-          <CardContent className="p-6">
+        <Card className="group relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-[1.02] bg-gradient-to-br from-amber-50 via-white to-amber-50/30 backdrop-blur-xl rounded-3xl border border-amber-200">
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-50/30 via-white/20 to-amber-100/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl"></div>
+          <CardContent className="relative p-8">
             <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-purple-700 mb-2">HR Staff</p>
-                <p className="text-3xl font-bold text-purple-900">{stats.hr}</p>
-                <p className="text-xs text-purple-600 mt-1">Human resources</p>
+              <div className="flex-1 space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
+                  <p className="text-sm font-bold text-amber-700 uppercase tracking-wider">HR Staff</p>
+                </div>
+                <p className="text-4xl font-bold text-slate-900 tracking-tight">{stats.hr}</p>
+                <p className="text-sm text-amber-600 font-medium">Human resources</p>
               </div>
-              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <Shield className="w-7 h-7 text-white" />
+              <div className="relative">
+                <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+                  <Shield className="w-8 h-8 text-white" />
+                </div>
+                <div className="absolute inset-0 w-16 h-16 bg-gradient-to-br from-amber-400/20 to-orange-600/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-emerald-50 via-white to-emerald-50/30 border-emerald-100">
-          <CardContent className="p-6">
+        <Card className="group relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-[1.02] bg-gradient-to-br from-rose-50 via-white to-rose-50/30 backdrop-blur-xl rounded-3xl border border-rose-200">
+          <div className="absolute inset-0 bg-gradient-to-br from-rose-50/30 via-white/20 to-rose-100/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl"></div>
+          <CardContent className="relative p-8">
             <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-emerald-700 mb-2">Employees</p>
-                <p className="text-3xl font-bold text-emerald-900">{stats.employees}</p>
-                <p className="text-xs text-emerald-600 mt-1">Regular employees</p>
+              <div className="flex-1 space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-rose-400 rounded-full animate-pulse"></div>
+                  <p className="text-sm font-bold text-rose-700 uppercase tracking-wider">Employees</p>
+                </div>
+                <p className="text-4xl font-bold text-slate-900 tracking-tight">{stats.employees}</p>
+                <p className="text-sm text-rose-600 font-medium">Regular employees</p>
               </div>
-              <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
-                <Briefcase className="w-7 h-7 text-white" />
+              <div className="relative">
+                <div className="w-16 h-16 bg-gradient-to-br from-rose-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+                  <Briefcase className="w-8 h-8 text-white" />
+                </div>
+                <div className="absolute inset-0 w-16 h-16 bg-gradient-to-br from-rose-400/20 to-pink-600/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Main User Management Card */}
-      <Card className="border-0 shadow-lg bg-gradient-to-br from-slate-50 via-white to-slate-50/30 border-slate-100">
-        <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100/50 border-b border-slate-200">
+      {/* Colorful Main User Management Card */}
+      <Card className="border-0 shadow-xl bg-gradient-to-br from-indigo-50 via-white to-purple-50/30 backdrop-blur-xl rounded-3xl border border-indigo-200/50 hover:shadow-2xl transition-all duration-500">
+        <CardHeader className="bg-gradient-to-r from-indigo-50/50 to-purple-100/30 border-b border-indigo-200/50 rounded-t-3xl p-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-slate-500 to-slate-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
                 <Users className="w-5 h-5 text-white" />
               </div>
               <div>
-                <CardTitle className="text-slate-900">User Management</CardTitle>
-                <CardDescription className="text-slate-600">Manage user accounts, roles, and permissions</CardDescription>
+                <CardTitle className="text-indigo-900">User Management</CardTitle>
+                <CardDescription className="text-indigo-600">Manage user accounts, roles, and permissions</CardDescription>
               </div>
             </div>
             <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300">
-                  <UserPlus className="w-4 h-4 mr-2" />
+                <Button className="bg-gradient-to-r from-indigo-600 to-purple-700 hover:from-indigo-700 hover:to-purple-800 text-white shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 rounded-2xl px-8 py-3">
+                  <UserPlus className="w-5 h-5 mr-2" />
                   Add User
                 </Button>
               </DialogTrigger>
@@ -571,8 +599,8 @@ export function UserManagement() {
             {filteredUsers.length > 0 ? (
               <div className="divide-y divide-slate-200">
                 {filteredUsers.map((user, index) => (
-                  <div key={user.id} className={`p-6 hover:bg-slate-50/50 transition-colors ${
-                    index % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'
+                  <div key={user.id} className={`group p-6 hover:bg-white/60 transition-all duration-300 border border-transparent hover:border-slate-200/50 hover:shadow-lg rounded-2xl ${
+                    index % 2 === 0 ? 'bg-white/40' : 'bg-slate-50/20'
                   }`}>
                     <div className="flex items-center justify-between md:flex-row flex-col gap-4 items-start">
                       {/* User Info */}

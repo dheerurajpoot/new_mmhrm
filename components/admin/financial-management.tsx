@@ -598,63 +598,91 @@ export function FinancialManagement() {
 
 	return (
 		<div className="space-y-8">
-			{/* Financial Statistics */}
+			{/* Modern Financial Statistics with Glassmorphism */}
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-				<Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-blue-50 via-white to-blue-50/30 border-blue-100">
-					<CardContent className="p-6">
+				<Card className="group relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-[1.02] bg-white/80 backdrop-blur-xl rounded-3xl border border-white/20">
+					<div className="absolute inset-0 bg-gradient-to-br from-slate-50/30 via-white/20 to-slate-100/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl"></div>
+					<CardContent className="relative p-8">
 						<div className="flex items-center justify-between">
-							<div className="flex-1">
-								<p className="text-sm font-medium text-blue-700 mb-2">Total Employees</p>
-								<p className="text-3xl font-bold text-blue-900">{stats.totalEmployees}</p>
-								<p className="text-xs text-blue-600 mt-1">All employees</p>
+							<div className="flex-1 space-y-3">
+								<div className="flex items-center gap-2">
+									<div className="w-2 h-2 bg-slate-400 rounded-full animate-pulse"></div>
+									<p className="text-sm font-bold text-slate-600 uppercase tracking-wider">Total Employees</p>
+								</div>
+								<p className="text-4xl font-bold text-slate-900 tracking-tight">{stats.totalEmployees}</p>
+								<p className="text-sm text-slate-500 font-medium">All employees</p>
 							</div>
-							<div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-								<Users className="w-7 h-7 text-white" />
+							<div className="relative">
+								<div className="w-16 h-16 bg-gradient-to-br from-slate-500 to-slate-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+									<Users className="w-8 h-8 text-white" />
+								</div>
+								<div className="absolute inset-0 w-16 h-16 bg-gradient-to-br from-slate-400/20 to-slate-600/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 							</div>
 						</div>
 					</CardContent>
 				</Card>
 
-				<Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-emerald-50 via-white to-emerald-50/30 border-emerald-100">
-					<CardContent className="p-6">
+				<Card className="group relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-[1.02] bg-white/80 backdrop-blur-xl rounded-3xl border border-white/20">
+					<div className="absolute inset-0 bg-gradient-to-br from-slate-50/30 via-white/20 to-slate-100/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl"></div>
+					<CardContent className="relative p-8">
 						<div className="flex items-center justify-between">
-							<div className="flex-1">
-								<p className="text-sm font-medium text-emerald-700 mb-2">With Finances</p>
-								<p className="text-3xl font-bold text-emerald-900">{stats.employeesWithFinances}</p>
-								<p className="text-xs text-emerald-600 mt-1">Financial records</p>
+							<div className="flex-1 space-y-3">
+								<div className="flex items-center gap-2">
+									<div className="w-2 h-2 bg-slate-400 rounded-full animate-pulse"></div>
+									<p className="text-sm font-bold text-slate-600 uppercase tracking-wider">With Finances</p>
+								</div>
+								<p className="text-4xl font-bold text-slate-900 tracking-tight">{stats.employeesWithFinances}</p>
+								<p className="text-sm text-slate-500 font-medium">Financial records</p>
 							</div>
-							<div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
-								<PiggyBank className="w-7 h-7 text-white" />
+							<div className="relative">
+								<div className="w-16 h-16 bg-gradient-to-br from-slate-500 to-slate-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+									<PiggyBank className="w-8 h-8 text-white" />
+								</div>
+								<div className="absolute inset-0 w-16 h-16 bg-gradient-to-br from-slate-400/20 to-slate-600/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 							</div>
 						</div>
 					</CardContent>
 				</Card>
 
-				<Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-purple-50 via-white to-purple-50/30 border-purple-100">
-					<CardContent className="p-6">
+				<Card className="group relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-[1.02] bg-white/80 backdrop-blur-xl rounded-3xl border border-white/20">
+					<div className="absolute inset-0 bg-gradient-to-br from-slate-50/30 via-white/20 to-slate-100/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl"></div>
+					<CardContent className="relative p-8">
 						<div className="flex items-center justify-between">
-							<div className="flex-1">
-								<p className="text-sm font-medium text-purple-700 mb-2">Payroll Records</p>
-								<p className="text-3xl font-bold text-purple-900">{stats.totalPayrollRecords}</p>
-								<p className="text-xs text-purple-600 mt-1">Total records</p>
+							<div className="flex-1 space-y-3">
+								<div className="flex items-center gap-2">
+									<div className="w-2 h-2 bg-slate-400 rounded-full animate-pulse"></div>
+									<p className="text-sm font-bold text-slate-600 uppercase tracking-wider">Payroll Records</p>
+								</div>
+								<p className="text-4xl font-bold text-slate-900 tracking-tight">{stats.totalPayrollRecords}</p>
+								<p className="text-sm text-slate-500 font-medium">Total records</p>
 							</div>
-							<div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-								<Receipt className="w-7 h-7 text-white" />
+							<div className="relative">
+								<div className="w-16 h-16 bg-gradient-to-br from-slate-500 to-slate-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+									<Receipt className="w-8 h-8 text-white" />
+								</div>
+								<div className="absolute inset-0 w-16 h-16 bg-gradient-to-br from-slate-400/20 to-slate-600/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 							</div>
 						</div>
 					</CardContent>
 				</Card>
 
-				<Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-amber-50 via-white to-amber-50/30 border-amber-100">
-					<CardContent className="p-6">
+				<Card className="group relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-[1.02] bg-white/80 backdrop-blur-xl rounded-3xl border border-white/20">
+					<div className="absolute inset-0 bg-gradient-to-br from-slate-50/30 via-white/20 to-slate-100/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl"></div>
+					<CardContent className="relative p-8">
 						<div className="flex items-center justify-between">
-							<div className="flex-1">
-								<p className="text-sm font-medium text-amber-700 mb-2">Avg Salary</p>
-								<p className="text-3xl font-bold text-amber-900">${Math.round(stats.averageSalary).toLocaleString()}</p>
-								<p className="text-xs text-amber-600 mt-1">Per employee</p>
+							<div className="flex-1 space-y-3">
+								<div className="flex items-center gap-2">
+									<div className="w-2 h-2 bg-slate-400 rounded-full animate-pulse"></div>
+									<p className="text-sm font-bold text-slate-600 uppercase tracking-wider">Avg Salary</p>
+								</div>
+								<p className="text-4xl font-bold text-slate-900 tracking-tight">${Math.round(stats.averageSalary).toLocaleString()}</p>
+								<p className="text-sm text-slate-500 font-medium">Per employee</p>
 							</div>
-							<div className="w-14 h-14 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg">
-								<TrendingUp className="w-7 h-7 text-white" />
+							<div className="relative">
+								<div className="w-16 h-16 bg-gradient-to-br from-slate-500 to-slate-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+									<TrendingUp className="w-8 h-8 text-white" />
+								</div>
+								<div className="absolute inset-0 w-16 h-16 bg-gradient-to-br from-slate-400/20 to-slate-600/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 							</div>
 						</div>
 					</CardContent>
@@ -662,8 +690,8 @@ export function FinancialManagement() {
 			</div>
 
 			{/* Main Financial Management Card */}
-			<Card className="border-0 shadow-lg bg-gradient-to-br from-slate-50 via-white to-slate-50/30 border-slate-100">
-				<CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100/50 border-b border-slate-200">
+			<Card className="border-0 shadow-xl bg-white/80 backdrop-blur-xl rounded-3xl border border-white/20 hover:shadow-2xl transition-all duration-500">
+				<CardHeader className="bg-gradient-to-r from-slate-50/50 to-slate-100/30 border-b border-slate-200/50 rounded-t-3xl p-8">
 					<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 						<div className="flex items-center gap-3">
 							<div className="w-10 h-10 bg-gradient-to-br from-slate-500 to-slate-600 rounded-lg flex items-center justify-center">
@@ -677,14 +705,14 @@ export function FinancialManagement() {
 						<div className="flex gap-2 flex-shrink-0">
 							<Button
 								onClick={() => openFinanceDialog()}
-								className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-2"
+								className="bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 rounded-2xl px-6 py-3"
 							>
 								<Plus className="w-4 h-4 mr-2" />
 								Create Finance
 							</Button>
 							<Button
 								onClick={() => openPayrollDialog()}
-								className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-2"
+								className="bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 rounded-2xl px-6 py-3"
 							>
 								<Plus className="w-4 h-4 mr-2" />
 								Create Payroll
@@ -1504,7 +1532,7 @@ export function FinancialManagement() {
 				<Button 
 					onClick={() => openFinanceDialog()}
 					size="lg" 
-					className="w-14 h-14 rounded-full bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-2xl hover:shadow-3xl transition-all duration-300"
+					className="w-14 h-14 rounded-full bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white shadow-2xl hover:shadow-3xl transition-all duration-300"
 				>
 					<Plus className="w-6 h-6" />
 				</Button>

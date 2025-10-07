@@ -20,12 +20,12 @@ import type { Profile } from "@/lib/types";
 const EmployeeProfile = lazy(() => import("./employee-profile").then(module => ({ default: module.EmployeeProfile })))
 const LeaveBalance = lazy(() => import("./leave-balance").then(module => ({ default: module.LeaveBalance })))
 const TimeTracking = lazy(() => import("./time-tracking").then(module => ({ default: module.TimeTracking })))
-const TimeTrackingSimple = lazy(() => import("./time-tracking-simple").then(module => ({ default: module.TimeTrackingSimple })))
+const TimeTrackingWidget = lazy(() => import("./time-tracking-widget").then(module => ({ default: module.TimeTrackingWidget })))
 const EmployeeFinances = lazy(() => import("./employee-finances").then(module => ({ default: module.EmployeeFinances })))
 const EmployeeStats = lazy(() => import("./employee-stats").then(module => ({ default: module.EmployeeStats })))
 const TeamMembers = lazy(() => import("./team-members").then(module => ({ default: module.TeamMembers })))
-const TimeTrackingWidget = lazy(() => import("./time-tracking-widget").then(module => ({ default: module.TimeTrackingWidget })))
 const UpcomingBirthdays = lazy(() => import("@/components/shared/upcoming-birthdays").then(module => ({ default: module.UpcomingBirthdays })))
+const Festivals = lazy(() => import("./festivals").then(module => ({ default: module.Festivals })))
 
 // Loading skeleton component
 const EmployeeSectionSkeleton = () => (
@@ -80,9 +80,9 @@ export function EmployeeDashboard() {
 	const [activeSection, setActiveSection] = useState("overview");
 	const [currentUser, setCurrentUser] = useState<Profile | null>(null);
 
-	// Use section-based data loading
+	// Use section-based data loading (except for festivals which has its own API)
 	const { data: sectionData, loading: sectionLoading, error: sectionError } = useSectionData(activeSection, {
-		enabled: true,
+		enabled: activeSection !== 'festivals', // Don't fetch section data for festivals
 		refetchOnMount: true
 	})
 
@@ -137,15 +137,17 @@ export function EmployeeDashboard() {
 		}
 
 		switch (activeSection) {
-			case "overview":
-				return (
-					<div className='space-y-6'>
-						<Suspense fallback={<Skeleton className="h-20 w-full" />}>
-							<TimeTrackingWidget sectionData={sectionData} />
-						</Suspense>
-						<Suspense fallback={<EmployeeSectionSkeleton />}>
-							<EmployeeStats sectionData={sectionData} />
-						</Suspense>
+		case "overview":
+			return (
+				<div className='space-y-6'>
+					{/* Time Tracking Widget */}
+					<Suspense fallback={<Skeleton className="h-20 w-full" />}>
+						<TimeTrackingWidget />
+					</Suspense>
+					
+					<Suspense fallback={<EmployeeSectionSkeleton />}>
+						<EmployeeStats sectionData={sectionData} />
+					</Suspense>
 						<div className='grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6'>
 							<Suspense fallback={<Skeleton className="h-64 w-full" />}>
 								<TeamMembers sectionData={sectionData} />
@@ -193,16 +195,29 @@ export function EmployeeDashboard() {
 						<EmployeeProfile sectionData={sectionData} />
 					</Suspense>
 				);
-			case "leaves":
-				return (
+		case "leaves":
+			return (
+				<div className='space-y-6'>
+					{/* Time Tracking Widget */}
+					<Suspense fallback={<Skeleton className="h-20 w-full" />}>
+						<TimeTrackingWidget />
+					</Suspense>
+					
 					<Suspense fallback={<EmployeeSectionSkeleton />}>
 						<LeaveBalance sectionData={sectionData} />
 					</Suspense>
-				);
+				</div>
+			);
 			case "time":
 				return (
 					<Suspense fallback={<EmployeeSectionSkeleton />}>
 						<TimeTracking sectionData={sectionData} />
+					</Suspense>
+				);
+			case "festivals":
+				return (
+					<Suspense fallback={<EmployeeSectionSkeleton />}>
+						<Festivals />
 					</Suspense>
 				);
 			case "finances":
@@ -211,15 +226,12 @@ export function EmployeeDashboard() {
 						<EmployeeFinances sectionData={sectionData} />
 					</Suspense>
 				);
-			default:
-				return (
-					<div className='space-y-6'>
-						<Suspense fallback={<EmployeeSectionSkeleton />}>
-							<EmployeeStats sectionData={sectionData} />
-						</Suspense>
-						<Suspense fallback={<Skeleton className="h-20 w-full" />}>
-							<TimeTrackingSimple sectionData={sectionData} />
-						</Suspense>
+		default:
+			return (
+				<div className='space-y-6'>
+					<Suspense fallback={<EmployeeSectionSkeleton />}>
+						<EmployeeStats sectionData={sectionData} />
+					</Suspense>
 						<div className='grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6'>
 							<Suspense fallback={<Skeleton className="h-64 w-full" />}>
 								<TeamMembers sectionData={sectionData} />
@@ -288,6 +300,11 @@ export function EmployeeDashboard() {
 					title: "Time Tracking",
 					description: "Track your work hours and attendance",
 				};
+			case "festivals":
+				return {
+					title: "Festivals & Holidays",
+					description: "Explore festivals and holidays around the world",
+				};
 			case "finances":
 				return {
 					title: "My Finances",
@@ -315,7 +332,7 @@ export function EmployeeDashboard() {
 					role="employee"
 				/>
 				<div className='flex-1 p-3 md:p-4 pb-20 md:pb-4 bg-gray-50/50 min-h-screen'>
-					<div className='max-w-7xl mx-auto'>{renderContent()}</div>
+					<div className='max-w-full mx-auto'>{renderContent()}</div>
 				</div>
 			</SidebarInset>
 			<MobileBottomNav

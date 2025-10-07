@@ -20,7 +20,6 @@ import {
 	ArrowUpRight,
 	ArrowDownRight,
 	DollarSign,
-	Activity,
 	CheckCircle,
 	XCircle,
 	AlertCircle,
@@ -34,6 +33,7 @@ import {
 	Trash2,
 } from "lucide-react";
 import { UpcomingBirthdays } from "@/components/shared/upcoming-birthdays";
+import { RecentActivity } from "@/components/shared/recent-activity";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 
@@ -50,38 +50,6 @@ interface Stats {
 	teamGrowth: number;
 }
 
-interface RecentActivity {
-	id: string;
-	type:
-		| "leave_request"
-		| "leave_approval"
-		| "employee_registered"
-		| "team_created"
-		| "time_entry";
-	title: string;
-	description: string;
-	details?: any;
-	user?: {
-		name: string;
-		email: string;
-		profile_photo?: string;
-		role: string;
-	};
-	targetUser?: {
-		name: string;
-		email: string;
-		profile_photo?: string;
-		role: string;
-	};
-	approver?: {
-		name: string;
-		email: string;
-		profile_photo?: string;
-		role: string;
-	};
-	timestamp: string;
-	status: string;
-}
 
 interface AdminStatsProps {
 	sectionData?: any;
@@ -100,7 +68,6 @@ export function AdminStats({ sectionData }: AdminStatsProps) {
 		leaveGrowth: 0,
 		teamGrowth: 0,
 	});
-	const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
 	const [recentTeams, setRecentTeams] = useState<any[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -121,13 +88,26 @@ export function AdminStats({ sectionData }: AdminStatsProps) {
 				leaveGrowth: 0,
 				teamGrowth: 0,
 			});
-			setRecentActivity(sectionData.recentActivity || []);
 			setRecentTeams(sectionData.recentTeams || []);
 			setIsLoading(false);
 			setLastUpdated(new Date());
 		} else {
-			// Fallback to original data fetching
-			fetchStats();
+			// Use default values when no section data is available
+			setStats({
+				totalUsers: 0,
+				activeUsers: 0,
+				pendingLeaves: 0,
+				todayAttendance: 0,
+				totalLeaveTypes: 0,
+				totalTeams: 0,
+				userGrowth: 0,
+				attendanceGrowth: 0,
+				leaveGrowth: 0,
+				teamGrowth: 0,
+			});
+			setRecentTeams([]);
+			setIsLoading(false);
+			setLastUpdated(new Date());
 		}
 	}, [sectionData]);
 
@@ -140,7 +120,6 @@ export function AdminStats({ sectionData }: AdminStatsProps) {
 					attendanceRes,
 					leaveTypesRes,
 					teamsRes,
-					activitiesRes,
 					employeesRes,
 				] = await Promise.all([
 					fetch("/api/employees"),
@@ -148,7 +127,6 @@ export function AdminStats({ sectionData }: AdminStatsProps) {
 					fetch("/api/time-entries"),
 					fetch("/api/leave-types"),
 					fetch("/api/teams"),
-					fetch("/api/admin/recent-activities"),
 					fetch("/api/employee/search"),
 				]);
 
@@ -166,13 +144,6 @@ export function AdminStats({ sectionData }: AdminStatsProps) {
 						teamsRes.statusText
 					);
 				}
-				if (!activitiesRes.ok) {
-					console.error(
-						"Failed to fetch activities:",
-						activitiesRes.status,
-						activitiesRes.statusText
-					);
-				}
 				if (!employeesRes.ok) {
 					console.error(
 						"Failed to fetch employees:",
@@ -186,7 +157,6 @@ export function AdminStats({ sectionData }: AdminStatsProps) {
 				const attendance = await attendanceRes.json();
 				const leaveTypes = await leaveTypesRes.json();
 				const teams = await teamsRes.json();
-				const activities = await activitiesRes.json();
 				const employees = await employeesRes.json();
 
 				// Store recent teams separately (10 most recent)
@@ -221,7 +191,6 @@ export function AdminStats({ sectionData }: AdminStatsProps) {
 					teamGrowth: 25,
 				});
 
-				setRecentActivity(activities || []);
 
 				// Update last updated timestamp
 				setLastUpdated(new Date());
@@ -259,10 +228,10 @@ export function AdminStats({ sectionData }: AdminStatsProps) {
 			icon: Users,
 			growth: stats.userGrowth || 0,
 			trend: "up",
-			color: "text-blue-600",
-			bgColor: "bg-gradient-to-br from-blue-50 to-blue-100",
+			color: "text-blue-700",
+			bgColor: "bg-gradient-to-br from-blue-50 via-white to-blue-50/30",
 			borderColor: "border-blue-200",
-			iconBg: "bg-blue-500",
+			iconBg: "bg-gradient-to-br from-blue-500 to-purple-600",
 		},
 		{
 			title: "Total Teams",
@@ -271,10 +240,10 @@ export function AdminStats({ sectionData }: AdminStatsProps) {
 			icon: Building2,
 			growth: stats.teamGrowth || 0,
 			trend: "up",
-			color: "text-purple-600",
-			bgColor: "bg-gradient-to-br from-purple-50 to-purple-100",
-			borderColor: "border-purple-200",
-			iconBg: "bg-purple-500",
+			color: "text-emerald-700",
+			bgColor: "bg-gradient-to-br from-emerald-50 via-white to-emerald-50/30",
+			borderColor: "border-emerald-200",
+			iconBg: "bg-gradient-to-br from-emerald-500 to-teal-600",
 		},
 		{
 			title: "Leave Types",
@@ -283,10 +252,10 @@ export function AdminStats({ sectionData }: AdminStatsProps) {
 			icon: Calendar,
 			growth: 0,
 			trend: "up",
-			color: "text-emerald-600",
-			bgColor: "bg-gradient-to-br from-emerald-50 to-emerald-100",
-			borderColor: "border-emerald-200",
-			iconBg: "bg-emerald-500",
+			color: "text-amber-700",
+			bgColor: "bg-gradient-to-br from-amber-50 via-white to-amber-50/30",
+			borderColor: "border-amber-200",
+			iconBg: "bg-gradient-to-br from-amber-500 to-orange-600",
 		},
 		{
 			title: "Pending Leaves",
@@ -295,10 +264,10 @@ export function AdminStats({ sectionData }: AdminStatsProps) {
 			icon: AlertCircle,
 			growth: stats.leaveGrowth || 0,
 			trend: "down",
-			color: "text-orange-600",
-			bgColor: "bg-gradient-to-br from-orange-50 to-orange-100",
-			borderColor: "border-orange-200",
-			iconBg: "bg-orange-500",
+			color: "text-rose-700",
+			bgColor: "bg-gradient-to-br from-rose-50 via-white to-rose-50/30",
+			borderColor: "border-rose-200",
+			iconBg: "bg-gradient-to-br from-rose-500 to-pink-600",
 		},
 	];
 
@@ -322,7 +291,7 @@ export function AdminStats({ sectionData }: AdminStatsProps) {
 						</div>
 					))}
 				</div>
-				<div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+				<div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
 					<div className='bg-white rounded-2xl border border-gray-100 p-6 animate-pulse'>
 						<div className='h-6 bg-gray-200 rounded mb-4'></div>
 						<div className='h-64 bg-gray-200 rounded'></div>
@@ -337,73 +306,15 @@ export function AdminStats({ sectionData }: AdminStatsProps) {
 							))}
 						</div>
 					</div>
+					<div className='bg-white rounded-2xl border border-gray-100 p-6 animate-pulse'>
+						<div className='h-6 bg-gray-200 rounded mb-4'></div>
+						<div className='h-64 bg-gray-200 rounded'></div>
+					</div>
 				</div>
 			</div>
 		);
 	}
 
-	const getActivityIcon = (type: string) => {
-		switch (type) {
-			case "leave_request":
-				return <FileText className='w-4 h-4 text-blue-600' />;
-			case "leave_approval":
-				return <CheckCircle className='w-4 h-4 text-green-600' />;
-			case "employee_registered":
-				return <UserPlus className='w-4 h-4 text-emerald-600' />;
-			case "team_created":
-				return <Building2 className='w-4 h-4 text-purple-600' />;
-			case "time_entry":
-				return <Timer className='w-4 h-4 text-orange-600' />;
-			case "clock_in":
-				return <Clock className='w-4 h-4 text-green-600' />;
-			case "clock_out":
-				return <Clock className='w-4 h-4 text-red-600' />;
-			default:
-				return <Activity className='w-4 h-4 text-gray-600' />;
-		}
-	};
-
-	const getActivityColor = (type: string) => {
-		switch (type) {
-			case "leave_request":
-				return "bg-blue-100 text-blue-800";
-			case "leave_approval":
-				return "bg-green-100 text-green-800";
-			case "employee_registered":
-				return "bg-emerald-100 text-emerald-800";
-			case "team_created":
-				return "bg-purple-100 text-purple-800";
-			case "time_entry":
-				return "bg-orange-100 text-orange-800";
-			case "clock_in":
-				return "bg-green-100 text-green-800";
-			case "clock_out":
-				return "bg-red-100 text-red-800";
-			default:
-				return "bg-gray-100 text-gray-800";
-		}
-	};
-
-	const getActivityBadge = (type: string, status: string) => {
-		switch (type) {
-			case "leave_request":
-				return status === "pending" ? "Pending" : status;
-			case "leave_approval":
-				return status === "approved" ? "Approved" : "Rejected";
-			case "employee_registered":
-				return "New";
-			case "team_created":
-				return "Created";
-			case "time_entry":
-				return status === "clock_in" ? "Clock In" : "Clock Out";
-			case "clock_in":
-				return "Clock In";
-			case "clock_out":
-				return "Clock Out";
-			default:
-				return "Activity";
-		}
-	};
 
 	const formatTimeAgo = (timestamp: string) => {
 		const time = new Date(timestamp);
@@ -418,396 +329,241 @@ export function AdminStats({ sectionData }: AdminStatsProps) {
 		return `${Math.floor(diffInMinutes / 1440)}d ago`;
 	};
 
-	const formatActivityTime = (timestamp: string) => {
-		const time = new Date(timestamp);
-		const now = new Date();
-		const diffInMinutes = Math.floor(
-			(now.getTime() - time.getTime()) / (1000 * 60)
-		);
-
-		// Show exact time for recent activities (less than 1 hour)
-		if (diffInMinutes < 60) {
-			// Use local time formatting to show user's timezone
-			return time.toLocaleTimeString([], {
-				hour: "2-digit",
-				minute: "2-digit",
-				hour12: true,
-			});
-		}
-
-		// Show relative time for older activities
-		if (diffInMinutes < 1440) {
-			return `${Math.floor(diffInMinutes / 60)}h ago`;
-		}
-
-		return `${Math.floor(diffInMinutes / 1440)}d ago`;
-	};
-
 	const refreshDashboard = () => {
 		setIsLoading(true);
 		// Trigger the useEffect to refetch data
 		window.location.reload();
 	};
 
-	const deleteActivity = async (activityId: string) => {
-		try {
-			// Extract the actual ID from the activity ID (remove prefix)
-			const actualId = activityId.replace(
-				/^(leave-request-|leave-approved-|leave-rejected-|team-|employee-|time-)/,
-				""
-			);
-
-			// Determine the collection based on activity type
-			let endpoint = "";
-			if (
-				activityId.startsWith("leave-request-") ||
-				activityId.startsWith("leave-approved-") ||
-				activityId.startsWith("leave-rejected-")
-			) {
-				endpoint = `/api/leave-requests/${actualId}`;
-			} else if (activityId.startsWith("team-")) {
-				endpoint = `/api/teams/${actualId}`;
-			} else if (activityId.startsWith("employee-")) {
-				endpoint = `/api/users/${actualId}`;
-			} else if (activityId.startsWith("time-")) {
-				endpoint = `/api/time-entries/${actualId}`;
-			}
-
-			if (endpoint) {
-				const response = await fetch(endpoint, {
-					method: "DELETE",
-				});
-
-				if (response.ok) {
-					// Remove from local state
-					setRecentActivity((prev) =>
-						prev.filter((activity) => activity.id !== activityId)
-					);
-					console.log("Activity deleted successfully");
-				} else {
-					console.error("Failed to delete activity");
-				}
-			}
-		} catch (error) {
-			console.error("Error deleting activity:", error);
-		}
-	};
 
 	return (
 		<div className='space-y-8'>
-			{/* Statistics Cards */}
+			{/* Modern Statistics Cards with Glassmorphism */}
 			<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
 				{statCards.map((stat, index) => (
 					<div
 						key={index}
-						className={`${stat.bgColor} rounded-2xl border-2 ${stat.borderColor} p-6 hover:shadow-xl transition-all duration-300 hover:scale-105`}>
-						<div className='flex items-center justify-between mb-4'>
-							<h3 className='text-sm font-semibold text-gray-700'>
-								{stat.title}
-							</h3>
-							<div
-								className={`w-12 h-12 ${stat.iconBg} rounded-xl flex items-center justify-center shadow-lg`}>
-								<stat.icon className='w-6 h-6 text-white' />
+						className={`group relative overflow-hidden ${stat.bgColor} backdrop-blur-xl rounded-3xl ${stat.borderColor} border p-8 hover:shadow-2xl transition-all duration-500 hover:scale-[1.02] hover:border-opacity-60 shadow-xl`}>
+						{/* Colorful gradient overlay */}
+						<div className={`absolute inset-0 ${stat.bgColor.replace('via-white', 'via-white/80')} opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl`}></div>
+
+						{/* Colorful border glow */}
+						<div className={`absolute inset-0 rounded-3xl ${stat.borderColor.replace('border-', 'bg-gradient-to-r from-').replace('-200', '-200/10')} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}></div>
+
+						<div className="relative">
+							<div className='flex items-center justify-between mb-6'>
+								<div className="flex items-center gap-3">
+									<div className={`w-2 h-2 ${stat.color.replace('text-', 'bg-').replace('-700', '-400')} rounded-full animate-pulse`}></div>
+									<h3 className={`text-sm font-bold ${stat.color} uppercase tracking-wider`}>
+										{stat.title}
+									</h3>
+								</div>
+								<div className="relative">
+									<div className={`w-14 h-14 ${stat.iconBg} rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-500`}>
+										<stat.icon className='w-7 h-7 text-white' />
+									</div>
+									{/* Colorful glow effect */}
+									<div className={`absolute inset-0 w-14 h-14 ${stat.iconBg.replace('from-', 'from-').replace('to-', 'to-').replace('-500', '-400/20').replace('-600', '-600/20')} rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500`}></div>
+								</div>
 							</div>
-						</div>
-						<div className='mb-3'>
-							<p className='text-3xl font-bold text-gray-900'>
-								{stat.value}
-							</p>
-							<p className='text-sm text-gray-600 mt-1'>
-								{stat.description}
-							</p>
-						</div>
-						<div className='flex items-center space-x-2'>
-							{stat.trend === "up" ? (
-								<ArrowUpRight className='w-4 h-4 text-emerald-600' />
-							) : (
-								<ArrowDownRight className='w-4 h-4 text-red-500' />
-							)}
-							<span
-								className={`text-sm font-semibold ${
-									stat.trend === "up"
-										? "text-emerald-600"
-										: "text-red-500"
-								}`}>
-								{Math.abs(stat.growth)}%
-							</span>
+
+							<div className='mb-6'>
+								<p className='text-4xl font-bold text-slate-900 mb-2 tracking-tight'>
+									{stat.value}
+								</p>
+								<p className={`text-sm ${stat.color} font-medium`}>
+									{stat.description}
+								</p>
+							</div>
+
+							{/* Modern progress indicator */}
+							<div className="pt-4 border-t border-slate-200/50">
+								<div className="flex items-center justify-between mb-2">
+									<div className="flex items-center gap-2">
+										{stat.trend === "up" ? (
+											<ArrowUpRight className='w-4 h-4 text-emerald-500' />
+										) : (
+											<ArrowDownRight className='w-4 h-4 text-red-500' />
+										)}
+										<span className="text-sm font-semibold text-slate-600">
+											{Math.abs(stat.growth)}%
+										</span>
+									</div>
+									<span className="text-xs text-slate-400 font-medium">vs last month</span>
+								</div>
+								<div className="w-full bg-slate-200/50 rounded-full h-1.5 overflow-hidden">
+									<div className={`h-full ${stat.iconBg} rounded-full transition-all duration-1000 ease-out`}
+										style={{ width: `${Math.min(Math.abs(stat.growth) * 3, 100)}%` }}></div>
+								</div>
+							</div>
 						</div>
 					</div>
 				))}
 			</div>
 
-			{/* Recent Activity, Teams, and Birthdays Section */}
+			{/* Activity, Teams and Birthdays Section */}
 			<div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-				{/* Recent Activity - Phone Notification Style */}
-				<div className='bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/30 rounded-2xl border border-blue-100 p-4 shadow-lg'>
+
+				{/* Recent Activity - Live Feed */}
+				<RecentActivity 
+					sectionData={sectionData}
+					maxItems={10}
+					showHeader={true}
+					title="Live Activity Feed"
+					description="Real-time system notifications"
+				/>
+
+				{/* Recent Teams - Modern Notification Style */}
+				<div className='bg-gradient-to-br from-cyan-50 via-white to-teal-50/30 backdrop-blur-xl rounded-3xl border border-cyan-200/50 p-6 shadow-xl hover:shadow-2xl transition-all duration-500'>
 					<div className='flex items-center justify-between mb-6'>
-						<div className='flex items-center gap-3'>
-							<div className='w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-md'>
-								<Activity className='w-5 h-5 text-white' />
+						<div className='flex items-center gap-4'>
+							<div className='w-12 h-12 bg-gradient-to-br from-cyan-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg'>
+								<Building2 className='w-6 h-6 text-white' />
 							</div>
 							<div>
-								<h3 className='text-lg font-bold text-gray-900'>
-									Recent Activity
+								<h3 className='text-xl font-bold text-cyan-900'>
+									Recent Team Notifications
 								</h3>
-								<p className='text-sm text-gray-600'>
-									Live system notifications
+								<p className='text-sm text-cyan-600 font-medium'>
+									Latest team creations & updates
 								</p>
 							</div>
 						</div>
-						<div className='flex items-center gap-2'>
-							<div className='w-2 h-2 bg-green-500 rounded-full animate-pulse'></div>
+						<div className='flex items-center gap-3'>
+							<div className='w-2 h-2 bg-cyan-500 rounded-full animate-pulse'></div>
 							<Badge
 								variant='outline'
-								className='text-xs bg-blue-50 text-blue-700 border-blue-200'>
-								Last 10 activities
+								className='text-xs bg-cyan-50/80 text-cyan-700 border-cyan-200 backdrop-blur-sm'>
+								Live Updates
 							</Badge>
 						</div>
 					</div>
-					<div className='space-y-3 h-96 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-blue-200 scrollbar-track-transparent hover:scrollbar-thumb-blue-300'>
-						{recentActivity.slice(0, 10).map((activity, index) => (
+					<div className='space-y-4 h-96 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-cyan-200 scrollbar-track-transparent hover:scrollbar-thumb-cyan-300'>
+						{recentTeams.slice(0, 10).map((team, index) => (
 							<div
-								key={activity.id}
-								className='group relative bg-white/80 backdrop-blur-sm rounded-xl p-4 hover:bg-white/90 transition-all duration-200 border border-blue-100 hover:border-blue-200 hover:shadow-md'>
+								key={team.id}
+								className='group relative bg-white/70 backdrop-blur-sm rounded-2xl p-5 hover:bg-white/90 transition-all duration-300 border border-cyan-200/50 hover:border-cyan-300/50 hover:shadow-lg'>
 								{/* Notification indicator */}
-								<div className='absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full animate-pulse'></div>
+								<div className='absolute top-3 right-3 w-2 h-2 bg-cyan-500 rounded-full animate-pulse'></div>
 
-								<div className='flex items-start space-x-3'>
-									<div className='flex-shrink-0'>
-										<div className='w-12 h-12 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center shadow-sm'>
-											{getActivityIcon(activity.type)}
+								<div className='flex items-start space-x-4'>
+									{/* Team Leader Avatar with Crown */}
+									<div className='relative flex-shrink-0'>
+										<Avatar className='w-14 h-14 ring-3 ring-cyan-100 group-hover:ring-cyan-200 transition-all duration-300 shadow-lg'>
+											<AvatarImage
+												src={team.leader?.profile_photo}
+												alt={team.leader?.full_name || team.leader?.name}
+											/>
+											<AvatarFallback className='bg-gradient-to-br from-cyan-400 to-teal-500 text-white font-semibold text-lg'>
+												{team.leader?.full_name?.charAt(0) ||
+													team.leader?.name?.charAt(0) ||
+													team.name?.charAt(0) || "T"}
+											</AvatarFallback>
+										</Avatar>
+										{/* Leader crown indicator */}
+										<div className='absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-br from-amber-400 to-orange-500 border-2 border-white rounded-full flex items-center justify-center shadow-lg'>
+											<Star className='w-3 h-3 text-white' />
 										</div>
 									</div>
+
+									{/* Team Notification Content */}
 									<div className='flex-1 min-w-0'>
-										<div className='flex items-center justify-between mb-1'>
-											<h4 className='text-sm font-bold text-gray-900 truncate'>
-												{activity.title}
-											</h4>
-											<div className='flex items-center gap-2'>
-												<Badge
-													className={`text-xs ${getActivityColor(
-														activity.type
-													)}`}>
-													{getActivityBadge(
-														activity.type,
-														activity.status
-													)}
-												</Badge>
-												<span className='text-xs text-gray-400 font-medium'>
-													{formatActivityTime(
-														activity.timestamp
-													)}
-												</span>
-											</div>
-										</div>
-										<p className='text-sm text-gray-600 mb-2 line-clamp-2'>
-											{activity.description}
-										</p>
 										<div className='flex items-center justify-between'>
-											<div className='flex items-center space-x-2'>
-												{activity.user && (
-													<Avatar className='w-6 h-6 ring-1 ring-blue-100'>
-														<AvatarImage
-															src={
-																activity.user
-																	.profile_photo
-															}
-															alt={
-																activity.user
-																	.name
-															}
-														/>
-														<AvatarFallback className='text-xs bg-gradient-to-br from-blue-400 to-indigo-400 text-white'>
-															{activity.user.name?.charAt(
-																0
-															) || "U"}
-														</AvatarFallback>
-													</Avatar>
-												)}
-												<span className='text-xs text-gray-500 font-medium'>
-													{activity.user?.name ||
-														"System"}
-													{activity.targetUser && (
-														<span className='text-gray-400'>
-															{" "}
-															→{" "}
-															{
-																activity
-																	.targetUser
-																	.name
-															}
-														</span>
-													)}
+											<div className='flex items-center gap-3'>
+												<h4 className='text-lg font-bold text-cyan-900 truncate'>
+													{team.name}
+												</h4>
+												<Badge className='text-xs bg-gradient-to-r from-cyan-100 to-teal-100 text-cyan-800 border-cyan-200 shadow-sm'>
+													Team Created
+												</Badge>
+											</div>
+											<span className='text-xs text-cyan-500 font-medium'>
+												{new Date(team.created_at).toLocaleTimeString([], {
+													hour: "2-digit",
+													minute: "2-digit",
+													hour12: true,
+												})}
+											</span>
+										</div>
+
+										{/* Team Leader Info */}
+										<div className='flex items-center gap-2 mb-3'>
+											<div className='w-2 h-2 bg-cyan-400 rounded-full'></div>
+											<span className='mt-1 text-sm font-semibold text-cyan-700 flex items-center gap-2'>
+												Led by
+												<Avatar className='w-4 h-4 border border-cyan-200'>
+													<AvatarImage src={team.leader?.profile_photo || ""} />
+													<AvatarFallback>
+														{team.leader?.full_name?.charAt(0) || team.leader?.name?.charAt(0) || "U"}
+													</AvatarFallback>
+												</Avatar>
+												{team.leader?.full_name || team.leader?.name || "Unknown Leader"}
+											</span>
+										</div>
+
+										{/* Team Stats */}
+										<div className='flex items-center gap-4 text-xs text-cyan-600 mb-3'>
+											<div className='flex items-center gap-1'>
+												<Users className='w-3 h-3' />
+												<span className='font-medium'>
+													{team.members?.length || 0} members
 												</span>
 											</div>
-											<div className='text-xs text-gray-400'>
-												{formatTimeAgo(
-													activity.timestamp
-												)}
+											<div className='w-1 h-1 bg-cyan-300 rounded-full'></div>
+											<div className='flex items-center gap-1'>
+												<Calendar className='w-3 h-3' />
+												<span className='font-medium'>
+													{new Date(team.created_at).toLocaleDateString()}
+												</span>
 											</div>
 										</div>
 									</div>
 								</div>
 							</div>
 						))}
-						{recentActivity.length === 0 && (
-							<div className='text-center py-12 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border-2 border-dashed border-gray-300'>
-								<div className='w-16 h-16 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4'>
-									<Activity className='w-8 h-8 text-blue-500' />
+						{recentTeams.length === 0 && (
+							<div className='text-center py-12 bg-gradient-to-br from-cyan-50 to-teal-50 rounded-2xl border-2 border-dashed border-cyan-200'>
+								<div className='w-16 h-16 bg-gradient-to-br from-cyan-100 to-teal-100 rounded-2xl flex items-center justify-center mx-auto mb-4'>
+									<Building2 className='w-8 h-8 text-cyan-500' />
 								</div>
-								<h3 className='text-lg font-semibold text-gray-800 mb-2'>
-									No Recent Activity
+								<h3 className='text-lg font-semibold text-cyan-800 mb-2'>
+									No Teams Created Yet
 								</h3>
-								<p className='text-gray-600 max-w-sm mx-auto'>
-									System activities will appear here in
-									real-time as they happen.
+								<p className='text-cyan-600 max-w-sm mx-auto'>
+									Team notifications will appear here once they are created. Create your first team to get started!
 								</p>
 							</div>
 						)}
 					</div>
 
 					{/* Real-time indicator */}
-					<div className='mt-4 pt-3 border-t border-blue-100'>
-						<div className='flex items-center justify-between text-xs text-blue-600'>
+					<div className='mt-4 pt-3 border-t border-cyan-200/50'>
+						<div className='flex items-center justify-between text-xs text-cyan-600'>
 							<div className='flex items-center gap-2'>
-								<div className='w-2 h-2 bg-green-500 rounded-full animate-pulse'></div>
+								<div className='w-2 h-2 bg-cyan-500 rounded-full animate-pulse'></div>
 								<span className='font-medium'>
-									Live updates enabled
+									Live team updates enabled
 								</span>
 							</div>
 							<span>
-								Last updated:{" "}
-								{lastUpdated?.toLocaleTimeString()}
+								Last updated: {lastUpdated?.toLocaleTimeString()}
 							</span>
 						</div>
 					</div>
 				</div>
 
-				{/* Recent Teams - Beautiful Modern Design */}
-				<div className='bg-gradient-to-br from-white via-purple-50/30 to-indigo-50/30 rounded-2xl border border-purple-100 p-6 shadow-lg'>
-					<div className='flex items-center justify-between mb-6'>
-						<div className='flex items-center gap-3'>
-							<div className='w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-md'>
-								<Building2 className='w-5 h-5 text-white' />
-							</div>
-							<div>
-								<h3 className='text-lg font-bold text-gray-900'>
-									Recent Teams
-								</h3>
-								<p className='text-sm text-gray-600'>
-									Latest team creations
-								</p>
-							</div>
-						</div>
-						<div className='flex items-center gap-2'>
-							<div className='w-2 h-2 bg-purple-500 rounded-full animate-pulse'></div>
-							<Badge
-								variant='outline'
-								className='text-xs bg-purple-50 text-purple-700 border-purple-200'>
-								Last 10 teams
-							</Badge>
-						</div>
-					</div>
-					<div className='space-y-3 h-96 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-purple-200 scrollbar-track-transparent hover:scrollbar-thumb-purple-300'>
-						{recentTeams.map((team, index) => (
-							<div
-								key={team.id}
-								className='group flex items-center space-x-4 p-4 rounded-xl hover:bg-white/70 transition-all duration-200 border border-purple-100 hover:border-purple-200 hover:shadow-md'>
-								<div className='relative'>
-									<Avatar className='w-12 h-12 ring-2 ring-purple-100 group-hover:ring-purple-200 transition-all duration-200'>
-										<AvatarImage
-											src={team.leader?.profile_photo}
-											alt={team.leader?.full_name}
-										/>
-										<AvatarFallback className='bg-gradient-to-br from-purple-400 to-indigo-400 text-white font-semibold'>
-											{team.leader?.full_name?.charAt(
-												0
-											) ||
-												team.name?.charAt(0) ||
-												"T"}
-										</AvatarFallback>
-									</Avatar>
-									<div className='absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full'></div>
-								</div>
-								<div className='flex-1 min-w-0'>
-									<div className='flex items-center gap-2 mb-1'>
-										<p className='text-sm font-semibold text-gray-900 truncate'>
-											{team.name}
-										</p>
-										<div className='flex items-center gap-1'>
-											<Users className='w-3 h-3 text-gray-400' />
-											<span className='text-xs text-gray-500'>
-												{team.members?.length || 0}
-											</span>
-										</div>
-									</div>
-									<p className='text-xs text-gray-600'>
-										Led by{" "}
-										{team.leader?.full_name ||
-											team.leader?.email ||
-											"Unknown"}
-									</p>
-									<div className='flex items-center gap-2 mt-1'>
-										<span className='text-xs text-gray-400'>
-											Created{" "}
-											{new Date(
-												team.created_at
-											).toLocaleDateString()}
-										</span>
-										<div className='w-1 h-1 bg-gray-300 rounded-full'></div>
-										<span className='text-xs text-gray-400'>
-											{new Date(
-												team.created_at
-											).toLocaleTimeString([], {
-												hour: "2-digit",
-												minute: "2-digit",
-											})}
-										</span>
-									</div>
-								</div>
-								<div className='flex flex-col items-end space-y-2'>
-									<Badge className='text-xs bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-800 border-purple-200'>
-										Team
-									</Badge>
-									<div className='flex items-center gap-1 text-xs text-purple-600'>
-										<Building2 className='w-3 h-3' />
-										<span className='font-medium'>
-											Active
-										</span>
-									</div>
-								</div>
-							</div>
-						))}
-						{recentTeams.length === 0 && (
-							<div className='text-center py-12 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border-2 border-dashed border-gray-300'>
-								<div className='w-16 h-16 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4'>
-									<Building2 className='w-8 h-8 text-purple-500' />
-								</div>
-								<h3 className='text-lg font-semibold text-gray-800 mb-2'>
-									No Teams Created Yet
-								</h3>
-								<p className='text-gray-600 max-w-sm mx-auto'>
-									Teams will appear here once they are
-									created. Create your first team to get
-									started!
-								</p>
-							</div>
-						)}
-					</div>
-				</div>
-
 				{/* Upcoming Birthdays */}
-				<div className='bg-gradient-to-br from-white via-pink-50/30 to-rose-50/30 rounded-2xl border border-pink-100 p-4 shadow-lg'>
+				<div className='bg-gradient-to-br from-rose-50 via-white to-pink-50/30 rounded-2xl border border-slate-200 p-4 shadow-lg'>
 					<div className='flex items-center justify-between mb-6'>
 						<div className='flex items-center gap-3'>
-							<div className='w-10 h-10 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl flex items-center justify-center shadow-md'>
+							<div className='w-10 h-10 bg-rose-500 rounded-xl flex items-center justify-center shadow-md'>
 								<Cake className='w-5 h-5 text-white' />
 							</div>
 							<div>
-								<h3 className='text-lg font-bold text-gray-900'>
+								<h3 className='text-lg font-bold text-slate-900'>
 									Upcoming Birthdays
 								</h3>
-								<p className='text-sm text-gray-600'>
+								<p className='text-sm text-slate-600'>
 									Celebrate your colleagues!
 								</p>
 							</div>
@@ -821,7 +577,7 @@ export function AdminStats({ sectionData }: AdminStatsProps) {
 							</Badge>
 						</div>
 					</div>
-					<div className='h-96 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-pink-200 scrollbar-track-transparent hover:scrollbar-thumb-pink-300'>
+					<div className='h-96 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent hover:scrollbar-thumb-slate-300'>
 						<UpcomingBirthdays
 							maxEmployees={10}
 							showAllMonths={false}

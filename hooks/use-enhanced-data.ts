@@ -170,28 +170,6 @@ export function useUpdateLeaveRequestMutation() {
   });
 }
 
-export function useCreateTimeEntryMutation() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ action, employeeId }: { action: string; employeeId: string }) => {
-      const response = await fetch("/api/time-entries", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, employee_id: employeeId }),
-      });
-      if (!response.ok) {
-        throw new Error("Failed to create time entry");
-      }
-      return response.json();
-    },
-    onSuccess: (_, variables) => {
-      // Invalidate and refetch related queries
-      queryClient.invalidateQueries({ queryKey: ["time-entries", variables.employeeId] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-    },
-  });
-}
 
 // Prefetch hook for better UX
 export function usePrefetchSectionData() {
@@ -227,12 +205,5 @@ export function useOptimisticUpdates() {
     });
   };
 
-  const optimisticUpdateTimeEntry = (employeeId: string, newEntry: any) => {
-    queryClient.setQueryData(["time-entries", employeeId], (oldData: any) => {
-      if (!oldData) return oldData;
-      return [...oldData, newEntry];
-    });
-  };
-
-  return { optimisticUpdateLeaveRequest, optimisticUpdateTimeEntry };
+  return { optimisticUpdateLeaveRequest };
 }

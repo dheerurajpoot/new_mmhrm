@@ -1,428 +1,613 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Clock, Zap, Moon, Play, Pause } from "lucide-react"
-import { getCurrentUser } from "@/lib/auth/client"
-import { toast } from "sonner"
-import { useRouter } from "next/navigation"
+import { useState, useEffect, useRef } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Clock, 
+  Play, 
+  Pause, 
+  Coffee, 
+  MapPin,
+  CheckCircle,
+  AlertCircle,
+  Timer,
+  History,
+  Calendar,
+  User
+} from "lucide-react";
+import { toast } from "sonner";
+import { getCurrentUser } from "@/lib/auth/client";
+import { format, parseISO, differenceInSeconds, differenceInMinutes, differenceInHours } from "date-fns";
 
-interface TimeEntry {
-  _id?: string
-  employee_id: string
-  date: string
-  clock_in: string
-  clock_out?: string
-  total_hours?: number
-  break_duration?: number
+interface CurrentTimeEntry {
+  id: string;
+  clock_in: string;
+  clock_out?: string;
+  break_start?: string;
+  break_end?: string;
+  status: 'active' | 'completed' | 'break';
+  location?: string;
+  total_hours?: number;
+  break_duration: number;
 }
 
-interface TimeTrackingWidgetProps {
-  sectionData?: any;
+interface RecentActivity {
+  id: string;
+  clock_in: string;
+  clock_out?: string;
+  total_hours?: number;
+  status: 'active' | 'completed' | 'break';
+  date: string;
 }
 
-export function TimeTrackingWidget({ sectionData }: TimeTrackingWidgetProps) {
-  const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isClocking, setIsClocking] = useState(false)
-  const [currentUser, setCurrentUser] = useState<any>(null)
-  const [isCurrentlyClockedIn, setIsCurrentlyClockedIn] = useState(false)
-  const [todayMinutes, setTodayMinutes] = useState(0)
-  const [weeklyMinutes, setWeeklyMinutes] = useState(0)
-  const [isAnimatingIn, setIsAnimatingIn] = useState(false)
-  const [isAnimatingOut, setIsAnimatingOut] = useState(false)
-  const [currentTime, setCurrentTime] = useState(new Date())
+export function TimeTrackingWidget() {
+  const [currentEntry, setCurrentEntry] = useState<CurrentTimeEntry | null>(null);
+  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [breakTime, setBreakTime] = useState(0);
+  const [isRealTime, setIsRealTime] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const clockIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const router = useRouter()
-
+  // Real-time clock update
   useEffect(() => {
-    loadCurrentUser()
-  }, [])
+    setCurrentTime(new Date());
+    clockIntervalRef.current = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
 
+    return () => {
+      if (clockIntervalRef.current) clearInterval(clockIntervalRef.current);
+    };
+  }, []);
+
+  // Timer update for current entry
   useEffect(() => {
-    if (sectionData?.timeEntries) {
-      // Use section data if available
-      console.log("[Time Widget] Using section data for time entries:", sectionData.timeEntries.length);
-      setTimeEntries(sectionData.timeEntries || []);
-      updateStats(sectionData.timeEntries || []);
-      setIsLoading(false);
-    } else if (currentUser) {
-      // Fallback to original data fetching
-      fetchTimeEntries();
-    }
-  }, [sectionData, currentUser]);
-
-  // Update current time every second
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date())
-    }, 1000)
-
-    return () => clearInterval(timer)
-  }, [])
-
-  const loadCurrentUser = async () => {
-    try {
-      console.log("[Time Widget] Loading current user...");
-      const user = await getCurrentUser();
-      console.log("[Time Widget] Current user:", user ? `${user.full_name} (${user.id})` : "Not authenticated");
-      setCurrentUser(user);
-    } catch (error) {
-      console.error("[Time Widget] Error loading current user:", error);
-      setCurrentUser(null);
-    }
-  }
-
-  // Helper function to convert hours to minutes and format display
-  const formatTimeDisplay = (hours: number) => {
-    const totalMinutes = Math.round(hours * 60)
-    if (totalMinutes >= 60) {
-      const hoursPart = Math.floor(totalMinutes / 60)
-      const minutesPart = totalMinutes % 60
-      return `${hoursPart}h ${minutesPart}m`
-    }
-    return `${totalMinutes}m`
-  }
-
-  // Helper function to format current date and time
-  const formatCurrentDateTime = () => {
-    const dateOptions: Intl.DateTimeFormatOptions = {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    }
-    const timeOptions: Intl.DateTimeFormatOptions = {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: true
-    }
-
-    return {
-      date: currentTime.toLocaleDateString('en-US', dateOptions),
-      time: currentTime.toLocaleTimeString('en-US', timeOptions)
-    }
-  }
-
-  const fetchTimeEntries = async () => {
-    if (!currentUser) {
-      console.log("[Time Widget] No current user, skipping fetch");
-      setIsLoading(false);
-      return;
-    }
-
-    if (!currentUser.id) {
-      console.error("[Time Widget] Current user has no ID:", currentUser);
-      toast.error("Authentication error", {
-        description: "User ID is missing. Please log in again.",
-      });
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      console.log("[Time Widget] Fetching time entries for user:", {
-        id: currentUser.id,
-        idType: typeof currentUser.id,
-        idLength: currentUser.id.length,
-        userName: currentUser.full_name
-      });
-
-      const response = await fetch(`/api/time-entries?employee_id=${encodeURIComponent(currentUser.id)}&limit=30`);
-      console.log("[Time Widget] API response status:", response.status);
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log("[Time Widget] Fetched time entries:", data?.length || 0);
-        setTimeEntries(data || []);
-        updateStats(data || []);
-      } else {
-        console.error("[Time Widget] Failed to fetch time entries:", response.status, response.statusText);
-        const errorData = await response.json().catch(() => ({}));
-        console.error("[Time Widget] Error details:", errorData);
-        toast.error("Failed to load time data", {
-          description: errorData.error || "Bad Request - Please contact support.",
-        });
+    const updateTimer = () => {
+      if (currentEntry?.status === 'active') {
+        const clockInTime = new Date(currentEntry.clock_in).getTime();
+        const now = Date.now();
+        const elapsed = now - clockInTime;
+        setElapsedTime(elapsed);
+      } else if (currentEntry?.status === 'break' && currentEntry.break_start) {
+        const breakStartTime = new Date(currentEntry.break_start).getTime();
+        const now = Date.now();
+        const breakElapsed = now - breakStartTime;
+        setBreakTime(breakElapsed);
       }
-    } catch (error) {
-      console.error("[Time Widget] Error fetching time entries:", error);
-      toast.error("Error loading time entries", {
-        description: "Please check your connection and try again.",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }
+    };
 
-  const updateStats = (entries: TimeEntry[]) => {
-    const today = new Date().toISOString().split("T")[0]
-
-    // Check if currently clocked in
-    const activeEntry = entries?.find((entry: TimeEntry) => {
-      const entryDate = new Date(entry.date).toISOString().split("T")[0]
-      return entryDate === today && !entry.clock_out
-    })
-    setIsCurrentlyClockedIn(!!activeEntry)
-
-    // Calculate today's minutes
-    const todayEntries = entries?.filter((entry: TimeEntry) => {
-      const entryDate = new Date(entry.date).toISOString().split("T")[0]
-      return entryDate === today
-    }) || []
-    const todayTotalHours = todayEntries.reduce((sum: number, entry: TimeEntry) => sum + (entry.total_hours || 0), 0)
-    const todayTotalMinutes = Math.round(todayTotalHours * 60)
-    setTodayMinutes(todayTotalMinutes)
-
-    // Calculate weekly minutes
-    const startOfWeek = new Date()
-    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay())
-    const weeklyEntries = entries?.filter((entry: TimeEntry) => {
-      const entryDate = new Date(entry.date)
-      return entryDate >= startOfWeek && (entry.total_hours || 0) > 0
-    }) || []
-    const weeklyTotalHours = weeklyEntries.reduce((sum: number, entry: TimeEntry) => sum + (entry.total_hours || 0), 0)
-    const weeklyTotalMinutes = Math.round(weeklyTotalHours * 60)
-    setWeeklyMinutes(weeklyTotalMinutes)
-  }
-
-  const handleClockInOut = async () => {
-    if (!currentUser || isClocking) return
-
-    const action = isCurrentlyClockedIn ? "clock_out" : "clock_in"
-    const actionText = isCurrentlyClockedIn ? "Clock Out" : "Clock In"
-
-    // Start animation
-    if (action === "clock_in") {
-      setIsAnimatingIn(true)
-      setTimeout(() => setIsAnimatingIn(false), 2000)
+    if (currentEntry?.status === 'active' || currentEntry?.status === 'break') {
+      updateTimer();
+      intervalRef.current = setInterval(updateTimer, 1000);
     } else {
-      setIsAnimatingOut(true)
-      setTimeout(() => setIsAnimatingOut(false), 2000)
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     }
 
-    setIsClocking(true)
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [currentEntry]);
 
+  // Fetch current time entry
+  const fetchCurrentEntry = async () => {
     try {
-      console.log(`[Time Widget] Starting ${actionText} for employee:`, currentUser.id);
+      const user = await getCurrentUser();
+      if (!user) {
+        console.log('[Time Widget] No user found');
+        return;
+      }
 
-      const loadingToastId = toast.loading(`${actionText}...`, {
-        description: `Processing your ${actionText.toLowerCase()} request.`,
+      console.log('[Time Widget] Fetching current entry for user:', user.id);
+      const response = await fetch('/api/time-entries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_current' })
       });
-
-      const requestBody = {
-        action,
-        employee_id: currentUser.id,
-      };
-
-      console.log("[Time Widget] Request body:", requestBody);
-
-      const response = await fetch("/api/time-entries", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestBody),
-      })
-
-      console.log("[Time Widget] Response status:", response.status);
-      console.log("[Time Widget] Response ok:", response.ok);
-
-      const data = await response.json()
-      console.log("[Time Widget] Response data:", data);
-
-      // Dismiss loading toast
-      toast.dismiss(loadingToastId);
+      console.log('[Time Widget] Response status:', response.status);
 
       if (response.ok) {
-        toast.success(`${actionText} successful! 🎉`, {
-          description: isCurrentlyClockedIn
-            ? "Great work today! You have been clocked out successfully."
-            : "Welcome back! You have been clocked in successfully.",
-        });
-
-        // Refresh data
-        await fetchTimeEntries()
+        const result = await response.json();
+        console.log('[Time Widget] Current entry result:', result);
+        console.log('[Time Widget] Setting current entry:', result.data);
+        setCurrentEntry(result.data);
+        setIsRealTime(true);
+        
+        // If there's an active entry, start the timer immediately
+        if (result.data && result.data.status === 'active') {
+          console.log('[Time Widget] Active session detected, starting timer');
+        }
       } else {
-        console.error(`[Time Widget] ${actionText} failed:`, data);
-        toast.error(`${actionText} failed`, {
-          description: data.error || data.details || `There was an error processing your ${actionText.toLowerCase()} request.`,
-        });
+        console.error('[Time Widget] Failed to fetch current entry:', response.status);
+        if (response.status === 404) {
+          console.log('[Time Widget] Time tracking API not available');
+        } else if (response.status === 401) {
+          console.log('[Time Widget] User not authenticated');
+        }
+        setCurrentEntry(null);
       }
     } catch (error) {
-      console.error("[Time Widget] Error clocking in/out:", error)
-      toast.error(`${actionText} failed`, {
-        description: "An unexpected error occurred. Please try again.",
-      });
-    } finally {
-      setIsClocking(false)
+      console.error('Error fetching current entry:', error);
+      setCurrentEntry(null);
     }
-  }
+  };
 
-  const formatTime = (timeString: string) => {
-    const time = new Date(timeString);
-    // Use local time formatting to show user's timezone
-    return time.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-  }
+  // Fetch recent activities
+  const fetchRecentActivities = async () => {
+    try {
+      const user = await getCurrentUser();
+      if (!user) {
+        console.log('[Time Widget] No user found for fetching activities');
+        return;
+      }
 
-  if (isLoading) {
-    return (
-      <Card className="animate-pulse">
-        <CardContent className="p-6">
-          <div className="h-4 bg-gray-200 rounded mb-4"></div>
-          <div className="h-16 bg-gray-200 rounded"></div>
-        </CardContent>
-      </Card>
-    )
-  }
+      console.log('[Time Widget] Fetching recent activities for user:', user.id, typeof user.id);
+      const response = await fetch('/api/time-entries');
+      console.log('[Time Widget] Activities response status:', response.status);
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('[Time Widget] Activities result:', result);
+        if (result.success && result.data) {
+          // Take only the first 3 entries
+          const recentEntries = result.data.slice(0, 3);
+          console.log('[Time Widget] Setting recent activities:', recentEntries.length, 'entries');
+          console.log('[Time Widget] Recent entries data:', recentEntries);
+          setRecentActivities(recentEntries);
+        } else {
+          console.error('[Time Widget] API returned error:', result.error);
+          console.log('[Time Widget] Full result:', result);
+        }
+      } else {
+        console.error('[Time Widget] Failed to fetch activities:', response.status);
+        const errorText = await response.text();
+        console.error('[Time Widget] Error response:', errorText);
+      }
+    } catch (error) {
+      console.error('[Time Widget] Error fetching recent activities:', error);
+    }
+  };
 
-  // Show error state if user is not authenticated
-  if (!currentUser) {
-    return (
-      <Card className="border-0 shadow-lg bg-gradient-to-br from-red-50 to-orange-50">
-        <CardContent className="p-6 text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Clock className="w-8 h-8 text-red-500" />
-          </div>
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">Authentication Required</h3>
-          <p className="text-gray-600 mb-4">
-            Please log in to access time tracking features.
-          </p>
-          <Button
-            onClick={() => window.location.href = "/auth/login"}
-            className="bg-red-600 hover:bg-red-700 text-white"
-          >
-            Go to Login
-          </Button>
-        </CardContent>
-      </Card>
-    )
-  }
+  useEffect(() => {
+    const initializeWidget = async () => {
+      const user = await getCurrentUser();
+      console.log('[Time Widget] Initializing with user:', user);
+      if (user) {
+        console.log('[Time Widget] User ID:', user.id, typeof user.id);
+      }
+      fetchCurrentEntry();
+      fetchRecentActivities();
+    };
+    
+    initializeWidget();
+  }, []);
 
-  const { date, time } = formatCurrentDateTime()
+  // Format time display
+  const formatTime = (milliseconds: number): string => {
+    const hours = Math.floor(milliseconds / (1000 * 60 * 60));
+    const minutes = Math.floor((milliseconds % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((milliseconds % (1000 * 60)) / 1000);
+    
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  // Format detailed time with hours, minutes, seconds
+  const formatDetailedTime = (milliseconds: number): string => {
+    const hours = Math.floor(milliseconds / (1000 * 60 * 60));
+    const minutes = Math.floor((milliseconds % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((milliseconds % (1000 * 60)) / 1000);
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m ${seconds}s`;
+    } else if (minutes > 0) {
+      return `${minutes}m ${seconds}s`;
+    } else {
+      return `${seconds}s`;
+    }
+  };
+
+  // Format activity time
+  const formatActivityTime = (timeString: string): string => {
+    try {
+      const date = parseISO(timeString);
+      return format(date, 'HH:mm:ss');
+    } catch {
+      return timeString;
+    }
+  };
+
+  // Format activity duration in HH:MM:SS format
+  const formatActivityDuration = (clockIn: string, clockOut?: string): string => {
+    if (!clockOut) return 'In Progress';
+    
+    try {
+      const start = parseISO(clockIn);
+      const end = parseISO(clockOut);
+      const durationMs = end.getTime() - start.getTime();
+      
+      const hours = Math.floor(durationMs / (1000 * 60 * 60));
+      const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((durationMs % (1000 * 60)) / 1000);
+      
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    } catch {
+      return 'Unknown';
+    }
+  };
+
+  // Clock in
+  const handleClockIn = async () => {
+    if (isLoading) return;
+    
+    setIsLoading(true);
+    try {
+      const user = await getCurrentUser();
+      if (!user) {
+        console.log('[Time Widget] No user found for clock in');
+        toast.error("Please log in to clock in");
+      return;
+    }
+
+      console.log('[Time Widget] Clocking in user:', user.id, user.role);
+      const response = await fetch('/api/time-entries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'clock_in'
+        })
+      });
+
+      console.log('[Time Widget] Clock in response status:', response.status);
+      const result = await response.json();
+      console.log('[Time Widget] Clock in result:', result);
+
+      if (result.success) {
+        toast.success("Clocked in successfully!", {
+          description: `Started at ${new Date().toLocaleTimeString()}`
+        });
+        setCurrentEntry(result.data);
+        
+        // Dispatch custom event for real-time updates
+        window.dispatchEvent(new CustomEvent('timeTrackingChanged'));
+        // Refresh recent activities after a short delay to ensure data is saved
+        setTimeout(() => {
+          fetchRecentActivities();
+        }, 1000);
+      } else {
+        console.error('[Time Widget] Clock in failed:', result.error);
+        toast.error(result.error || "Failed to clock in");
+      }
+    } catch (error) {
+      console.error('[Time Widget] Error clocking in:', error);
+      toast.error("Failed to clock in");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Clock out
+  const handleClockOut = async () => {
+    if (isLoading) return;
+    
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/time-entries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'clock_out' })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success("Clocked out successfully!", {
+          description: `Total hours: ${result.data.total_hours?.toFixed(2) || '0'}h`
+        });
+        setCurrentEntry(null);
+        setElapsedTime(0);
+        setBreakTime(0);
+        
+        // Dispatch custom event for real-time updates
+        window.dispatchEvent(new CustomEvent('timeTrackingChanged'));
+        // Refresh recent activities after a short delay to ensure data is saved
+        setTimeout(() => {
+          fetchRecentActivities();
+        }, 1000);
+      } else {
+        toast.error(result.error || "Failed to clock out");
+      }
+    } catch (error) {
+      console.error('Error clocking out:', error);
+      toast.error("Failed to clock out");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Start break
+  const handleStartBreak = async () => {
+    if (isLoading) return;
+    
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/time-entries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'start_break' })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success("Break started", {
+          description: "Enjoy your break!"
+        });
+        setCurrentEntry(result.data);
+        setBreakTime(0);
+        
+        // Dispatch custom event for real-time updates
+        window.dispatchEvent(new CustomEvent('timeTrackingChanged'));
+        // Refresh recent activities after a short delay to ensure data is saved
+        setTimeout(() => {
+          fetchRecentActivities();
+        }, 1000);
+    } else {
+        toast.error(result.error || "Failed to start break");
+      }
+    } catch (error) {
+      console.error('Error starting break:', error);
+      toast.error("Failed to start break");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // End break
+  const handleEndBreak = async () => {
+    if (isLoading) return;
+    
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/time-entries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'end_break' })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success("Break ended", {
+          description: "Welcome back to work!"
+        });
+        setCurrentEntry(result.data);
+        setBreakTime(0);
+        
+        // Dispatch custom event for real-time updates
+        window.dispatchEvent(new CustomEvent('timeTrackingChanged'));
+        // Refresh recent activities after a short delay to ensure data is saved
+        setTimeout(() => {
+          fetchRecentActivities();
+        }, 1000);
+      } else {
+        toast.error(result.error || "Failed to end break");
+      }
+    } catch (error) {
+      console.error('Error ending break:', error);
+      toast.error("Failed to end break");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getStatusBadge = () => {
+    if (!currentEntry) return null;
+    
+    switch (currentEntry.status) {
+      case 'active':
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100 text-xs">Active</Badge>;
+      case 'break':
+        return <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-100 text-xs">On Break</Badge>;
+      case 'completed':
+        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100 text-xs">Completed</Badge>;
+      default:
+        return null;
+    }
+  };
 
   return (
-    <Card className="border-0 shadow-lg bg-gradient-to-br from-red-600 to-blue-600 text-white flex">
-      <CardHeader className="pb-4">
-        <CardTitle className="flex items-center gap-2 text-white">
+    <Card className="bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-600 text-white border-0 shadow-lg">
+      <CardContent className="p-4">
+        {/* Header Section */}
+        <div className="flex items-center justify-between mb-4">
+          {/* Left side - Status and Time */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
           <Clock className="w-5 h-5" />
-          Time Tracking
-        </CardTitle>
-        <CardDescription className="text-red-100">
-          {isCurrentlyClockedIn ? "You're currently clocked in" : "Ready to start your day?"}
-        </CardDescription>
-
-        {/* Current Date and Time */}
-        <div className="mt-3 space-y-1">
-          <p className="text-sm text-white/90 font-medium">{date}</p>
-          <p className="text-lg font-mono text-white font-bold">{time}</p>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div className="bg-white/10 rounded-lg p-3">
-            <p className="text-red-100">Today</p>
-            <p className="text-xl font-bold">{formatTimeDisplay(todayMinutes / 60)}</p>
-          </div>
-          <div className="bg-white/10 rounded-lg p-3">
-            <p className="text-red-100">This Week</p>
-            <p className="text-xl font-bold">{formatTimeDisplay(weeklyMinutes / 60)}</p>
-          </div>
-        </div>
-
-        {/* Clock In/Out Button */}
-        <Button
-          onClick={handleClockInOut}
-          disabled={isClocking}
-          size="lg"
-          className={`w-full relative overflow-hidden transition-all duration-300 ${isCurrentlyClockedIn
-              ? "bg-red-500 hover:bg-red-600"
-              : "bg-white text-red-600 hover:bg-gray-100"
-            } ${isAnimatingIn ? "animate-pulse scale-105 shadow-2xl shadow-yellow-400/50" : ""
-            } ${isAnimatingOut ? "animate-bounce scale-95 shadow-2xl shadow-blue-400/50" : ""
-            }`}
-        >
-          {/* Animation overlay */}
-          {isAnimatingIn && (
-            <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 to-orange-400/20 animate-ping" />
-          )}
-          {isAnimatingOut && (
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 animate-pulse" />
-          )}
-
-          {isCurrentlyClockedIn ? (
-            <>
-              <Moon className={`w-5 h-5 mr-2 ${isAnimatingOut ? "animate-spin" : ""}`} />
-              {isClocking ? "Clocking Out..." : "Clock Out"}
-            </>
-          ) : (
-            <>
-              <Zap className={`w-5 h-5 mr-2 ${isAnimatingIn ? "animate-bounce" : ""}`} />
-              {isClocking ? "Clocking In..." : "Clock In"}
-            </>
-          )}
-        </Button>
-
-        {/* Current Status */}
-        <div className="flex items-center justify-between text-sm">
-          <div className="flex items-center gap-2">
-            <div className={`w-3 h-3 rounded-full ${isCurrentlyClockedIn ? "bg-green-400 animate-pulse" : "bg-gray-400"}`} />
-            <span>{isCurrentlyClockedIn ? "Active" : "Offline"}</span>
-          </div>
-          <Button
-            onClick={() => router.push("/employee?section=time")}
-            variant="ghost"
-            size="sm"
-            className="text-white hover:bg-white/10"
-          >
-            View Details
-          </Button>
-        </div>
-
-        {/* Recent Activity */}
-        {timeEntries.length > 0 && (
-          <div className="bg-white/10 rounded-lg p-3">
-            <p className="text-sm text-red-100 mb-2">Recent Activity</p>
-            <div className="space-y-1">
-              {timeEntries.slice(0, 3).map((entry, index) => {
-                const entryDate = new Date(entry.date)
-                const isToday = entryDate.toDateString() === new Date().toDateString()
-
-                return (
-                  <div key={entry._id || index} className="flex items-center justify-between text-xs">
-                    <span className={isToday ? "font-semibold" : ""}>
-                      {isToday ? "Today" : entryDate.toLocaleDateString()}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <span>{formatTime(entry.clock_in)}</span>
-                      {entry.clock_out ? (
-                        <>
-                          <span>→</span>
-                          <span>{formatTime(entry.clock_out)}</span>
-                          <Badge variant="secondary" className="text-xs">
-                            {entry.total_hours?.toFixed(1)}h
-                          </Badge>
-                        </>
-                      ) : (
-                        <Badge className="bg-green-500 text-xs">
-                          Active
-                        </Badge>
-                      )}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Time Tracking</span>
+                  {isRealTime && (
+                    <div className="flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
+                      <span className="text-xs text-green-200">Live</span>
                     </div>
+                  )}
+                </div>
+                {currentEntry ? (
+                  <div className="flex items-center gap-2 mt-1">
+                    {getStatusBadge()}
+                    <span className="text-xs text-blue-100">
+                      Since {formatActivityTime(currentEntry.clock_in)}
+                    </span>
                   </div>
-                )
-              })}
+                ) : (
+                  <span className="text-xs text-blue-100">Ready to clock in</span>
+                )}
+              </div>
+            </div>
+
+            {/* Real-time Timer */}
+            {currentEntry && (
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 min-w-[120px]">
+                <div className="text-center">
+                  <div className="text-lg font-mono font-bold">
+                    {currentEntry.status === 'break' 
+                      ? formatTime(breakTime)
+                      : formatTime(elapsedTime)
+                    }
+                  </div>
+                  <div className="text-xs text-blue-200">
+                    {currentEntry.status === 'break' ? 'Break Time' : 'Work Time'}
+                  </div>
+                </div>
+        </div>
+            )}
+          </div>
+
+          {/* Right side - Action Buttons */}
+          <div className="flex items-center gap-2">
+            {currentEntry ? (
+              <>
+                {currentEntry.status === 'active' && (
+                  <>
+                    <Button
+                      onClick={handleStartBreak}
+                      disabled={isLoading}
+                      size="sm"
+                      variant="secondary"
+                      className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+                    >
+                      <Coffee className="w-4 h-4 mr-1" />
+                      Break
+                    </Button>
+                    <Button
+                      onClick={handleClockOut}
+                      disabled={isLoading}
+                      size="sm"
+                      className="bg-red-500/80 hover:bg-red-600/80 text-white"
+                    >
+                      <Pause className="w-4 h-4 mr-1" />
+                      Clock Out
+                    </Button>
+                  </>
+                )}
+                {currentEntry.status === 'break' && (
+                  <Button
+                    onClick={handleEndBreak}
+                    disabled={isLoading}
+                    size="sm"
+                    className="bg-green-500/80 hover:bg-green-600/80 text-white"
+                  >
+                    <Play className="w-4 h-4 mr-1" />
+                    End Break
+                  </Button>
+                )}
+              </>
+            ) : (
+              <Button
+                onClick={handleClockIn}
+                disabled={isLoading}
+                size="sm"
+                className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+              >
+                <Play className="w-4 h-4 mr-1" />
+                {isLoading ? "Clocking In..." : "Clock In"}
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Current Time Display */}
+        <div className="mb-4 pb-3 border-b border-white/20">
+          <div className="flex items-center justify-between text-xs text-blue-100">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                <span>Current Time: {format(currentTime, 'HH:mm:ss')}</span>
+              </div>
+              {currentEntry?.location && (
+                <div className="flex items-center gap-1">
+                  <MapPin className="w-3 h-3" />
+                  <span>{currentEntry.location}</span>
+                </div>
+              )}
+            </div>
+            <div className="text-blue-200">
+              {format(currentTime, 'MMM dd, yyyy')}
             </div>
           </div>
+        </div>
+
+        {/* Recent Attendance Records */}
+        <div className="mt-4">
+          <div className="flex items-center gap-2 mb-3">
+            <History className="w-4 h-4 text-blue-200" />
+            <h3 className="text-sm font-medium text-blue-100">Recent Attendance</h3>
+          </div>
+          
+          {recentActivities.length > 0 ? (
+            <div className="space-y-2">
+              {recentActivities.slice(0, 3).map((activity, index) => (
+                <div key={activity.id} className="bg-white/10 backdrop-blur-sm rounded-lg p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                        activity.status === 'completed' ? 'bg-green-400/80' : 
+                        activity.status === 'active' ? 'bg-blue-400/80' : 'bg-orange-400/80'
+                      }`}>
+                        {activity.status === 'completed' ? (
+                          <CheckCircle className="w-3 h-3 text-white" />
+                        ) : activity.status === 'active' ? (
+                          <Clock className="w-3 h-3 text-white" />
+                        ) : (
+                          <Coffee className="w-3 h-3 text-white" />
+                        )}
+                      </div>
+                      <div>
+                        <div className="text-xs font-medium text-white">
+                          {format(parseISO(activity.date), 'MMM dd, yyyy')}
+                        </div>
+                        <div className="text-xs text-blue-200">
+                          {activity.status === 'completed' ? 'Work Session' : 
+                           activity.status === 'active' ? 'Active Session' : 'Break Session'}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="text-right">
+                      <div className="text-xs font-mono text-white">
+                        {formatActivityTime(activity.clock_in)}
+                        {activity.clock_out && (
+                          <span className="text-blue-200"> - {formatActivityTime(activity.clock_out)}</span>
+                        )}
+                      </div>
+                      <div className="text-xs text-blue-200">
+                        Total: {formatActivityDuration(activity.clock_in, activity.clock_out)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-4 text-blue-200">
+              <Clock className="w-6 h-6 mx-auto mb-2 opacity-50" />
+              <p className="text-xs">No recent attendance records</p>
+          </div>
         )}
+        </div>
       </CardContent>
     </Card>
-  )
+  );
 }

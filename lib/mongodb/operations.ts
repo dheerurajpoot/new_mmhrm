@@ -65,12 +65,21 @@ export async function getAllLeaveRequests(): Promise<LeaveRequest[]> {
     
     const leaveRequests = await leaveRequestsCollection.find({}).sort({ created_at: -1 }).toArray()
     
-    // Populate employee data for each leave request
+    // Populate employee and approver data for each leave request
     const populatedLeaveRequests = await Promise.all(
       leaveRequests.map(async (request) => {
+        // Get employee data
         const employee = await usersCollection.findOne({ 
           _id: new ObjectId(request.employee_id) 
         })
+        
+        // Get approver data if approved_by exists
+        let approvedBy = null
+        if (request.approved_by) {
+          approvedBy = await usersCollection.findOne({ 
+            _id: new ObjectId(request.approved_by) 
+          })
+        }
         
         return {
           ...request,
@@ -81,6 +90,13 @@ export async function getAllLeaveRequests(): Promise<LeaveRequest[]> {
             department: employee.department || "",
             position: employee.position || "",
             profile_photo: employee.profile_photo || "",
+          } : null,
+          approved_by: approvedBy ? {
+            id: approvedBy._id.toString(),
+            full_name: approvedBy.full_name || approvedBy.name || "",
+            email: approvedBy.email || "",
+            role: approvedBy.role || "",
+            profile_photo: approvedBy.profile_photo || "",
           } : null
         }
       })
@@ -145,57 +161,319 @@ export async function getTimeEntriesByEmployee(
   endDate?: Date,
 ): Promise<TimeEntry[]> {
   try {
+    console.log("[getTimeEntriesByEmployee] Starting with employeeId:", employeeId, typeof employeeId);
     const timeEntriesCollection = await getTimeEntriesCollection()
 
-    const query: any = { employee_id: new ObjectId(employeeId) }
+    // Handle ObjectId conversion safely
+    let employeeObjectId;
+    if (employeeId instanceof ObjectId) {
+      employeeObjectId = employeeId;
+    } else if (ObjectId.isValid(employeeId)) {
+      employeeObjectId = new ObjectId(employeeId);
+    } else {
+      console.error("[getTimeEntriesByEmployee] Invalid ObjectId format:", employeeId);
+      return [];
+    }
+
+    const query: any = { employee_id: employeeObjectId }
+    console.log("[getTimeEntriesByEmployee] Query:", query);
 
     if (startDate && endDate) {
       query.date = { $gte: startDate, $lte: endDate }
     }
 
-    return await timeEntriesCollection.find(query).sort({ clock_in: -1 }).toArray()
+    const entries = await timeEntriesCollection.find(query).sort({ clock_in: -1 }).toArray()
+    console.log("[getTimeEntriesByEmployee] Found entries:", entries.length);
+    
+    return entries
   } catch (error) {
-    console.error(" Error getting time entries by employee:", error)
+    console.error("[getTimeEntriesByEmployee] Error getting time entries by employee:", error)
     return []
   }
 }
 
-export async function createTimeEntry(timeEntryData: {
-  employee_id: string
-  clock_in: Date
-  clock_out?: Date
-  break_duration?: number
-  notes?: string
-}): Promise<{ success: boolean; data?: TimeEntry; error?: string }> {
+export async function getAllTimeEntries(): Promise<any[]> {
   try {
     const timeEntriesCollection = await getTimeEntriesCollection()
+    const usersCollection = await getUsersCollection()
+    
+    // Use aggregation to join time entries with user data
+    const timeEntries = await timeEntriesCollection.aggregate([
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'employee_id',
+          foreignField: '_id',
+          as: 'employee'
+        }
+      },
+      {
+        $unwind: {
+          path: '$employee',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $sort: { clock_in: -1 }
+      },
+      {
+        $project: {
+          _id: 1,
+          employee_id: { $toString: '$employee_id' },
+          clock_in: 1,
+          clock_out: 1,
+          break_start: 1,
+          break_end: 1,
+          total_hours: 1,
+          break_duration: 1,
+          notes: 1,
+          date: 1,
+          status: 1,
+          location: 1,
+          ip_address: 1,
+          device_info: 1,
+          created_at: 1,
+          updated_at: 1,
+          employee: {
+            $cond: {
+              if: { $ne: ['$employee', null] },
+              then: {
+                id: { $toString: '$employee._id' },
+                full_name: '$employee.full_name',
+                email: '$employee.email',
+                department: '$employee.department',
+                profile_photo: '$employee.profile_photo'
+              },
+              else: null
+            }
+          }
+        }
+      }
+    ]).toArray()
+    
+    return timeEntries
+  } catch (error) {
+    console.error("[getAllTimeEntries] Error getting all time entries:", error)
+    return []
+  }
+}
 
+export async function getCurrentTimeEntry(employeeId: string): Promise<TimeEntry | null> {
+  try {
+    const timeEntriesCollection = await getTimeEntriesCollection()
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    // Handle ObjectId conversion safely
+    let employeeObjectId;
+    if (employeeId instanceof ObjectId) {
+      employeeObjectId = employeeId;
+    } else if (ObjectId.isValid(employeeId)) {
+      employeeObjectId = new ObjectId(employeeId);
+    } else {
+      console.error("Invalid employeeId format:", employeeId);
+      return null;
+    }
+    
+    return await timeEntriesCollection.findOne({
+      employee_id: employeeObjectId,
+      date: { $gte: today },
+      status: { $in: ['active', 'break'] }
+    })
+  } catch (error) {
+    console.error(" Error getting current time entry:", error)
+    return null
+  }
+}
+
+export async function clockIn(employeeId: string, location?: string, ipAddress?: string, deviceInfo?: string): Promise<{ success: boolean; data?: TimeEntry; error?: string }> {
+  try {
+    console.log("[Clock In] Starting clock in for employee:", employeeId);
+    const timeEntriesCollection = await getTimeEntriesCollection()
+    
+    // Validate employeeId format
+    if (!ObjectId.isValid(employeeId)) {
+      console.error("[Clock In] Invalid employeeId format:", employeeId);
+      return {
+        success: false,
+        error: "Invalid employee ID format"
+      }
+    }
+    
+    // Check if already clocked in today
+    const existingEntry = await getCurrentTimeEntry(employeeId)
+    if (existingEntry) {
+      console.log("[Clock In] Employee already clocked in today");
+      return {
+        success: false,
+        error: "Already clocked in for today"
+      }
+    }
+
+    const now = new Date()
+    const today = new Date(now.toDateString())
+    
     const newEntry: TimeEntry = {
-      employee_id: new ObjectId(timeEntryData.employee_id),
-      clock_in: timeEntryData.clock_in,
-      clock_out: timeEntryData.clock_out,
-      break_duration: timeEntryData.break_duration || 0,
-      notes: timeEntryData.notes,
-      date: new Date(timeEntryData.clock_in.toDateString()),
-      created_at: new Date(),
-      updated_at: new Date(),
+      employee_id: new ObjectId(employeeId),
+      clock_in: now,
+      break_duration: 0,
+      date: today,
+      status: 'active',
+      location,
+      ip_address: ipAddress,
+      device_info: deviceInfo,
+      created_at: now,
+      updated_at: now,
     }
 
-    // Calculate total hours if clock_out is provided
-    if (newEntry.clock_out) {
-      const totalMs = newEntry.clock_out.getTime() - newEntry.clock_in.getTime()
-      const totalHours = totalMs / (1000 * 60 * 60) - newEntry.break_duration / 60
-      newEntry.total_hours = Math.max(0, totalHours)
-    }
-
+    console.log("[Clock In] Inserting new time entry:", newEntry);
     const result = await timeEntriesCollection.insertOne(newEntry)
+    console.log("[Clock In] Insert result:", result);
 
     return {
       success: true,
       data: { ...newEntry, _id: result.insertedId },
     }
   } catch (error) {
-    console.error(" Error creating time entry:", error)
+    console.error(" Error clocking in:", error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    }
+  }
+}
+
+export async function clockOut(employeeId: string): Promise<{ success: boolean; data?: TimeEntry; error?: string }> {
+  try {
+    const timeEntriesCollection = await getTimeEntriesCollection()
+    
+    const currentEntry = await getCurrentTimeEntry(employeeId)
+    if (!currentEntry) {
+      return {
+        success: false,
+        error: "No active time entry found"
+      }
+    }
+
+    const now = new Date()
+    const totalMs = now.getTime() - currentEntry.clock_in.getTime()
+    const breakMs = currentEntry.break_duration * 60 * 1000
+    const totalHours = Math.max(0, (totalMs - breakMs) / (1000 * 60 * 60))
+
+    const updatedEntry = await timeEntriesCollection.findOneAndUpdate(
+      { _id: currentEntry._id },
+      {
+        $set: {
+          clock_out: now,
+          total_hours: totalHours,
+          status: 'completed',
+          updated_at: now,
+        }
+      },
+      { returnDocument: 'after' }
+    )
+
+    return {
+      success: true,
+      data: updatedEntry,
+    }
+  } catch (error) {
+    console.error(" Error clocking out:", error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    }
+  }
+}
+
+export async function startBreak(employeeId: string): Promise<{ success: boolean; data?: TimeEntry; error?: string }> {
+  try {
+    const timeEntriesCollection = await getTimeEntriesCollection()
+    
+    const currentEntry = await getCurrentTimeEntry(employeeId)
+    if (!currentEntry) {
+      return {
+        success: false,
+        error: "No active time entry found"
+      }
+    }
+
+    if (currentEntry.status === 'break') {
+      return {
+        success: false,
+        error: "Already on break"
+      }
+    }
+
+    const now = new Date()
+    const updatedEntry = await timeEntriesCollection.findOneAndUpdate(
+      { _id: currentEntry._id },
+      {
+        $set: {
+          break_start: now,
+          status: 'break',
+          updated_at: now,
+        }
+      },
+      { returnDocument: 'after' }
+    )
+
+    return {
+      success: true,
+      data: updatedEntry,
+    }
+  } catch (error) {
+    console.error(" Error starting break:", error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    }
+  }
+}
+
+export async function endBreak(employeeId: string): Promise<{ success: boolean; data?: TimeEntry; error?: string }> {
+  try {
+    const timeEntriesCollection = await getTimeEntriesCollection()
+    
+    const currentEntry = await getCurrentTimeEntry(employeeId)
+    if (!currentEntry) {
+      return {
+        success: false,
+        error: "No active time entry found"
+      }
+    }
+
+    if (currentEntry.status !== 'break' || !currentEntry.break_start) {
+      return {
+        success: false,
+        error: "Not currently on break"
+      }
+    }
+
+    const now = new Date()
+    const breakDuration = now.getTime() - currentEntry.break_start.getTime()
+    const totalBreakMs = currentEntry.break_duration * 60 * 1000 + breakDuration
+    const totalBreakMinutes = totalBreakMs / (1000 * 60)
+
+    const updatedEntry = await timeEntriesCollection.findOneAndUpdate(
+      { _id: currentEntry._id },
+      {
+        $set: {
+          break_end: now,
+          break_duration: totalBreakMinutes,
+          status: 'active',
+          updated_at: now,
+        }
+      },
+      { returnDocument: 'after' }
+    )
+
+    return {
+      success: true,
+      data: updatedEntry,
+    }
+  } catch (error) {
+    console.error(" Error ending break:", error)
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",
