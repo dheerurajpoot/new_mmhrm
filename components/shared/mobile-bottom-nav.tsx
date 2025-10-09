@@ -13,8 +13,10 @@ import {
     UserCircle,
     PartyPopper,
     LogOut,
+    Bell,
 } from "lucide-react";
 import { getCurrentUser, signOut } from "@/lib/auth/client";
+import { NotificationPanel } from "@/components/shared/notification-panel";
 import { toast } from "sonner";
 import type { Profile } from "@/lib/types";
 
@@ -31,6 +33,8 @@ export function MobileBottomNav({
 }: MobileBottomNavProps) {
 	const [currentUser, setCurrentUser] = useState<Profile | null>(null);
     const [isSigningOut, setIsSigningOut] = useState(false);
+    const [isNotifOpen, setIsNotifOpen] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
 
 	useEffect(() => {
 		const fetchCurrentUser = async () => {
@@ -52,6 +56,25 @@ export function MobileBottomNav({
 		return () =>
 			window.removeEventListener("profileUpdated", handleProfileUpdate);
 	}, []);
+    useEffect(() => {
+        const readKey = `notif_last_read_${role || "all"}`;
+        const computeUnread = () => {
+            try {
+                const raw = localStorage.getItem("notifications");
+                const lastRead = Number(localStorage.getItem(readKey) || 0);
+                if (!raw) { setUnreadCount(0); return; }
+                const list = JSON.parse(raw) as Array<{ timestamp: number; meta?: any; type: string }>;
+                const filtered = list.filter((it) => {
+                    if (role === "employee") return it.meta?.status === "approved" || it.meta?.status === "rejected";
+                    return it.meta?.status === "pending" || it.type === "leave_request";
+                });
+                setUnreadCount(filtered.filter((it) => (it.timestamp || 0) > lastRead).length);
+            } catch { setUnreadCount(0); }
+        };
+        computeUnread();
+        const id = setInterval(computeUnread, 5000);
+        return () => clearInterval(id);
+    }, [role]);
     const handleLogout = async () => {
         if (isSigningOut) return;
         try {
@@ -98,10 +121,11 @@ export function MobileBottomNav({
                     { id: "leaves", label: "Leaves", icon: CalendarCheck },
                     { id: "attendance", label: "Attendance", icon: Timer },
 				];
-			case "employee":
+            case "employee":
 				return [
                     { id: "overview", label: "Overview", icon: UserCircle },
                     { id: "profile", label: "Profile", icon: UserCircle },
+                    { id: "notifications", label: "Notifications", icon: Bell },
                     { id: "leaves", label: "Leaves", icon: CalendarCheck },
                     { id: "time", label: "Time", icon: Timer },
 					{ id: "festivals", label: "Festivals", icon: PartyPopper },
@@ -130,6 +154,13 @@ export function MobileBottomNav({
 
             {/* Scrollable container */}
             <div className='relative pointer-events-auto px-2 py-2'>
+                {isNotifOpen && (
+                    <div className='absolute -top-2 bottom-full left-0 right-0 px-2 pb-2'>
+                        <div className='mx-auto max-w-md'>
+                            <NotificationPanel role={role} />
+                        </div>
+                    </div>
+                )}
                 <div className='flex items-center gap-1 overflow-x-auto no-scrollbar snap-x snap-mandatory [scrollbar-width:none] [-ms-overflow-style:none]'>
                     {/* map items */}
                     {menuItems.map((item) => (
@@ -137,7 +168,8 @@ export function MobileBottomNav({
 						key={item.id}
                             variant='ghost'
                             size='sm'
-						onClick={() => {
+                        onClick={() => {
+                            if (item.id === 'notifications') { setIsNotifOpen((v)=>!v); return; }
 							const sectionNames = {
 								overview: "Dashboard",
 								users: "User Management",
@@ -178,7 +210,12 @@ export function MobileBottomNav({
                                     className='w-5 h-5 rounded-full object-cover'
                                 />
                             ) : (
-                                <item.icon className='w-5 h-5' />
+                                <div className='relative'>
+                                    <item.icon className='w-5 h-5' />
+                                    {item.id === 'notifications' && unreadCount > 0 && (
+                                        <span className='absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-rose-500 animate-pulse'></span>
+                                    )}
+                                </div>
                             )}
                             <span className='text-[10px] font-medium'>
                                 {item.label}

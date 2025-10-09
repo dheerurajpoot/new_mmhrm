@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { getCurrentUser } from "@/lib/auth/client";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ConnectionStatus } from "@/components/shared/connection-status";
+import { NotificationPanel } from "@/components/shared/notification-panel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -142,8 +143,12 @@ export function DashboardHeader({ title, description, role }: DashboardHeaderPro
                     </div>
                 </div>
 
-                {/* Right Side - Edit Cover */}
+                {/* Right Side - Notifications + Live status */}
                 <div className="flex items-center gap-3">
+                    {/* Notification bell */}
+                    <div className="hidden sm:block">
+                        <NotificationPanel role={role} />
+                    </div>
                     {/* <Button
                         variant="ghost"
                         size="sm"

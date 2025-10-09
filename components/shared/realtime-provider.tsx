@@ -111,11 +111,11 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
 	);
 }
 
-export function triggerDataUpdate(type: string, message?: string) {
+export function triggerDataUpdate(type: string, message?: string, audience?: "admin" | "hr" | "employee", payload?: any) {
 	if (typeof window !== "undefined") {
 		window.dispatchEvent(
 			new CustomEvent("data-update", {
-				detail: { type, message },
+				detail: { type, message, audience, payload },
 			})
 		);
 	}

@@ -1347,12 +1347,17 @@ export function LeaveManagement() {
 																						.id
 																					]
 																				}
-																				onClick={() =>
-																					handleRequestUpdate(
-																						request.id,
-																						"approved"
-																					)
-																				}
+                                                                                onClick={() => {
+                                                                                    // Dispatch realtime notification for panel
+                                                                                    try {
+                                                                                        const { triggerDataUpdate } = require("@/components/shared/realtime-provider");
+                                                                                        triggerDataUpdate("leave_approved", `Leave approved for ${request.employee_name || "employee"}`, "admin");
+                                                                                    } catch {}
+                                                                                    handleRequestUpdate(
+                                                                                        request.id,
+                                                                                        "approved"
+                                                                                    )
+                                                                                }}
 																				className='bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'>
 																				{isLeaveUpdating[
 																					request
@@ -1372,12 +1377,16 @@ export function LeaveManagement() {
 																						.id
 																					]
 																				}
-																				onClick={() =>
-																					handleRequestUpdate(
-																						request.id,
-																						"rejected"
-																					)
-																				}
+                                                                                onClick={() => {
+                                                                                    try {
+                                                                                        const { triggerDataUpdate } = require("@/components/shared/realtime-provider");
+                                                                                        triggerDataUpdate("leave_rejected", `Leave rejected for ${request.employee_name || "employee"}`, "admin");
+                                                                                    } catch {}
+                                                                                    handleRequestUpdate(
+                                                                                        request.id,
+                                                                                        "rejected"
+                                                                                    )
+                                                                                }}
 																				className='bg-red-50 hover:bg-red-100 text-red-700 border-red-200'>
 																				{isLeaveUpdating[
 																					request

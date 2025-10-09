@@ -70,6 +70,12 @@ export function LeaveApprovals() {
         description: status === "approved" ? "The leave request has been approved." : "The leave request has been rejected.",
       })
 
+      // Push notification event for panel
+      try {
+        const { triggerDataUpdate } = require("@/components/shared/realtime-provider");
+        triggerDataUpdate(status === "approved" ? "leave_approved" : "leave_rejected", `Leave ${status} by HR/Admin`, "admin");
+      } catch {}
+
       fetchLeaveRequests()
     } catch (error) {
       console.error("Error updating leave request:", error)

@@ -124,6 +124,12 @@ export function EmployeeLeaveBalance({ sectionData }: EmployeeLeaveBalanceProps)
           toast.success("Leave request submitted successfully!", {
             description: "Your leave request has been sent for approval.",
           })
+        // Dispatch realtime notification for Admin/HR panels
+        try {
+          const { triggerDataUpdate } = require("@/components/shared/realtime-provider");
+          triggerDataUpdate("leave_request", "New leave request submitted", "admin");
+          triggerDataUpdate("leave_request", "New leave request submitted", "hr");
+        } catch {}
           setLeaveRequest({
             leave_type: "",
             start_date: "",
