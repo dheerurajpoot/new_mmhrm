@@ -8,6 +8,7 @@ import { DashboardHeader } from "@/components/shared/dashboard-header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useSectionData } from "@/hooks/use-section-data"
+ 
 
 // Lazy load components for better performance
 const UserManagement = lazy(() => import("./user-management").then(module => ({ default: module.UserManagement })))
@@ -200,9 +201,9 @@ export function AdminDashboard() {
           description={description} 
           role="admin" 
         />
-        <div className="flex-1 p-4 pb-20 md:pb-4 bg-gradient-to-br from-slate-50/50 via-white/30 to-slate-100/30 min-h-screen">
+        <div className="flex-1 p-2 pb-0 md:pb-4 bg-gradient-to-br from-slate-50/50 via-white/30 to-slate-100/30 min-h-screen">
           <div className="max-w-full mx-auto">
-            <div className="bg-white/60 backdrop-blur-xl rounded-3xl border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-500 p-6">
+            <div className="bg-white/60 backdrop-blur-xl rounded-3xl">
               {renderContent()}
             </div>
           </div>

@@ -62,8 +62,8 @@ interface RecentActivityProps {
 export function RecentActivity({
 	maxItems = 10,
 	showHeader = true,
-	title = "Live Activity Feed",
-	description = "Real-time system notifications",
+	title = "Recent Activity",
+	description = "New Notification",
 	sectionData,
 }: RecentActivityProps) {
 	const [activities, setActivities] = useState<ActivityItem[]>([]);
@@ -703,7 +703,7 @@ export function RecentActivity({
 	}
 
 	return (
-		<div className='bg-gradient-to-br from-emerald-50 via-white to-teal-50/30 backdrop-blur-xl rounded-3xl border border-emerald-200/50 p-6 shadow-xl hover:shadow-2xl transition-all duration-500'>
+		<div className='bg-gradient-to-br from-emerald-50 via-white to-teal-50/30 backdrop-blur-xl rounded-3xl border border-emerald-200/50 p-3'>
 			{/* Header */}
 			{showHeader && (
 				<div className='flex items-center justify-between mb-6'>

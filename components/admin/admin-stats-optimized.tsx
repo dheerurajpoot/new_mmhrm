@@ -285,8 +285,7 @@ export function AdminStats({ sectionData }: AdminStatsProps) {
 					sectionData={sectionData}
 					maxItems={10}
 					showHeader={true}
-					title="Live Activity Feed"
-					description="Real-time system notifications"
+					title="Recent Activity"
 				/>
 
 				{/* Recent Teams - Modern Notification Style */}
@@ -298,11 +297,8 @@ export function AdminStats({ sectionData }: AdminStatsProps) {
 							</div>
 							<div>
 								<h3 className='text-xl font-bold text-cyan-900'>
-									Recent Team Notifications
+									Recent Team
 								</h3>
-								<p className='text-sm text-cyan-600 font-medium'>
-									Latest team creations & updates
-								</p>
 							</div>
 						</div>
 						<div className='flex items-center gap-3'>

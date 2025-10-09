@@ -231,10 +231,10 @@ export function UpcomingFestivalsStrip({
       } catch (error) {
         console.error('Error loading festivals:', error);
         // Fallback: try without location parameters
-        try {
-          const res = await fetch(`/api/festivals`);
-          const json: FestivalsResponse = await res.json();
-          if (json.success && json.data) {
+      try {
+        const res = await fetch(`/api/festivals`);
+        const json: FestivalsResponse = await res.json();
+        if (json.success && json.data) {
             let filteredFestivals = json.data.festivals
               .filter(isUpcomingFestival)
               .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -312,13 +312,13 @@ export function UpcomingFestivalsStrip({
     <div className="space-y-3">
       
       {/* Festival Cards */}
-      <div
-        id={containerId}
-        onWheel={onWheel}
-        onMouseDown={onMouseDown}
-        onMouseLeave={onMouseLeave}
-        onMouseUp={onMouseUp}
-        onMouseMove={onMouseMove}
+    <div
+      id={containerId}
+      onWheel={onWheel}
+      onMouseDown={onMouseDown}
+      onMouseLeave={onMouseLeave}
+      onMouseUp={onMouseUp}
+      onMouseMove={onMouseMove}
         className="h-40 overflow-x-auto overflow-y-hidden p-2 flex gap-4 touch-pan-x select-none cursor-grab"
       >
       {items.map((festival) => {
@@ -386,7 +386,7 @@ export function UpcomingFestivalsStrip({
           </div>
         );
       })}
-      </div>
+        </div>
     </div>
   );
 }

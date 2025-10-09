@@ -33,6 +33,9 @@ import {
 	Trash2,
 } from "lucide-react";
 import { UpcomingBirthdays } from "@/components/shared/upcoming-birthdays";
+import UpcomingFestivalsStrip from "@/components/employee/upcoming-festivals-strip";
+import { LocationIndicator } from "@/components/employee/location-indicator";
+
 import { RecentActivity } from "@/components/shared/recent-activity";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -402,19 +405,19 @@ export function AdminStats({ sectionData }: AdminStatsProps) {
 			</div>
 
 			{/* Activity, Teams and Birthdays Section */}
-			<div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
+			<div className='grid grid-cols-1 lg:grid-cols-3 gap-3'>
 
 				{/* Recent Activity - Live Feed */}
-				<RecentActivity 
+				<RecentActivity
 					sectionData={sectionData}
 					maxItems={10}
 					showHeader={true}
-					title="Live Activity Feed"
-					description="Real-time system notifications"
+					title="Recent Activity"
+					description="New Notification"
 				/>
 
 				{/* Recent Teams - Modern Notification Style */}
-				<div className='bg-gradient-to-br from-cyan-50 via-white to-teal-50/30 backdrop-blur-xl rounded-3xl border border-cyan-200/50 p-6 shadow-xl hover:shadow-2xl transition-all duration-500'>
+				<div className='bg-gradient-to-br from-cyan-50 via-white to-teal-50/30 backdrop-blur-xl rounded-3xl border border-cyan-200/50 p-3'>
 					<div className='flex items-center justify-between mb-6'>
 						<div className='flex items-center gap-4'>
 							<div className='w-12 h-12 bg-gradient-to-br from-cyan-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg'>
@@ -422,7 +425,7 @@ export function AdminStats({ sectionData }: AdminStatsProps) {
 							</div>
 							<div>
 								<h3 className='text-xl font-bold text-cyan-900'>
-									Recent Team Notifications
+									Recent Team
 								</h3>
 								<p className='text-sm text-cyan-600 font-medium'>
 									Latest team creations & updates
@@ -552,36 +555,53 @@ export function AdminStats({ sectionData }: AdminStatsProps) {
 					</div>
 				</div>
 
-				{/* Upcoming Birthdays */}
-				<div className='bg-gradient-to-br from-rose-50 via-white to-pink-50/30 rounded-2xl border border-slate-200 p-4 shadow-lg'>
-					<div className='flex items-center justify-between mb-6'>
-						<div className='flex items-center gap-3'>
-							<div className='w-10 h-10 bg-rose-500 rounded-xl flex items-center justify-center shadow-md'>
-								<Cake className='w-5 h-5 text-white' />
+				{/* Upcoming Birthdays + Upcoming Festivals (replaces birthdays block) */}
+				<div className='grid grid-cols-1 lg:grid-cols-1 gap-4 md:gap-6'>
+					{/* Birthdays strip */}
+					<div className='rounded-2xl border border-pink-100 bg-gradient-to-br from-white via-pink-50/40 to-rose-50/40 shadow-lg'>
+						<div className='p-4 pb-3 flex items-center justify-between'>
+							<div className='flex items-center gap-3'>
+								<div className='w-10 h-10 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl flex items-center justify-center shadow-md'>
+									<Cake className='w-5 h-5 text-white' />
+								</div>
+								<div>
+									<h3 className='text-base font-bold text-gray-900'>Upcoming Birthdays</h3>
+									<p className='text-xs text-gray-600'>Celebrate your colleagues</p>
+								</div>
 							</div>
-							<div>
-								<h3 className='text-lg font-bold text-slate-900'>
-									Upcoming Birthdays
-								</h3>
-								<p className='text-sm text-slate-600'>
-									Celebrate your colleagues!
-								</p>
-							</div>
+							<Badge variant='outline' className='text-[10px] bg-pink-50 text-pink-700 border-pink-200'>This Month</Badge>
 						</div>
-						<div className='flex items-center gap-2'>
-							<div className='w-2 h-2 bg-pink-500 rounded-full animate-pulse'></div>
-							<Badge
-								variant='outline'
-								className='text-xs bg-pink-50 text-pink-700 border-pink-200'>
-								Next 10 birthdays
-							</Badge>
+						<div className='h-40 overflow-x-auto overflow-y-hidden pr-2 pb-2 touch-pan-x select-none'>
+							<UpcomingBirthdays maxEmployees={12} showAllMonths={false} sectionData={sectionData} horizontal />
+						</div>
+						<div className='px-4 pb-3 pt-0 flex items-center justify-between'>
+							<div className='text-xs text-rose-600'>Swipe to see more</div>
+							<div className='flex items-center gap-2'>
+								<div className='w-1.5 h-1.5 rounded-full bg-pink-400 animate-pulse' />
+								<div className='w-1.5 h-1.5 rounded-full bg-pink-200' />
+							</div>
 						</div>
 					</div>
-					<div className='h-96 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent hover:scrollbar-thumb-slate-300'>
-						<UpcomingBirthdays
-							maxEmployees={10}
-							showAllMonths={false}
-						/>
+
+					{/* Festivals strip */}
+					<div className='rounded-2xl border border-blue-100 bg-gradient-to-br from-white via-blue-50/40 to-indigo-50/40 shadow-lg'>
+						<div className='p-4 pb-3 flex items-center justify-between'>
+							<div className='flex items-center gap-3'>
+								<div className='w-10 h-10 bg-gradient-to-br from-orange-500 to-rose-600 rounded-xl flex items-center justify-center shadow-md'>
+									<Sparkles className='w-5 h-5 text-white' />
+								</div>
+								<div>
+									<h3 className='text-base font-bold text-gray-900'>Upcoming Festivals</h3>
+									<p className='text-xs text-gray-600'>Celebrate festivals</p>
+								</div>
+							</div>
+							<div className='flex justify-end'>
+								<LocationIndicator />
+							</div>
+						</div>
+						<div className='h-40 overflow-x-auto overflow-y-hidden pr-2 pb-2 touch-pan-x select-none'>
+							<UpcomingFestivalsStrip />
+						</div>
 					</div>
 				</div>
 			</div>
