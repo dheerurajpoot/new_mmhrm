@@ -12,9 +12,12 @@ import { DashboardHeader } from "@/components/shared/dashboard-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Cake } from "lucide-react";
+import { Cake, Sparkle, Sparkles } from "lucide-react";
 import { useSectionData } from "@/hooks/use-section-data";
 import type { Profile } from "@/lib/types";
+import { ResourceHints } from "@/components/optimization/critical-css";
+import UpcomingFestivalsStrip from "@/components/employee/upcoming-festivals-strip";
+import { LocationIndicator } from "./location-indicator";
 
 // Lazy load components for better performance
 const EmployeeProfile = lazy(() => import("./employee-profile").then(module => ({ default: module.EmployeeProfile })))
@@ -137,52 +140,107 @@ export function EmployeeDashboard() {
 		}
 
 		switch (activeSection) {
-		case "overview":
-			return (
-				<div className='space-y-6'>
-					{/* Time Tracking Widget */}
-					<Suspense fallback={<Skeleton className="h-20 w-full" />}>
-						<TimeTrackingWidget />
-					</Suspense>
-					
-					<Suspense fallback={<EmployeeSectionSkeleton />}>
-						<EmployeeStats sectionData={sectionData} />
-					</Suspense>
-						<div className='grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6'>
-							<Suspense fallback={<Skeleton className="h-64 w-full" />}>
-								<TeamMembers sectionData={sectionData} />
-							</Suspense>
-							<Suspense fallback={<Skeleton className="h-64 w-full" />}>
-								<div className='bg-gradient-to-br from-white via-pink-50/30 to-rose-50/30 rounded-2xl border border-pink-100 p-4 shadow-lg'>
-									<div className='flex items-center justify-between mb-6'>
-										<div className='flex items-center gap-3'>
-											<div className='w-10 h-10 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl flex items-center justify-center shadow-md'>
-												<Cake className='w-5 h-5 text-white' />
+			case "overview":
+				return (
+					<div className='space-y-6'>
+						{/* Time Tracking Widget */}
+						<Suspense fallback={
+							<div className="w-full">
+								<div className="bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-600 text-white border-0 shadow-lg rounded-lg">
+									<div className="p-4">
+										<div className="flex items-center justify-between mb-4">
+											<div className="flex items-center gap-4">
+												<div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+													<Skeleton className="h-5 w-5 opacity-60" />
+												</div>
+												<div>
+													<Skeleton className="h-4 w-28 mb-1" />
+													<Skeleton className="h-3 w-20" />
+												</div>
 											</div>
-											<div>
-												<h3 className='text-lg font-bold text-gray-900'>
-													Upcoming Birthdays
-												</h3>
-												<p className='text-sm text-gray-600'>
-													Celebrate your colleagues!
-												</p>
+											<div className="flex items-center gap-2">
+												<Skeleton className="h-7 w-20" />
 											</div>
 										</div>
-										<div className='flex items-center gap-2'>
-											<div className='w-2 h-2 bg-pink-500 rounded-full animate-pulse'></div>
-											<Badge
-												variant='outline'
-												className='text-xs bg-pink-50 text-pink-700 border-pink-200'>
-												Next 10 birthdays
-											</Badge>
+										<div className="flex items-center justify-between text-xs text-blue-100 border-b border-white/20 pb-3 mb-3">
+											<Skeleton className="h-4 w-40" />
+											<Skeleton className="h-4 w-24" />
+										</div>
+										<div className="space-y-2">
+											<Skeleton className="h-10 w-full bg-white/20" />
+											<Skeleton className="h-10 w-full bg-white/20" />
+											<Skeleton className="h-10 w-full bg-white/20" />
 										</div>
 									</div>
-									<div className='h-96 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-pink-200 scrollbar-track-transparent hover:scrollbar-thumb-pink-300'>
-										<UpcomingBirthdays
-											maxEmployees={10}
-											showAllMonths={false}
-											sectionData={sectionData}
-										/>
+								</div>
+							</div>
+						}>
+							<TimeTrackingWidget />
+						</Suspense>
+
+						<Suspense fallback={<EmployeeSectionSkeleton />}>
+							<EmployeeStats sectionData={sectionData} />
+						</Suspense>
+						<div className='grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6'>
+							<Suspense fallback={<Skeleton className="h-auto w-full" />}>
+								<TeamMembers sectionData={sectionData} />
+							</Suspense>
+							<Suspense fallback={<Skeleton className="h-auto w-full" />}>
+								<div className='space-y-4'>
+									{/* Upcoming Birthdays Box (redesigned) */}
+									<div className='rounded-2xl border border-pink-100 bg-gradient-to-br from-white via-pink-50/40 to-rose-50/40 shadow-lg'>
+										<div className='p-4 pb-3 flex items-center justify-between'>
+											<div className='flex items-center gap-3'>
+												<div className='w-10 h-10 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl flex items-center justify-center shadow-md'>
+													<Cake className='w-5 h-5 text-white' />
+												</div>
+												<div>
+													<h3 className='text-base font-bold text-gray-900'>Upcoming Birthdays</h3>
+													<p className='text-xs text-gray-600'>Celebrate your colleagues</p>
+												</div>
+											</div>
+											<div className='flex items-center gap-2'>
+												<Badge variant='outline' className='text-[10px] bg-pink-50 text-pink-700 border-pink-200'>This Month</Badge>
+											</div>
+										</div>
+										<div className='h-40 overflow-x-auto overflow-y-hidden pr-2 pb-2 touch-pan-x select-none'>
+											<UpcomingBirthdays
+												maxEmployees={12}
+												showAllMonths={false}
+												sectionData={sectionData}
+												horizontal
+											/>
+										</div>
+										<div className='px-4 pb-3 pt-0 flex items-center justify-between'>
+											<div className='text-xs text-rose-600'>Swipe to see more</div>
+											<div className='flex items-center gap-2'>
+												<div className='w-1.5 h-1.5 rounded-full bg-pink-400 animate-pulse' />
+												<div className='w-1.5 h-1.5 rounded-full bg-pink-200' />
+											</div>
+										</div>
+
+									</div>
+
+									{/* Upcoming Festival Box */}
+									<div className='rounded-2xl border border-blue-100 bg-gradient-to-br from-white via-blue-50/40 to-indigo-50/40 shadow-lg'>
+									<div className='p-4 pb-3 flex items-center justify-between'>
+											<div className='flex items-center gap-3'>
+												<div className='w-10 h-10 bg-gradient-to-br from-orange-500 to-rose-600 rounded-xl flex items-center justify-center shadow-md'>
+													<Sparkles className='w-5 h-5 text-white' />
+												</div>
+												<div>
+													<h3 className='text-base font-bold text-gray-900'>Upcoming Festivals</h3>
+													<p className='text-xs text-gray-600'>Celebrate festivals</p>
+												</div>
+											</div>
+											{/* Location Indicator */}
+											<div className="flex justify-end">
+												<LocationIndicator />
+											</div>
+										</div>
+										<div className='h-40 overflow-x-auto overflow-y-hidden pr-2 pb-2 touch-pan-x select-none'>
+											<UpcomingFestivalsStrip />
+										</div>
 									</div>
 								</div>
 							</Suspense>
@@ -195,19 +253,19 @@ export function EmployeeDashboard() {
 						<EmployeeProfile sectionData={sectionData} />
 					</Suspense>
 				);
-		case "leaves":
-			return (
-				<div className='space-y-6'>
-					{/* Time Tracking Widget */}
-					<Suspense fallback={<Skeleton className="h-20 w-full" />}>
-						<TimeTrackingWidget />
-					</Suspense>
-					
-					<Suspense fallback={<EmployeeSectionSkeleton />}>
-						<LeaveBalance sectionData={sectionData} />
-					</Suspense>
-				</div>
-			);
+			case "leaves":
+				return (
+					<div className='space-y-6'>
+						{/* Time Tracking Widget */}
+						<Suspense fallback={<Skeleton className="h-20 w-full" />}>
+							<TimeTrackingWidget />
+						</Suspense>
+
+						<Suspense fallback={<EmployeeSectionSkeleton />}>
+							<LeaveBalance sectionData={sectionData} />
+						</Suspense>
+					</div>
+				);
 			case "time":
 				return (
 					<Suspense fallback={<EmployeeSectionSkeleton />}>
@@ -226,12 +284,12 @@ export function EmployeeDashboard() {
 						<EmployeeFinances sectionData={sectionData} />
 					</Suspense>
 				);
-		default:
-			return (
-				<div className='space-y-6'>
-					<Suspense fallback={<EmployeeSectionSkeleton />}>
-						<EmployeeStats sectionData={sectionData} />
-					</Suspense>
+			default:
+				return (
+					<div className='space-y-6'>
+						<Suspense fallback={<EmployeeSectionSkeleton />}>
+							<EmployeeStats sectionData={sectionData} />
+						</Suspense>
 						<div className='grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6'>
 							<Suspense fallback={<Skeleton className="h-64 w-full" />}>
 								<TeamMembers sectionData={sectionData} />
@@ -324,6 +382,8 @@ export function EmployeeDashboard() {
 
 	return (
 		<SidebarProvider>
+			{/* Prefetch APIs used by time tracking to improve perceived speed */}
+			<ResourceHints />
 			<AppSidebar role='employee' />
 			<SidebarInset>
 				<DashboardHeader

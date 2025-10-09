@@ -9,8 +9,37 @@ interface PreloaderProviderProps {
 }
 
 export function PreloaderProvider({ children }: PreloaderProviderProps) {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+
+  // Show preloader immediately on first load, hide when page has finished loading
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const hide = () => setIsLoading(false);
+
+    if (document.readyState === "complete") {
+      // Page already loaded
+      hide();
+    } else {
+      // Ensure a minimum visibility to avoid instant flash
+      const minVisibilityTimer = setTimeout(() => {
+        // Will be turned off by 'load' as soon as it fires, otherwise by this timer
+        hide();
+      }, 1200);
+
+      const onLoad = () => {
+        clearTimeout(minVisibilityTimer);
+        hide();
+      };
+
+      window.addEventListener("load", onLoad);
+      return () => {
+        clearTimeout(minVisibilityTimer);
+        window.removeEventListener("load", onLoad);
+      };
+    }
+  }, []);
 
   useEffect(() => {
     // Listen for route changes

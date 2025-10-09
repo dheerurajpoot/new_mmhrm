@@ -45,7 +45,7 @@ interface RecentActivity {
 export function TimeTrackingWidget() {
   const [currentEntry, setCurrentEntry] = useState<CurrentTimeEntry | null>(null);
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [breakTime, setBreakTime] = useState(0);
   const [isRealTime, setIsRealTime] = useState(false);
@@ -183,8 +183,12 @@ export function TimeTrackingWidget() {
       if (user) {
         console.log('[Time Widget] User ID:', user.id, typeof user.id);
       }
-      fetchCurrentEntry();
-      fetchRecentActivities();
+      await Promise.all([
+        fetchCurrentEntry(),
+        fetchRecentActivities()
+      ]);
+      // Small delay for smooth skeleton-to-content transition
+      setTimeout(() => setIsLoading(false), 150);
     };
     
     initializeWidget();
@@ -423,9 +427,35 @@ export function TimeTrackingWidget() {
     }
   };
 
-  return (
-    <Card className="bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-600 text-white border-0 shadow-lg">
-      <CardContent className="p-4">
+  const content = isLoading ? (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-4">
+                <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                  <div className="skeleton h-5 w-5 opacity-60" />
+                </div>
+                <div>
+                  <div className="skeleton h-4 w-28 mb-1" />
+                  <div className="skeleton h-3 w-20" />
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="skeleton h-7 w-20" />
+              </div>
+            </div>
+            <div className="mb-4 pb-3 border-b border-white/20">
+              <div className="flex items-center justify-between text-xs text-blue-100">
+                <div className="skeleton h-4 w-40" />
+                <div className="skeleton h-4 w-24" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="skeleton h-10 w-full bg-white/20" />
+              <div className="skeleton h-10 w-full bg-white/20" />
+              <div className="skeleton h-10 w-full bg-white/20" />
+            </div>
+          </div>
+        ) : (<>
         {/* Header Section */}
         <div className="flex items-center justify-between mb-4">
           {/* Left side - Status and Time */}
@@ -607,6 +637,12 @@ export function TimeTrackingWidget() {
           </div>
         )}
         </div>
+        </>);
+
+  return (
+    <Card className="bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-600 text-white border-0 shadow-lg">
+      <CardContent className="p-4">
+        {content}
       </CardContent>
     </Card>
   );

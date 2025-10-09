@@ -1045,37 +1045,6 @@ export function EmployeeStats({ sectionData }: EmployeeStatsProps) {
 							})}
 					</div>
 				)}
-
-				{/* Summary Card */}
-				{getRealLeaveData().length > 0 && (
-					<Card className='bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200'>
-						<CardContent className='p-6'>
-							<div className='flex items-center justify-between'>
-								<div>
-									<h3 className='text-lg font-semibold text-gray-900 mb-2'>
-										Leave Summary
-									</h3>
-									<p className='text-gray-600 text-sm'>
-										Total available leave days across all
-										types
-									</p>
-								</div>
-								<div className='text-right'>
-									<div className='text-3xl font-bold text-indigo-600'>
-										{getRealLeaveData().reduce(
-											(sum, type) =>
-												sum + type.remainingDays,
-											0
-										)}
-									</div>
-									<div className='text-sm text-gray-500'>
-										days remaining
-									</div>
-								</div>
-							</div>
-						</CardContent>
-					</Card>
-				)}
 			</div>
 
 			{/* Employee Details Modal */}
