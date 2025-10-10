@@ -13,68 +13,47 @@ import {
     UserCircle,
     PartyPopper,
     LogOut,
-    Bell,
 } from "lucide-react";
 import { getCurrentUser, signOut } from "@/lib/auth/client";
-import { NotificationPanel } from "@/components/shared/notification-panel";
 import { toast } from "sonner";
 import type { Profile } from "@/lib/types";
 
 interface MobileBottomNavProps {
-	role: "admin" | "hr" | "employee";
-	activeSection: string;
-	onNavigate: (section: string) => void;
+    role: "admin" | "hr" | "employee";
+    activeSection: string;
+    onNavigate: (section: string) => void;
 }
 
 export function MobileBottomNav({
-	role,
-	activeSection,
-	onNavigate,
+    role,
+    activeSection,
+    onNavigate,
 }: MobileBottomNavProps) {
-	const [currentUser, setCurrentUser] = useState<Profile | null>(null);
+    const [currentUser, setCurrentUser] = useState<Profile | null>(null);
     const [isSigningOut, setIsSigningOut] = useState(false);
-    const [isNotifOpen, setIsNotifOpen] = useState(false);
-    const [unreadCount, setUnreadCount] = useState(0);
+    
 
-	useEffect(() => {
-		const fetchCurrentUser = async () => {
-			try {
-				const user = await getCurrentUser();
-				setCurrentUser(user);
-			} catch (error) {
-				console.error("Error fetching current user:", error);
-			}
-		};
-		fetchCurrentUser();
-
-		// Listen for profile updates
-		const handleProfileUpdate = () => {
-			fetchCurrentUser();
-		};
-
-		window.addEventListener("profileUpdated", handleProfileUpdate);
-		return () =>
-			window.removeEventListener("profileUpdated", handleProfileUpdate);
-	}, []);
     useEffect(() => {
-        const readKey = `notif_last_read_${role || "all"}`;
-        const computeUnread = () => {
+        const fetchCurrentUser = async () => {
             try {
-                const raw = localStorage.getItem("notifications");
-                const lastRead = Number(localStorage.getItem(readKey) || 0);
-                if (!raw) { setUnreadCount(0); return; }
-                const list = JSON.parse(raw) as Array<{ timestamp: number; meta?: any; type: string }>;
-                const filtered = list.filter((it) => {
-                    if (role === "employee") return it.meta?.status === "approved" || it.meta?.status === "rejected";
-                    return it.meta?.status === "pending" || it.type === "leave_request";
-                });
-                setUnreadCount(filtered.filter((it) => (it.timestamp || 0) > lastRead).length);
-            } catch { setUnreadCount(0); }
+                const user = await getCurrentUser();
+                setCurrentUser(user as Profile);
+            } catch (error) {
+                console.error("Error fetching current user:", error);
+            }
         };
-        computeUnread();
-        const id = setInterval(computeUnread, 5000);
-        return () => clearInterval(id);
-    }, [role]);
+        fetchCurrentUser();
+
+        // Listen for profile updates
+        const handleProfileUpdate = () => {
+            fetchCurrentUser();
+        };
+
+        window.addEventListener("profileUpdated", handleProfileUpdate);
+        return () =>
+            window.removeEventListener("profileUpdated", handleProfileUpdate);
+    }, []);
+    
     const handleLogout = async () => {
         if (isSigningOut) return;
         try {
@@ -104,39 +83,38 @@ export function MobileBottomNav({
     };
 
     const getMenuItems = () => {
-		switch (role) {
-			case "admin":
-				return [
+        switch (role) {
+            case "admin":
+                return [
                     { id: "overview", label: "Dashboard", icon: LayoutDashboard },
                     { id: "users", label: "Users", icon: Users },
                     { id: "teams", label: "Teams", icon: Users },
                     { id: "finances", label: "Finance", icon: CreditCard },
                     { id: "leaves", label: "Leaves", icon: CalendarCheck },
-					{ id: "settings", label: "Settings", icon: Settings },
-				];
-			case "hr":
-				return [
+                    { id: "settings", label: "Settings", icon: Settings },
+                ];
+            case "hr":
+                return [
                     { id: "overview", label: "Dashboard", icon: LayoutDashboard },
-					{ id: "employees", label: "Employees", icon: UserPlus },
+                    { id: "employees", label: "Employees", icon: UserPlus },
                     { id: "leaves", label: "Leaves", icon: CalendarCheck },
                     { id: "attendance", label: "Attendance", icon: Timer },
-				];
+                ];
             case "employee":
-				return [
+                return [
                     { id: "overview", label: "Overview", icon: UserCircle },
                     { id: "profile", label: "Profile", icon: UserCircle },
-                    { id: "notifications", label: "Notifications", icon: Bell },
                     { id: "leaves", label: "Leaves", icon: CalendarCheck },
                     { id: "time", label: "Time", icon: Timer },
-					{ id: "festivals", label: "Festivals", icon: PartyPopper },
+                    { id: "festivals", label: "Festivals", icon: PartyPopper },
                     { id: "finances", label: "Pay", icon: CreditCard },
-				];
-			default:
-				return [];
-		}
-	};
+                ];
+            default:
+                return [];
+        }
+    };
 
-	const menuItems = getMenuItems();
+    const menuItems = getMenuItems();
 
     return (
         <div className='md-hidden fixed bottom-0 left-0 right-0 z-50 md:hidden'>
@@ -154,55 +132,46 @@ export function MobileBottomNav({
 
             {/* Scrollable container */}
             <div className='relative pointer-events-auto px-2 py-2'>
-                {isNotifOpen && (
-                    <div className='absolute -top-2 bottom-full left-0 right-0 px-2 pb-2'>
-                        <div className='mx-auto max-w-md'>
-                            <NotificationPanel role={role} />
-                        </div>
-                    </div>
-                )}
                 <div className='flex items-center gap-1 overflow-x-auto no-scrollbar snap-x snap-mandatory [scrollbar-width:none] [-ms-overflow-style:none]'>
                     {/* map items */}
                     {menuItems.map((item) => (
-					<Button
-						key={item.id}
+                        <Button
+                            key={item.id}
                             variant='ghost'
                             size='sm'
-                        onClick={() => {
-                            if (item.id === 'notifications') { setIsNotifOpen((v)=>!v); return; }
-							const sectionNames = {
-								overview: "Dashboard",
-								users: "User Management",
-								teams: "Team Management",
-								employees: "Employee Management",
-								finances: "Financial Management",
-								leaves: "Leave Management",
-								time: "Time Tracking",
-								attendance: "Attendance",
-								settings: "Settings",
-								profile: "Profile",
-								recruitment: "Recruitment",
-								performance: "Performance",
-								compliance: "Compliance",
-							};
+                            onClick={() => {
+                                const sectionNames = {
+                                    overview: "Dashboard",
+                                    users: "User Management",
+                                    teams: "Team Management",
+                                    employees: "Employee Management",
+                                    finances: "Financial Management",
+                                    leaves: "Leave Management",
+                                    time: "Time Tracking",
+                                    attendance: "Attendance",
+                                    settings: "Settings",
+                                    profile: "Profile",
+                                    recruitment: "Recruitment",
+                                    performance: "Performance",
+                                    compliance: "Compliance",
+                                };
 
-							const sectionName =
-								sectionNames[
-									item.id as keyof typeof sectionNames
-								] || item.id;
+                                const sectionName =
+                                    sectionNames[
+                                    item.id as keyof typeof sectionNames
+                                    ] || item.id;
 
-							toast.info(`Switching to ${sectionName}`, {
-								description: `Loading ${sectionName.toLowerCase()}...`,
-								duration: 1000,
-							});
+                                toast.info(`Switching to ${sectionName}`, {
+                                    description: `Loading ${sectionName.toLowerCase()}...`,
+                                    duration: 1000,
+                                });
 
-							onNavigate(item.id);
-						}}
-                            className={`snap-start flex flex-col items-center gap-1 h-auto py-2 px-3 rounded-xl transition-colors ${
-                                activeSection === item.id
+                                onNavigate(item.id);
+                            }}
+                            className={`snap-start flex flex-col items-center gap-1 h-auto py-2 px-3 rounded-xl transition-colors ${activeSection === item.id
                                     ? "text-red-600 bg-red-100/60"
                                     : "text-gray-700 hover:text-gray-900"
-                            }`}>
+                                }`}>
                             {item.id === "profile" && currentUser?.profile_photo ? (
                                 <img
                                     src={currentUser.profile_photo}
@@ -212,9 +181,6 @@ export function MobileBottomNav({
                             ) : (
                                 <div className='relative'>
                                     <item.icon className='w-5 h-5' />
-                                    {item.id === 'notifications' && unreadCount > 0 && (
-                                        <span className='absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-rose-500 animate-pulse'></span>
-                                    )}
                                 </div>
                             )}
                             <span className='text-[10px] font-medium'>
@@ -264,5 +230,5 @@ export function MobileBottomNav({
                 }
             `}</style>
         </div>
-	);
+    );
 }

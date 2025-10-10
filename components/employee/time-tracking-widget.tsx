@@ -487,22 +487,6 @@ export function TimeTrackingWidget() {
               </div>
             </div>
 
-            {/* Real-time Timer */}
-            {currentEntry && (
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 min-w-[120px]">
-                <div className="text-center">
-                  <div className="text-lg font-mono font-bold">
-                    {currentEntry.status === 'break' 
-                      ? formatTime(breakTime)
-                      : formatTime(elapsedTime)
-                    }
-                  </div>
-                  <div className="text-xs text-blue-200">
-                    {currentEntry.status === 'break' ? 'Break Time' : 'Work Time'}
-                  </div>
-                </div>
-        </div>
-            )}
           </div>
 
           {/* Right side - Action Buttons */}
@@ -511,16 +495,6 @@ export function TimeTrackingWidget() {
               <>
                 {currentEntry.status === 'active' && (
                   <>
-                    <Button
-                      onClick={handleStartBreak}
-                      disabled={isLoading}
-                      size="sm"
-                      variant="secondary"
-                      className="bg-white/20 hover:bg-white/30 text-white border-white/30"
-                    >
-                      <Coffee className="w-4 h-4 mr-1" />
-                      Break
-                    </Button>
                     <Button
                       onClick={handleClockOut}
                       disabled={isLoading}
@@ -557,6 +531,23 @@ export function TimeTrackingWidget() {
             )}
           </div>
         </div>
+
+        {/* Real-time Timer */}
+        {currentEntry && (
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 min-w-[120px] mb-4">
+                <div className="text-center flex items-center justify-between">
+                  <div className="text-lg font-mono font-bold">
+                    {currentEntry.status === 'break' 
+                      ? formatTime(breakTime)
+                      : formatTime(elapsedTime)
+                    }
+                  </div>
+                  <div className="text-xs text-blue-200">
+                    {currentEntry.status === 'break' ? 'Break Time' : 'Work Time'}
+                  </div>
+                </div>
+        </div>
+            )}
 
         {/* Current Time Display */}
         <div className="mb-4 pb-3 border-b border-white/20">

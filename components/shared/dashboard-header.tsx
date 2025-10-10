@@ -118,7 +118,7 @@ export function DashboardHeader({ title, description, role }: DashboardHeaderPro
     }
 
     return (
-        <div className="relative h-64 overflow-hidden">
+        <div className="relative h-64 overflow-visible">
             {/* Background Image */}
             <div
                 className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -146,7 +146,7 @@ export function DashboardHeader({ title, description, role }: DashboardHeaderPro
                 {/* Right Side - Notifications + Live status */}
                 <div className="flex items-center gap-3">
                     {/* Notification bell */}
-                    <div className="hidden sm:block">
+                    <div className="sm:block">
                         <NotificationPanel role={role} />
                     </div>
                     {/* <Button
@@ -235,7 +235,7 @@ export function DashboardHeader({ title, description, role }: DashboardHeaderPro
 
                         {/* Position */}
                         {currentUser?.position && (
-                            <div className="flex items-center gap-2 text-sm">
+                            <div className="hidden md:flex items-center gap-2 text-sm">
                                 <Briefcase className="h-4 w-4 text-gray-500" />
                                 <div className="min-w-0">
                                     <p className="text-gray-900 font-medium truncate">

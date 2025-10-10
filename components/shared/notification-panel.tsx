@@ -180,8 +180,7 @@ export function NotificationPanel({ role }: { role?: "admin" | "hr" | "employee"
       <button
         aria-label='Notifications'
         onClick={(e) => { e.stopPropagation(); const now = Date.now(); setLastReadAt(now); try { localStorage.setItem(`notif_last_read_${role || "all"}`, String(now)); } catch {}; setOpen(!open); }}
-        className='relative flex items-center justify-center w-9 h-9 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white transition-colors'
-      >
+        className='relative flex items-center justify-center w-6 h-6 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white transition-colors'>
         <Bell className='w-5 h-5' />
         {unreadCount > 0 && (
           <span className='absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-[10px] font-bold flex items-center justify-center animate-pulse'>
@@ -191,7 +190,7 @@ export function NotificationPanel({ role }: { role?: "admin" | "hr" | "employee"
       </button>
 
       {open && (
-        <div className='absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-white/90 backdrop-blur-xl text-slate-900 rounded-xl shadow-2xl border border-white/40 p-2 z-[60]'>
+        <div className='absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-white/90 backdrop-blur-xl text-slate-900 rounded-xl shadow-2xl border border-white/40 p-2 z-[99999]'>
           <div className='flex items-center justify-between px-2 pb-2 border-b border-slate-200/60'>
             <div className='flex items-center gap-2'>
               <Bell className='w-4 h-4 text-rose-600' />
