@@ -266,12 +266,17 @@ export function EmployeeDashboard() {
 						</Suspense>
 					</div>
 				);
-			case "time":
-				return (
-					<Suspense fallback={<EmployeeSectionSkeleton />}>
-						<TimeTracking sectionData={sectionData} />
-					</Suspense>
-				);
+            case "time":
+                return (
+                    <div className='space-y-6'>
+                        <Suspense fallback={<Skeleton className="h-20 w-full" />}>
+                            <TimeTrackingWidget />
+                        </Suspense>
+                        <Suspense fallback={<EmployeeSectionSkeleton />}> 
+                            <TimeTracking sectionData={sectionData} />
+                        </Suspense>
+                    </div>
+                );
 			case "festivals":
 				return (
 					<Suspense fallback={<EmployeeSectionSkeleton />}>
