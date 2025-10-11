@@ -44,6 +44,7 @@
 		"@types/mongoose": "^5.11.97",
 		"@types/nodemailer": "^7.0.1",
 		"@vercel/analytics": "latest",
+		"@vercel/speed-insights": "^1.2.0",
 		"autoprefixer": "^10.4.20",
 		"bcryptjs": "latest",
 		"class-variance-authority": "^0.7.1",

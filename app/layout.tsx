@@ -14,6 +14,7 @@ import { getServerWebsiteSettings } from "@/lib/server-settings";
 import { CriticalResourcePreloader } from "@/components/optimization/optimized-dashboard";
 import { OptimizationInitializer } from "@/components/optimization/optimization-initializer";
 import { NotificationInitializer } from "@/components/shared/notification-initializer";
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 export const metadata: Metadata = {
 	title: "MMHRM - Modern HR Management Platform",
@@ -94,6 +95,7 @@ export default async function RootLayout({
 						</RealtimeProvider>
 					</QueryProvider>
 				</PreloaderProvider>
+				<SpeedInsights/>
 			</body>
 		</html>
 	);
