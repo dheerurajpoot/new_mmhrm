@@ -84,8 +84,6 @@ export function TimeTracking({ sectionData }: TimeTrackingProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFilter, setDateFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [sortBy, setSortBy] = useState<'date' | 'hours'>('date');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const breakIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -230,20 +228,8 @@ export function TimeTracking({ sectionData }: TimeTrackingProps) {
       );
     }
 
-    // Sort
-    const sorted = [...filtered].sort((a, b) => {
-      if (sortBy === 'date') {
-        const da = new Date(a.date).getTime();
-        const db = new Date(b.date).getTime();
-        return sortDir === 'asc' ? da - db : db - da;
-      }
-      const ha = a.total_hours || 0;
-      const hb = b.total_hours || 0;
-      return sortDir === 'asc' ? ha - hb : hb - ha;
-    });
-
-    setFilteredRecords(sorted);
-  }, [attendanceRecords, dateFilter, statusFilter, searchTerm, sortBy, sortDir]);
+    setFilteredRecords(filtered);
+  }, [attendanceRecords, dateFilter, statusFilter, searchTerm]);
 
   useEffect(() => {
     fetchCurrentEntry();
@@ -527,10 +513,152 @@ export function TimeTracking({ sectionData }: TimeTrackingProps) {
 
   return (
     <div className="space-y-6">
-      {/* Main Time Tracking Card removed by request */}
+      {/* Main Time Tracking Card */}
+      <Card className="bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/30 border-blue-200 shadow-lg">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-3 text-xl">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Clock className="w-6 h-6 text-blue-600" />
+            </div>
+            Time Tracking
+            {isRealTime && (
+              <div className="flex items-center gap-1 ml-auto">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm text-green-600 font-normal">Live</span>
+              </div>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Current Status */}
+          {currentEntry ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <span className="font-medium text-gray-900">Currently Clocked In</span>
+                  {getCurrentStatusBadge()}
+                </div>
+                <span className="text-sm text-gray-500">
+                  Since {new Date(currentEntry.clock_in).toLocaleTimeString()}
+                </span>
+              </div>
+
+              {/* Real-time Timer */}
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-blue-100">
+                <div className="text-center">
+                  <div className="text-4xl font-mono font-bold text-blue-600 mb-2">
+                    {currentEntry.status === 'break' 
+                      ? formatTime(breakTime)
+                      : formatTime(elapsedTime)
+                    }
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    {currentEntry.status === 'break' ? 'Break Time' : 'Work Time'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                {currentEntry.status === 'active' && (
+                  <>
+                    <Button
+                      onClick={handleStartBreak}
+                      disabled={isLoading}
+                      variant="outline"
+                      className="flex-1 border-orange-200 text-orange-600 hover:bg-orange-50"
+                    >
+                      <Coffee className="w-4 h-4 mr-2" />
+                      Start Break
+                    </Button>
+                    <Button
+                      onClick={handleClockOut}
+                      disabled={isLoading}
+                      className="flex-1 bg-red-500 hover:bg-red-600 text-white"
+                    >
+                      <Pause className="w-4 h-4 mr-2" />
+                      Clock Out
+                    </Button>
+                  </>
+                )}
+                {currentEntry.status === 'break' && (
+                  <Button
+                    onClick={handleEndBreak}
+                    disabled={isLoading}
+                    className="w-full bg-green-500 hover:bg-green-600 text-white"
+                  >
+                    <Play className="w-4 h-4 mr-2" />
+                    End Break
+                  </Button>
+                )}
+              </div>
+
+              {/* Entry Details */}
+              <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Calendar className="w-4 h-4" />
+                  <span>Date: {new Date(currentEntry.clock_in).toLocaleDateString()}</span>
+                </div>
+                {currentEntry.location && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <MapPin className="w-4 h-4" />
+                    <span>Location: {currentEntry.location}</span>
+                  </div>
+                )}
+                {currentEntry.total_hours && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Timer className="w-4 h-4" />
+                    <span>Total Hours: {currentEntry.total_hours.toFixed(2)}h</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="text-center py-8">
+                <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Ready to Start Your Day?</h3>
+                <p className="text-gray-600">Clock in to begin tracking your work time</p>
+              </div>
+
+              {/* Clock In Form */}
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="location">Location (Optional)</Label>
+                  <Input
+                    id="location"
+                    placeholder="e.g., Office, Remote, Client Site"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="notes">Notes (Optional)</Label>
+                  <Textarea
+                    id="notes"
+                    placeholder="Add any notes for today..."
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    rows={2}
+                  />
+                </div>
+                <Button
+                  onClick={handleClockIn}
+                  disabled={isLoading}
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3"
+                >
+                  <Play className="w-5 h-5 mr-2" />
+                  {isLoading ? "Clocking In..." : "Clock In"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Today's Summary */}
-      {/* {currentEntry && (
+      {currentEntry && (
         <Card className="bg-gradient-to-br from-white via-green-50/30 to-emerald-50/30 border-green-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -558,7 +686,7 @@ export function TimeTracking({ sectionData }: TimeTrackingProps) {
             </div>
           </CardContent>
         </Card>
-      )} */}
+      )}
 
       {/* Attendance Records Table */}
       <Card className="border-0 shadow-lg">
@@ -569,7 +697,8 @@ export function TimeTracking({ sectionData }: TimeTrackingProps) {
                 <Calendar className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <h3 className="text-md font-semibold text-gray-800">Attendance Records</h3>
+                <h3 className="text-xl font-semibold text-gray-800">My Attendance Records</h3>
+                <p className="text-sm text-gray-600">Track your daily time entries and work history</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -594,7 +723,7 @@ export function TimeTracking({ sectionData }: TimeTrackingProps) {
 
         {/* Filters */}
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             {/* Search Filter */}
             <div className="space-y-2">
               <Label className="flex items-center gap-2 text-sm font-medium text-gray-700">
@@ -646,38 +775,6 @@ export function TimeTracking({ sectionData }: TimeTrackingProps) {
                 <option value="break">☕ On Break</option>
               </select>
             </div>
-
-            {/* Sort By */}
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <BarChart3 className="w-4 h-4" />
-                Sort By
-              </Label>
-              <select 
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as 'date' | 'hours')}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-gray-700"
-              >
-                <option value="date">📅 Date</option>
-                <option value="hours">⏱️ Total Hours</option>
-              </select>
-            </div>
-
-            {/* Sort Direction */}
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <TrendingUp className="w-4 h-4" />
-                Order
-              </Label>
-              <select 
-                value={sortDir}
-                onChange={(e) => setSortDir(e.target.value as 'asc' | 'desc')}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-gray-700"
-              >
-                <option value="desc">⬇️ Desc</option>
-                <option value="asc">⬆️ Asc</option>
-              </select>
-            </div>
           </div>
 
           {/* Records Table */}
@@ -685,12 +782,12 @@ export function TimeTracking({ sectionData }: TimeTrackingProps) {
             <Table className="min-w-full">
               <TableHeader className="bg-gray-50">
                 <TableRow className="border-b border-gray-200">
-                  <TableHead className="font-semibold text-gray-700 py-3 text-xs sm:text-sm">📅 Date</TableHead>
-                  <TableHead className="font-semibold text-gray-700 py-3 text-xs sm:text-sm">🕐 Clock In</TableHead>
-                  <TableHead className="font-semibold text-gray-700 py-3 text-xs sm:text-sm">🕐 Clock Out</TableHead>
-                  <TableHead className="hidden sm:table-cell font-semibold text-gray-700 py-3 text-sm">📊 Status</TableHead>
-                  <TableHead className="font-semibold text-gray-700 py-3 text-xs sm:text-sm">⏱️ Total Hours</TableHead>
-                  <TableHead className="hidden sm:table-cell font-semibold text-gray-700 py-3 text-sm">🗑️ Actions</TableHead>
+                  <TableHead className="font-semibold text-gray-700 py-4">📅 Date</TableHead>
+                  <TableHead className="font-semibold text-gray-700 py-4">🕐 Clock In</TableHead>
+                  <TableHead className="font-semibold text-gray-700 py-4">🕐 Clock Out</TableHead>
+                  <TableHead className="font-semibold text-gray-700 py-4">📊 Status</TableHead>
+                  <TableHead className="font-semibold text-gray-700 py-4">⏱️ Total Hours</TableHead>
+                  <TableHead className="font-semibold text-gray-700 py-4">🗑️ Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -720,25 +817,25 @@ export function TimeTracking({ sectionData }: TimeTrackingProps) {
                   </TableRow>
                 ) : (
                   filteredRecords.map((record, index) => (
-                  <TableRow key={record.id} className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}`}>
-                      <TableCell className="py-3 w-[200px]">
-                        <div className="text-xs sm:text-sm font-medium text-gray-900">{formatDate(record.date)}</div>
+                    <TableRow key={record.id} className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}`}>
+                      <TableCell className="py-4">
+                        <div className="text-sm font-medium text-gray-900">{formatDate(record.date)}</div>
                       </TableCell>
-                      <TableCell className="py-3 w-[200px]">
+                      <TableCell className="py-4">
                         <div className="flex items-center gap-2">
                           <div className="p-1 bg-green-100 rounded">
                             <Play className="w-3 h-3 text-green-600" />
                           </div>
-                          <span className="text-xs sm:text-sm font-mono text-gray-900">{formatTimeDisplay(record.clock_in)}</span>
+                          <span className="text-sm font-mono text-gray-900">{formatTimeDisplay(record.clock_in)}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="py-3 w-[200px]">
+                      <TableCell className="py-4">
                         {record.clock_out ? (
                           <div className="flex items-center gap-2">
                             <div className="p-1 bg-red-100 rounded">
                               <Pause className="w-3 h-3 text-red-600" />
                             </div>
-                            <span className="text-xs sm:text-sm font-mono text-gray-900">{formatTimeDisplay(record.clock_out)}</span>
+                            <span className="text-sm font-mono text-gray-900">{formatTimeDisplay(record.clock_out)}</span>
                           </div>
                         ) : (
                           <Badge variant="secondary" className="bg-yellow-100 text-yellow-700">
@@ -746,14 +843,14 @@ export function TimeTracking({ sectionData }: TimeTrackingProps) {
                           </Badge>
                         )}
                       </TableCell>
-                      <TableCell className="hidden sm:table-cell py-3">
+                      <TableCell className="py-4">
                         {getStatusBadge(record.status)}
                       </TableCell>
-                      <TableCell className="py-3">
+                      <TableCell className="py-4">
                         {record.total_hours ? (
                           <div className="flex items-center gap-1">
                             <Timer className="w-4 h-4 text-gray-400" />
-                            <span className="text-xs sm:text-sm font-semibold text-gray-900">{formatDuration(record.total_hours)}</span>
+                            <span className="text-sm font-semibold text-gray-900">{formatDuration(record.total_hours)}</span>
                           </div>
                         ) : (
                           <div className="flex items-center gap-1">
@@ -761,7 +858,7 @@ export function TimeTracking({ sectionData }: TimeTrackingProps) {
                           </div>
                         )}
                       </TableCell>
-                      <TableCell className="hidden sm:table-cell py-3">
+                      <TableCell className="py-4">
                         <div className="flex items-center justify-center">
                           <Button
                             variant="ghost"

@@ -363,7 +363,7 @@ export function Festivals({ }: FestivalsProps) {
   // Get festival background graphics
   const getFestivalBackgroundGraphics = (festival: Festival): JSX.Element => {
     const title = festival.title.toLowerCase();
-
+    
     // Hindu festivals
     if (title.includes('diwali')) {
       return (
@@ -378,7 +378,7 @@ export function Festivals({ }: FestivalsProps) {
         </svg>
       );
     }
-
+    
     if (title.includes('holi')) {
       return (
         <svg className="absolute inset-0 w-full h-full opacity-10" viewBox="0 0 200 200" fill="none">
@@ -393,7 +393,7 @@ export function Festivals({ }: FestivalsProps) {
         </svg>
       );
     }
-
+    
     if (title.includes('dussehra')) {
       return (
         <svg className="absolute inset-0 w-full h-full opacity-10" viewBox="0 0 200 200" fill="none">
@@ -405,7 +405,7 @@ export function Festivals({ }: FestivalsProps) {
         </svg>
       );
     }
-
+    
     if (title.includes('rakhi') || title.includes('raksha')) {
       return (
         <svg className="absolute inset-0 w-full h-full opacity-10" viewBox="0 0 200 200" fill="none">
@@ -417,7 +417,7 @@ export function Festivals({ }: FestivalsProps) {
         </svg>
       );
     }
-
+    
     if (title.includes('karva') || title.includes('karwa')) {
       return (
         <svg className="absolute inset-0 w-full h-full opacity-10" viewBox="0 0 200 200" fill="none">
@@ -429,7 +429,7 @@ export function Festivals({ }: FestivalsProps) {
         </svg>
       );
     }
-
+    
     if (title.includes('janmashtami')) {
       return (
         <svg className="absolute inset-0 w-full h-full opacity-10" viewBox="0 0 200 200" fill="none">
@@ -441,7 +441,7 @@ export function Festivals({ }: FestivalsProps) {
         </svg>
       );
     }
-
+    
     if (title.includes('ganesh') || title.includes('ganpati')) {
       return (
         <svg className="absolute inset-0 w-full h-full opacity-10" viewBox="0 0 200 200" fill="none">
@@ -452,7 +452,7 @@ export function Festivals({ }: FestivalsProps) {
         </svg>
       );
     }
-
+    
     if (title.includes('navratri')) {
       return (
         <svg className="absolute inset-0 w-full h-full opacity-10" viewBox="0 0 200 200" fill="none">
@@ -468,7 +468,7 @@ export function Festivals({ }: FestivalsProps) {
         </svg>
       );
     }
-
+    
     // Islamic festivals
     if (title.includes('eid') || title.includes('ramadan') || title.includes('muharram')) {
       return (
@@ -480,7 +480,7 @@ export function Festivals({ }: FestivalsProps) {
         </svg>
       );
     }
-
+    
     // Christian festivals
     if (title.includes('christmas')) {
       return (
@@ -494,7 +494,7 @@ export function Festivals({ }: FestivalsProps) {
         </svg>
       );
     }
-
+    
     if (title.includes('easter')) {
       return (
         <svg className="absolute inset-0 w-full h-full opacity-10" viewBox="0 0 200 200" fill="none">
@@ -505,7 +505,7 @@ export function Festivals({ }: FestivalsProps) {
         </svg>
       );
     }
-
+    
     if (title.includes('good friday')) {
       return (
         <svg className="absolute inset-0 w-full h-full opacity-10" viewBox="0 0 200 200" fill="none">
@@ -516,7 +516,7 @@ export function Festivals({ }: FestivalsProps) {
         </svg>
       );
     }
-
+    
     // National holidays
     if (title.includes('independence') || title.includes('republic') || title.includes('gandhi')) {
       return (
@@ -530,7 +530,7 @@ export function Festivals({ }: FestivalsProps) {
         </svg>
       );
     }
-
+    
     // Cultural festivals
     if (title.includes('new year')) {
       return (
@@ -546,7 +546,7 @@ export function Festivals({ }: FestivalsProps) {
         </svg>
       );
     }
-
+    
     if (title.includes('thanksgiving')) {
       return (
         <svg className="absolute inset-0 w-full h-full opacity-10" viewBox="0 0 200 200" fill="none">
@@ -556,7 +556,7 @@ export function Festivals({ }: FestivalsProps) {
         </svg>
       );
     }
-
+    
     if (title.includes('labor') || title.includes('memorial')) {
       return (
         <svg className="absolute inset-0 w-full h-full opacity-10" viewBox="0 0 200 200" fill="none">
@@ -567,7 +567,7 @@ export function Festivals({ }: FestivalsProps) {
         </svg>
       );
     }
-
+    
     // General celebrations
     if (title.includes('birthday')) {
       return (
@@ -580,7 +580,7 @@ export function Festivals({ }: FestivalsProps) {
         </svg>
       );
     }
-
+    
     if (title.includes('anniversary')) {
       return (
         <svg className="absolute inset-0 w-full h-full opacity-10" viewBox="0 0 200 200" fill="none">
@@ -592,7 +592,7 @@ export function Festivals({ }: FestivalsProps) {
         </svg>
       );
     }
-
+    
     // Default celebration graphics
     return (
       <svg className="absolute inset-0 w-full h-full opacity-10" viewBox="0 0 200 200" fill="none">
@@ -737,7 +737,7 @@ export function Festivals({ }: FestivalsProps) {
           <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-pink-500/5"></div>
           <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-purple-400/10 rounded-full blur-2xl"></div>
           <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-pink-400/10 to-orange-400/10 rounded-full blur-xl"></div>
-
+          
           <CardHeader className="pb-6 relative z-10">
             <CardTitle className="flex items-center gap-4 text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
               <div className="p-4 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-2xl shadow-xl">
@@ -749,7 +749,7 @@ export function Festivals({ }: FestivalsProps) {
               </div>
             </CardTitle>
           </CardHeader>
-
+          
           <CardContent className="pt-0 pb-8 relative z-10">
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-8">
               {/* Country Selection */}
@@ -952,6 +952,7 @@ export function Festivals({ }: FestivalsProps) {
                 className="flex items-center gap-2 px-6 py-3 border-blue-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200"
               >
                 <ChevronLeft className="w-4 h-4" />
+                Previous Month
               </Button>
 
               <div className="text-center">
@@ -969,6 +970,7 @@ export function Festivals({ }: FestivalsProps) {
                 disabled={isLoading}
                 className="flex items-center gap-2 px-6 py-3 border-blue-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200"
               >
+                Next Month
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
@@ -1055,7 +1057,7 @@ export function Festivals({ }: FestivalsProps) {
                 return (
                   <Card
                     key={festival.id}
-                    className="group border-0 shadow-sm hover:shadow-xl transition-all duration-300 bg-white overflow-hidden relative w-[100%] lg:w-[30%]"
+                    className="group border-0 shadow-sm hover:shadow-xl transition-all duration-300 bg-white overflow-hidden relative w-[30%]"
                   >
                     {/* Festival Background Graphics */}
                     {backgroundGraphics}
