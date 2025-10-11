@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Bell, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Bell, CheckCircle, XCircle, Clock, Settings, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useSimpleNotifications } from "@/hooks/use-simple-notifications";
+import { Button } from "@/components/ui/button";
 
 type NotificationItem = {
   id: string;
@@ -21,6 +23,7 @@ export function NotificationPanel({ role }: { role?: "admin" | "hr" | "employee"
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<NotificationItem[]>([]);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const notifications = useSimpleNotifications();
 
   const formatTime = (ts: number) => {
     const now = new Date();
@@ -51,20 +54,76 @@ export function NotificationPanel({ role }: { role?: "admin" | "hr" | "employee"
       if (saved) setItems(JSON.parse(saved));
     } catch {}
 
-    const handler = (e: CustomEvent) => {
-      const { type, message, audience } = e.detail || {};
+    const handler = async (e: CustomEvent) => {
+      const { type, message, audience, payload } = e.detail || {};
       if (audience && role && audience !== role) return; // filter by dashboard role if provided
+      
       const item: NotificationItem = {
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         type,
         message: message || "New update",
         timestamp: Date.now(),
       };
+      
       setItems((prev) => {
         const next = [item, ...prev].slice(0, 50);
         try { localStorage.setItem("notifications", JSON.stringify(next)); } catch {}
         return next;
       });
+
+      // Show browser notification if permission is granted
+      if (notifications.permission === "granted") {
+        try {
+          let notificationTitle = "New Notification";
+          let notificationBody = message || "You have a new update";
+
+          // Customize notification based on type
+          switch (type) {
+            case "leave_request":
+              notificationTitle = "New Leave Request";
+              if (payload?.employeeName && payload?.leaveType && payload?.days) {
+                notificationBody = `${payload.employeeName} requested ${payload.days} day${payload.days === 1 ? '' : 's'} of ${payload.leaveType}`;
+              }
+              break;
+            case "leave_approved":
+              notificationTitle = "Leave Approved";
+              if (payload?.leaveType && payload?.days) {
+                notificationBody = `Your ${payload.days} day${payload.days === 1 ? '' : 's'} ${payload.leaveType} request has been approved`;
+              }
+              break;
+            case "leave_rejected":
+              notificationTitle = "Leave Rejected";
+              if (payload?.leaveType && payload?.days) {
+                notificationBody = `Your ${payload.days} day${payload.days === 1 ? '' : 's'} ${payload.leaveType} request has been rejected`;
+              }
+              break;
+            case "payroll_created":
+              notificationTitle = "Payroll Update";
+              if (payload?.amount && payload?.period) {
+                notificationBody = `Your salary for ${payload.period} has been processed: $${payload.amount.toFixed(2)}`;
+              }
+              break;
+            case "time_tracking":
+              notificationTitle = "Time Tracking";
+              notificationBody = message || "Time tracking update";
+              break;
+            default:
+              notificationTitle = "System Notification";
+              notificationBody = message || "You have a new notification";
+          }
+
+          await notifications.showNotification(
+            notificationTitle,
+            notificationBody,
+            {
+              tag: type,
+              requireInteraction: type === "leave_request" || type === "leave_approved" || type === "leave_rejected",
+            }
+          );
+        } catch (error) {
+          console.error("Failed to show browser notification:", error);
+        }
+      }
     };
 
     window.addEventListener("data-update", handler as EventListener);
@@ -196,8 +255,90 @@ export function NotificationPanel({ role }: { role?: "admin" | "hr" | "employee"
               <Bell className='w-4 h-4 text-rose-600' />
               <span className='text-sm font-semibold'>Notifications</span>
             </div>
-            <Badge onClick={() => setItems([])} className='cursor-pointer bg-rose-50 text-rose-700 hover:bg-rose-100'>Clear</Badge>
+            <div className='flex items-center gap-2'>
+              {notifications.permission !== "granted" && notifications.isSupported && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={notifications.requestPermission}
+                  disabled={notifications.isRequesting}
+                  className='text-xs h-6 px-2'
+                >
+                  {notifications.isRequesting ? "Requesting..." : "Enable Notifications"}
+                </Button>
+              )}
+              {notifications.permission === "granted" && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={async () => {
+                    console.log("Test notification button clicked");
+                    console.log("Current permission:", notifications.permission);
+                    console.log("Is supported:", notifications.isSupported);
+                    console.log("Browser Notification.permission:", typeof window !== "undefined" ? Notification.permission : "N/A");
+                    
+                    // Test direct browser notification as well
+                    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+                      try {
+                        console.log("Creating direct browser notification...");
+                        const directNotification = new Notification("Direct Test", {
+                          body: "This is a direct browser notification test",
+                          icon: "/placeholder-logo.png",
+                          tag: "direct-test",
+                          requireInteraction: true // This makes it stay longer
+                        });
+                        console.log("Direct notification created:", directNotification);
+                        
+                        // Keep it open for 10 seconds
+                        setTimeout(() => {
+                          directNotification.close();
+                          console.log("Direct notification closed");
+                        }, 10000);
+                      } catch (error) {
+                        console.error("Direct notification error:", error);
+                      }
+                    }
+                    
+                    const result = await notifications.showTestNotification();
+                    console.log("Test notification result:", result);
+                  }}
+                  className='text-xs h-6 px-2'
+                >
+                  Test
+                </Button>
+              )}
+              <Badge onClick={() => {
+                setItems([]);
+                try { 
+                  localStorage.setItem("notifications", JSON.stringify([])); 
+                } catch {}
+              }} className='cursor-pointer bg-rose-50 text-rose-700 hover:bg-rose-100'>Clear</Badge>
+            </div>
           </div>
+          
+          {notifications.permission !== "granted" && notifications.isSupported && (
+            <div className='p-3 bg-amber-50 border border-amber-200 rounded-lg mx-2 mb-2'>
+              <div className='flex items-start gap-2'>
+                <AlertCircle className='w-4 h-4 text-amber-600 mt-0.5' />
+                <div className='text-xs text-amber-800'>
+                  <p className='font-medium'>Enable notifications</p>
+                  <p>Get real-time notifications for important updates.</p>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {notifications.permission === "granted" && (
+            <div className='p-3 bg-green-50 border border-green-200 rounded-lg mx-2 mb-2'>
+              <div className='flex items-start gap-2'>
+                <CheckCircle className='w-4 h-4 text-green-600 mt-0.5' />
+                <div className='text-xs text-green-800'>
+                  <p className='font-medium'>Notifications enabled</p>
+                  <p>You'll receive notifications for important updates.</p>
+                </div>
+              </div>
+            </div>
+          )}
           <div className='divide-y divide-slate-200/60'>
             {items.length === 0 ? (
               <div className='p-4 text-sm text-slate-600'>No notifications yet.</div>

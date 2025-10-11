@@ -20,6 +20,7 @@ const AttendanceManagement = lazy(() => import("./attendance-management").then(m
 const AdminSettings = lazy(() => import("./admin-settings").then(module => ({ default: module.AdminSettings })))
 const TeamManagement = lazy(() => import("./team-management").then(module => ({ default: module.TeamManagement })))
 const AdminProfile = lazy(() => import("./admin-profile").then(module => ({ default: module.AdminProfile })))
+const SimpleNotificationTest = lazy(() => import("../shared/simple-notification-test").then(module => ({ default: module.SimpleNotificationTest })))
 
 // Modern Loading skeleton component with glassmorphism
 const SectionSkeleton = () => (
@@ -154,6 +155,14 @@ export function AdminDashboard() {
             <AdminSettings />
           </Suspense>
         )
+      case "notifications":
+        return (
+          <Suspense fallback={<SectionSkeleton />}>
+            <div className="p-6">
+              <SimpleNotificationTest />
+            </div>
+          </Suspense>
+        )
       default:
         return (
           <Suspense fallback={<SectionSkeleton />}>
@@ -185,6 +194,8 @@ export function AdminDashboard() {
         return { title: "My Profile", description: "View and update your personal information" }
       case "settings":
         return { title: "System Settings", description: "Configure system-wide settings and preferences" }
+      case "notifications":
+        return { title: "Notification Test", description: "Test and manage browser notifications" }
       default:
         return { title: "Admin Dashboard", description: "Manage users, roles, and system settings" }
     }

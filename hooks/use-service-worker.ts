@@ -13,6 +13,7 @@ export function useServiceWorker() {
     try {
       const registration = await navigator.serviceWorker.register("/sw.js", {
         scope: "/",
+        updateViaCache: "none"
       });
 
       console.log("Service Worker registered successfully:", registration);
@@ -35,6 +36,14 @@ export function useServiceWorker() {
       // Handle controller change
       navigator.serviceWorker.addEventListener("controllerchange", () => {
         window.location.reload();
+      });
+
+      // Set up message handling for service worker communication
+      navigator.serviceWorker.addEventListener("message", (event) => {
+        if (event.data && event.data.type === "NOTIFICATION_CLICKED") {
+          // Handle notification click
+          console.log("Notification clicked:", event.data.payload);
+        }
       });
 
     } catch (error) {

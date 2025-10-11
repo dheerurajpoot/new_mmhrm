@@ -157,6 +157,17 @@ export async function PATCH(
 			// Don't fail the request if email fails
 		}
 
+		// Trigger real-time notification for leave status change
+		if (body.status === "approved" || body.status === "rejected") {
+			try {
+				// This will be handled by the client-side realtime system
+				// The notification will be triggered when the client polls for updates
+				console.log(`Leave request ${body.status}: ${result.leave_type} for ${result.days_requested} days`);
+			} catch (notificationError) {
+				console.error("Failed to trigger leave status notification:", notificationError);
+			}
+		}
+
 		// Serialize for client safety
 		const safe = {
 			id: (result as any)._id?.toString?.() || (result as any)._id,

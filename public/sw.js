@@ -252,6 +252,12 @@ async function openDB() {
         const store = db.createObjectStore('pendingActions', { keyPath: 'id', autoIncrement: true });
         store.createIndex('timestamp', 'timestamp', { unique: false });
       }
+      
+      if (!db.objectStoreNames.contains('pendingNotifications')) {
+        const store = db.createObjectStore('pendingNotifications', { keyPath: 'id', autoIncrement: true });
+        store.createIndex('timestamp', 'timestamp', { unique: false });
+        store.createIndex('tag', 'tag', { unique: false });
+      }
     };
   });
 }
@@ -273,45 +279,215 @@ self.addEventListener('message', (event) => {
 
 // Push notification handler
 self.addEventListener('push', (event) => {
+  console.log('Push event received:', event);
+  
+  let notificationData = {
+    title: 'MMHRM Notification',
+    body: 'You have a new notification',
+    icon: '/placeholder-logo.png',
+    badge: '/placeholder-logo.png',
+    tag: 'mmhrm-notification',
+    data: {
+      url: '/',
+      timestamp: Date.now()
+    }
+  };
+
   if (event.data) {
-    const data = event.data.json();
-    
-    const options = {
-      body: data.body,
-      icon: '/icon-192x192.png',
-      badge: '/badge-72x72.png',
-      vibrate: [100, 50, 100],
-      data: {
-        dateOfArrival: Date.now(),
-        primaryKey: data.primaryKey,
-      },
-      actions: [
-        {
-          action: 'explore',
-          title: 'View Details',
-          icon: '/icon-192x192.png',
-        },
-        {
-          action: 'close',
-          title: 'Close',
-          icon: '/icon-192x192.png',
-        },
-      ],
-    };
-    
-    event.waitUntil(
-      self.registration.showNotification(data.title, options)
-    );
+    try {
+      const data = event.data.json();
+      notificationData = {
+        title: data.title || 'MMHRM Notification',
+        body: data.body || 'You have a new notification',
+        icon: data.icon || '/placeholder-logo.png',
+        badge: data.badge || '/placeholder-logo.png',
+        tag: data.tag || 'mmhrm-notification',
+        data: {
+          url: data.url || '/',
+          type: data.type || 'general',
+          payload: data.payload || {},
+          timestamp: Date.now()
+        }
+      };
+    } catch (error) {
+      console.error('Error parsing push data:', error);
+      // Use default notification data
+    }
   }
+
+  const options = {
+    body: notificationData.body,
+    icon: notificationData.icon,
+    badge: notificationData.badge,
+    vibrate: [100, 50, 100],
+    requireInteraction: notificationData.data.type === 'leave_request' || 
+                       notificationData.data.type === 'leave_approved' || 
+                       notificationData.data.type === 'leave_rejected',
+    data: notificationData.data,
+    actions: getNotificationActions(notificationData.data.type)
+  };
+  
+  event.waitUntil(
+    self.registration.showNotification(notificationData.title, options)
+  );
 });
+
+// Get notification actions based on type
+function getNotificationActions(type) {
+  const baseActions = [
+    {
+      action: 'close',
+      title: 'Close',
+      icon: '/placeholder-logo.png',
+    }
+  ];
+
+  switch (type) {
+    case 'leave_request':
+      return [
+        {
+          action: 'view_request',
+          title: 'View Request',
+          icon: '/placeholder-logo.png',
+        },
+        ...baseActions
+      ];
+    case 'leave_approved':
+    case 'leave_rejected':
+      return [
+        {
+          action: 'view_leave',
+          title: 'View Leave',
+          icon: '/placeholder-logo.png',
+        },
+        ...baseActions
+      ];
+    case 'payroll':
+      return [
+        {
+          action: 'view_payroll',
+          title: 'View Payroll',
+          icon: '/placeholder-logo.png',
+        },
+        ...baseActions
+      ];
+    default:
+      return [
+        {
+          action: 'view_dashboard',
+          title: 'View Dashboard',
+          icon: '/placeholder-logo.png',
+        },
+        ...baseActions
+      ];
+  }
+}
 
 // Notification click handler
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   
-  if (event.action === 'explore') {
-    event.waitUntil(
-      clients.openWindow('/dashboard')
-    );
+  const notificationData = event.notification.data || {};
+  const action = event.action;
+  
+  let targetUrl = notificationData.url || '/';
+  
+  // Handle different actions
+  switch (action) {
+    case 'view_request':
+      targetUrl = '/admin/leave-requests';
+      break;
+    case 'view_leave':
+      targetUrl = '/employee';
+      break;
+    case 'view_payroll':
+      targetUrl = '/employee/finances';
+      break;
+    case 'view_dashboard':
+      targetUrl = '/';
+      break;
+    case 'close':
+      return; // Just close, don't open anything
+    default:
+      // Default action or notification body click
+      targetUrl = notificationData.url || '/';
+  }
+  
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // Check if there's already a window/tab open with the target URL
+      for (const client of clientList) {
+        if (client.url.includes(targetUrl) && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      
+      // If no existing window, open a new one
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+    })
+  );
+});
+
+// Background sync for notifications
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'notification-sync') {
+    event.waitUntil(syncNotifications());
   }
 });
+
+async function syncNotifications() {
+  try {
+    // Get pending notifications from IndexedDB
+    const pendingNotifications = await getPendingNotifications();
+    
+    for (const notification of pendingNotifications) {
+      try {
+        await self.registration.showNotification(notification.title, {
+          body: notification.body,
+          icon: notification.icon,
+          badge: notification.badge,
+          tag: notification.tag,
+          data: notification.data,
+          requireInteraction: notification.requireInteraction,
+          actions: notification.actions
+        });
+        
+        // Remove from pending after successful display
+        await removePendingNotification(notification.id);
+      } catch (error) {
+        console.error('Failed to show pending notification:', error);
+      }
+    }
+  } catch (error) {
+    console.error('Background sync for notifications failed:', error);
+  }
+}
+
+// Store pending notification in IndexedDB
+async function storePendingNotification(notification) {
+  const db = await openDB();
+  const transaction = db.transaction(['pendingNotifications'], 'readwrite');
+  const store = transaction.objectStore('pendingNotifications');
+  await store.add({
+    ...notification,
+    timestamp: Date.now()
+  });
+}
+
+// Get pending notifications from IndexedDB
+async function getPendingNotifications() {
+  const db = await openDB();
+  const transaction = db.transaction(['pendingNotifications'], 'readonly');
+  const store = transaction.objectStore('pendingNotifications');
+  return await store.getAll();
+}
+
+// Remove pending notification from IndexedDB
+async function removePendingNotification(id) {
+  const db = await openDB();
+  const transaction = db.transaction(['pendingNotifications'], 'readwrite');
+  const store = transaction.objectStore('pendingNotifications');
+  await store.delete(id);
+}

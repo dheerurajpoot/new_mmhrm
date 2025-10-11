@@ -13,6 +13,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { getServerWebsiteSettings } from "@/lib/server-settings";
 import { CriticalResourcePreloader } from "@/components/optimization/optimized-dashboard";
 import { OptimizationInitializer } from "@/components/optimization/optimization-initializer";
+import { NotificationInitializer } from "@/components/shared/notification-initializer";
 
 export const metadata: Metadata = {
 	title: "MMHRM - Modern HR Management Platform",
@@ -85,6 +86,7 @@ export default async function RootLayout({
 											<Toaster />
 											<CriticalResourcePreloader />
 											<OptimizationInitializer />
+											<NotificationInitializer />
 										</GlobalSettingsProvider>
 									</SettingsProvider>
 								</PostLoginPreloader>

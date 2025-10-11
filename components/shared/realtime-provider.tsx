@@ -4,6 +4,7 @@ import type React from "react";
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { notificationService } from "@/lib/services/notification-service";
 
 interface RealtimeContextType {
 	isConnected: boolean;
@@ -70,11 +71,11 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
 	}, []);
 
 	useEffect(() => {
-		const handleDataUpdate = (event: CustomEvent) => {
+		const handleDataUpdate = async (event: CustomEvent) => {
 			setLastUpdate(new Date());
 
 			// Show toast notifications based on event type
-			const { type, message } = event.detail;
+			const { type, message, payload } = event.detail;
 
 			if (type === "leave_request_updated") {
 				toast("A leave request has been updated");
@@ -82,6 +83,58 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
 				toast("A new payroll record has been created");
 			} else if (type === "finance_updated") {
 				toast("Employee financial information has been updated");
+			}
+
+			// Show browser notifications if permission is granted
+			if (notificationService.getPermissionStatus().granted) {
+				try {
+					let notificationTitle = "System Update";
+					let notificationBody = message || "You have a new update";
+
+					switch (type) {
+						case "leave_request":
+							notificationTitle = "New Leave Request";
+							if (payload?.employeeName && payload?.leaveType && payload?.days) {
+								notificationBody = `${payload.employeeName} requested ${payload.days} day${payload.days === 1 ? '' : 's'} of ${payload.leaveType}`;
+							}
+							break;
+						case "leave_approved":
+							notificationTitle = "Leave Approved";
+							if (payload?.leaveType && payload?.days) {
+								notificationBody = `Your ${payload.days} day${payload.days === 1 ? '' : 's'} ${payload.leaveType} request has been approved`;
+							}
+							break;
+						case "leave_rejected":
+							notificationTitle = "Leave Rejected";
+							if (payload?.leaveType && payload?.days) {
+								notificationBody = `Your ${payload.days} day${payload.days === 1 ? '' : 's'} ${payload.leaveType} request has been rejected`;
+							}
+							break;
+						case "payroll_created":
+							notificationTitle = "Payroll Update";
+							if (payload?.amount && payload?.period) {
+								notificationBody = `Your salary for ${payload.period} has been processed: $${payload.amount.toFixed(2)}`;
+							}
+							break;
+						case "time_tracking":
+							notificationTitle = "Time Tracking";
+							notificationBody = message || "Time tracking update";
+							break;
+						default:
+							notificationTitle = "System Notification";
+							notificationBody = message || "You have a new notification";
+					}
+
+					await notificationService.showNotification({
+						title: notificationTitle,
+						body: notificationBody,
+						tag: type,
+						data: { type, payload },
+						requireInteraction: type === "leave_request" || type === "leave_approved" || type === "leave_rejected",
+					});
+				} catch (error) {
+					console.error("Failed to show browser notification:", error);
+				}
 			}
 		};
 

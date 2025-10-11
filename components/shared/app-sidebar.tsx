@@ -37,6 +37,7 @@ import {
 	PieChart,
 	CreditCard,
 	Home,
+	Bell,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -94,6 +95,7 @@ export function AppSidebar({ role }: AppSidebarProps) {
 			leaves: "Leave Management",
 			time: "Time Tracking",
 			attendance: "Attendance",
+			notifications: "Notification Test",
 			settings: "Settings",
 			profile: "Profile",
 			recruitment: "Recruitment",
@@ -172,6 +174,14 @@ export function AppSidebar({ role }: AppSidebarProps) {
 						color: "from-indigo-500 to-indigo-600",
 						bgColor: "bg-indigo-50 hover:bg-indigo-100",
 						textColor: "text-indigo-700"
+					},
+					{ 
+						id: "notifications", 
+						label: "Notification Test", 
+						icon: Bell, 
+						color: "from-yellow-500 to-yellow-600",
+						bgColor: "bg-yellow-50 hover:bg-yellow-100",
+						textColor: "text-yellow-700"
 					},
 					{ 
 						id: "settings", 
