@@ -33,7 +33,6 @@ export default async function RootLayout({
 	return (
 		<html lang='en' suppressHydrationWarning>
 			<head>
-				<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
 				<title>{settings.site_title}</title>
 				<meta name="description" content={settings.footer_text || "Comprehensive HR management solution with role-based access, time tracking, leave management, and employee self-service portal."} />
 				
@@ -54,11 +53,7 @@ export default async function RootLayout({
 							-moz-osx-font-smoothing: grayscale;
 							background-color: #f8fafc;
 							font-weight: 400;
-							/* Prevent font auto-scaling and double-tap zoom artifacts */
-							-webkit-text-size-adjust: 100%;
 						}
-						/* Prevent iOS from zooming inputs on focus */
-						input, select, textarea { font-size: 16px; }
 						.font-primary { 
 							font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 							font-weight: 400;
